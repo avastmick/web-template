@@ -1,0 +1,56 @@
+# Rust
+**/target/
+**/dist/
+**/.cargo/
+
+# Node/Svelte
+**/node_modules/
+**/build/
+**/.svelte-kit/
+**/package-lock.json
+**/test-results
+
+# Output
+**/.output
+**/.vercel
+**/.netlify
+**/.wrangler
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# outputs
+/output/
+**.log
+
+# scratchpad
+scratchpad.*
+
+# Sensitive or environment-specific data
+.env*
+.direnv
+
+# OS or Editor folders
+.DS_Store
+
+# Codegen context
+INSTRUCTIONS.md
+context/
+*.mdc
+.cursorrules
+.windsurfrules
+
+# IDE
+.idea
+.vscode
+.lapce
+.zed
+*.vim
+
+# Database
+*.db 

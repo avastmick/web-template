@@ -53,4 +53,6 @@ context/
 *.vim
 
 # Database
-*.db 
+*.db
+**/.sqlx
+**/*.sqlite*

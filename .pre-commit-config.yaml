@@ -1,3 +1,6 @@
+# .pre-commit-config.yaml
+minimum_pre_commit_version: '2.17.0'
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
@@ -5,44 +8,77 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
       - id: check-added-large-files
+        args: ['--maxkb=1024'] # Prevent files larger than 1MB
+      - id: check-merge-conflict
+      - id: detect-private-key
 
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.16.1
+    rev: v8.18.2
     hooks:
       - id: gitleaks
+        name: Detect hardcoded secrets (gitleaks)
 
   # Rust checks
   - repo: https://github.com/backplane/pre-commit-rust-hooks
-    rev: v1.1.0
+    rev: v1.2.0
     hooks:
       - id: fmt
-        args: ["--all", "--"]
+        name: Format Rust code (cargo fmt)
+        entry: bash -c 'cd server && cargo fmt --all --'
+        language: system # Override to ensure it runs in project context
+        types: [rust]
+        pass_filenames: false
       - id: clippy
-        args: ["--all-targets", "--all-features", "--", "-D warnings"]
+        name: Lint Rust code (cargo clippy)
+        entry: bash -c 'cd server && cargo clippy --all-targets --all-features -- -D warnings -D clippy::pedantic'
+        language: system # Override to ensure it runs in project context
+        types: [rust]
+        pass_filenames: false
+
+
+  # Client-side checks (Svelte/TypeScript) using local bun scripts from client/
+  - repo: local
+    hooks:
+      - id: client-format
+        name: Format client code (bun run format)
+        language: system
+        entry: bash -c 'cd client && bun run format'
+        files: ^client/.*\.(ts|svelte|js|json|css|scss|html|yaml|md)$
+        pass_filenames: false # Assumes `bun run format` (e.g. prettier --write .) handles its scope
+
+      - id: client-lint
+        name: Lint client code (bun run lint)
+        language: system
+        entry: bash -c 'cd client && bun run lint'
+        files: ^client/.*\.(ts|svelte|js)$
+        pass_filenames: false # Assumes `bun run lint` (e.g. eslint .) handles its scope
+
+      - id: client-type-check
+        name: Type-check client code (bun run check:strict)
+        language: system
+        entry: bash -c 'cd client && bun run check:strict'
+        files: ^client/.*\.(ts|svelte|js)$
+        pass_filenames: false # `svelte-check` runs on the project
+
+  # Lockfile consistency checks
+  - repo: local
+    hooks:
+      - id: bun-lockfile-check
+        name: Check Bun lockfile consistency
+        language: system
+        entry: bash -c 'cd client && bun install --frozen-lockfile'
+        files: ^client/bun\.lockb$ # Only trigger on lockfile change itself
+        pass_filenames: false
 
   - repo: local
     hooks:
-      - id: format
-        name: format
+      - id: cargo-lockfile-check
+        name: Check Cargo.lock consistency
         language: system
-        entry: bun run format
-        types: [file]
-        files: \.(ts|svelte|js)$
-        pass_filenames: false
-
-      - id: lint
-        name: lint
-        language: system
-        entry: bun run lint
-        types: [file]
-        files: \.(ts|svelte|js)$
-        pass_filenames: false
-
-      - id: type-check
-        name: strict-type-check
-        language: system
-        entry: bun run check:strict
-        types: [file]
-        files: \.(ts|svelte|js)$
+        entry: bash -c 'cd server && cargo check --locked'
+        files: ^server/Cargo\.lock$ # Only trigger on lockfile change itself
         pass_filenames: false

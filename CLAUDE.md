@@ -1,159 +1,230 @@
 # WEB-TEMPLATE CODEBASE GUIDE
 
-
-Always read `documentation/PRD.md` and the project `README.md`.
+Always read `documentation/PRD.md`, the project `README.md`, and `CURRENT_TASKS.md` before starting work.
 
 ## Overview
 
-There are two components to this project:
+This project aims to create a high-performance, secure, and high-quality web application. There are two main components:
 
-- `client`, which is a `svelte/svelte-kit` application that serves the web application
-- `server`, which is a `rust/axum` application that offers `REST` API endpoints and interacts with a database using `sqlx`
+-   `client/`: A SvelteKit application (TypeScript) serving the web interface.
+-   `server/`: A Rust/Axum application providing REST API endpoints and interacting with a database (`sqlx`).
 
-The database is configurable, we will use `SQLite` as a starting point. Database migrations will be managed using `dbmate` locally.
+The database is SQLite for local development, with `dbmate` for migrations. `just` is used for command running, and `direnv` manages environment variables through `.envrc`.
 
-We will use `just` to wrap commands to make development and deployment easy.
-We will use `overmind` to run the servers locally.
+## Key Project Goals (from PRD.md and README.md)
 
-## Documentation and additional context
+-   **Performance:** Exceed highest performance expectations.
+-   **Security:** Provably secure with modern cryptography and best practices.
+-   **High Quality:** Rigorous static analysis, linting, formatting, and type-checking.
+-   **Lightweight:** Minimal memory/storage footprint.
+-   **Ease of Use:** First-class UX, DX, and operational experience.
+-   **Beautiful & Functional UI:** Engaging, easily extensible UI with dark/light modes and themes.
+-   **Modular Backend:** Fast, extensible Rust server for database, AI, payments, etc.
 
-There is additional documentation context available in `context/`. The following is currently available:
+## Documentation and Additional Context
 
-- `svelte` docs - TODO
-
-Ask the user to add the link to needed SDK or API documentation and `git clone`, or `cuRl`/`wget` the resource locally so it can be read. Always ask before attempting to download.
+-   Primary project documentation: `README.md`, `documentation/PRD.md`, `documentation/ARCHITECTURE.md`.
+-   Current development tasks: `CURRENT_TASKS.md`.
+-   Additional context (e.g., SDKs, specific library docs) may be in `context/`.
+-   If you need external documentation (SDKs, API docs), please ask the user to provide a link or download it into the `context/` directory. Do not attempt to fetch external resources yourself without explicit instruction.
 
 ## Package Management
 
-This project uses Bun and Cargo exclusively. Do not use `npm` or `node`, etc. commands. ALWAYS use `bun add` or `cargo add`: DO NOT update configuration files directly
+This project uses Bun (client) and Cargo (server) exclusively.
 
-### Package Commands
+### Client - Bun (`web-template/client/`)
 
-#### Client - using Bun
+-   Install package: `bun add <package-name>` (User runs this command)
+-   Install dev dependency: `bun add -d <package-name>` (User runs this command)
+-   Remove package: `bun remove <package-name>`
+-   Update dependencies: `bun update`
+-   List dependencies: `bun pm ls`
+-   Check for unused dependencies: `bun pm ls --prod=false` (More accurately: `bun run depcheck` or similar if configured)
+-   Clean unused packages: `bun pm prune` (Be cautious with this, verify before running)
 
-- Install packages: `bun add <package-name>` (Note: have user run this command instead of Claude)
-- Remove packages: `bun remove <package-name>`
-- Check for unused dependencies: `bun pm ls --prod=false` (identifies unused dependencies)
-- Clean unused packages: `bun pm prune` (removes unused dependencies)
+### Server - Cargo (`web-template/server/`)
 
-#### Server - using Cargo
+-   Add dependency: `cargo add <crate-name>`
+-   Add dependency (with features): `cargo add <crate-name> --features <feature-name>`
+-   Add dev dependency: `cargo add <crate-name> --dev`
+-   Remove dependency: `cargo remove <crate-name>` (User runs this, check `Cargo.toml` afterwards)
+-   Update dependencies: `cargo update`
+-   Build: `cargo build`
+-   Run: `cargo run`
+-   Test: `cargo test`
+-   Check: `cargo check`
+-   Lint (Clippy): `cargo clippy` or `cargo clippy -- -D warnings -D clippy::pedantic` (for stricter checks)
+-   Format: `cargo fmt`
 
-TODO: complete instructions here
+## Project Commands (using `just` from `web-template/`)
 
+The `justfile` in the project root (`web-template/`) provides a unified interface for common tasks. Always use `just <command>` where possible. Run `just` to see all available commands.
 
-## Project Commands
+### Common `just` Commands (Examples - will be defined in `justfile`):
 
-- Build: `bun run build` (vite build)
-- Lint: `bun run lint` (prettier --check . && eslint .)
-- Format: `bun run format` (prettier --write .)
-- Basic Type Check: `bun run check` (basic svelte-kit check)
-- Strict Type Check: `bun run check:strict` (uses strict TypeScript configuration, default)
-- Test (all): `bun run test` (runs e2e tests)
-- Test (single): `bun playwright test <path-to-test-file>`
-- Just: `just <command>` (see justfile for available commands)
-
-## Just Commands
-
-- `just`: List all available commands
-TODO: Add detailed compilation, linting, and style checks for both client and server. Ensure both client and server are strict, as per `clippy`-level checking
+*   **Setup & Installation:**
+    *   `just setup`: Installs all client and server dependencies after cleaning. Sets up `.envrc` if needed.
+    *   `just setup-client`: Cleans client, then installs client dependencies (`cd client && bun install`).
+    *   `just setup-server`: Cleans server, then prepares server (e.g., `cd server && cargo build` to fetch dependencies).
+*   **Development:**
+    *   `just dev`: Starts client and server development servers (e.g., using `overmind` and `Procfile.dev`). (Claude should not run this; for user execution).
+    *   `just client-dev-server`: Starts only the client development server.
+    *   `just server-dev-server [--hotreload]`: Starts only the server development server, optionally with hot-reloading.
+*   **Building:**
+    *   `just build`: Builds both client and server for production.
+    *   `just build-client`: Builds the client application (`cd client && bun run build`).
+    *   `just build-server`: Builds the server application (`cd server && cargo build --release`).
+*   **Quality Checks & Formatting:**
+    *   `just check`: Runs all linters, formatters (check mode), and type checkers for both client and server.
+    *   `just check-client`: Runs client-side checks (e.g., `cd client && bun run lint && bun run check:strict`).
+    *   `just check-server`: Runs server-side checks (`cd server && cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings -D clippy::pedantic && cargo check`).
+    *   `just format`: Formats code for both client and server.
+    *   `just format-client`: Formats client code (`cd client && bun run format`).
+    *   `just format-server`: Formats server code (`cd server && cargo fmt`).
+*   **Testing:**
+    *   `just test [server_pattern] [client_pattern] [e2e_pattern]`: Runs all tests. Patterns are optional.
+    *   `just test-client [pattern]`: Runs client-side unit/integration tests (`cd client && bun run test`).
+    *   `just test-server [pattern]`: Runs server-side tests (`cd server && cargo test`).
+    *   `just test-e2e [pattern]`: Runs end-to-end tests (`cd client && bun playwright test`).
+*   **Database (using `dbmate`):**
+    *   `just db-setup`: Sets up the database by applying all pending migrations (`dbmate up`).
+    *   `just db-migrate`: Applies pending database migrations (`dbmate up`).
+    *   `just db-rollback`: Rolls back the last database migration (`dbmate down`).
+    *   `just db-new-migration <name>`: Creates a new migration file (`dbmate new <name>`).
+*   **Cleaning:**
+    *   `just clean`: Removes all build artifacts, dependencies (`node_modules`, `target`), and temporary files.
+    *   `just clean-client`: Cleans client artifacts and dependencies (`rm -rf client/node_modules client/.svelte-kit client/build client/bun.lockb client/.bun`).
+    *   `just clean-server`: Cleans server artifacts (`rm -rf server/target`).
 
 ## Code Style Guidelines
 
-- Use TypeScript for type safety
-- Indentation: Tabs (not spaces)
-- Quotes: Single quotes
-- Line width: 140 characters max
-- No trailing commas
-- Svelte components use PascalCase (.svelte files)
-- Variables/functions use camelCase
-- Prefer async/await over promise chains
-- Use descriptive error messages in catch blocks
-- Import order: external libraries first, then internal modules
+-   **General:**
+    -   Indentation: Tabs (not spaces).
+    -   Quotes: Single quotes for TypeScript/JavaScript/CSS. Double quotes for Rust string literals.
+    -   Line width: 140 characters max.
+    -   No trailing commas (except where idiomatic, e.g., Rust multiline struct/enum, Svelte props).
+    -   Prefer `async/await` over promise chains in TypeScript.
+    -   Use descriptive error messages in `catch` blocks and Rust `Result::Err`.
+    -   Import order: External libraries first, then internal modules, grouped logically.
+-   **Svelte (Client):**
+    -   Component filenames: `PascalCase.svelte`.
+    -   Variables/functions: `camelCase`.
+-   **Rust (Server):**
+    -   Modules, crates, functions, variables: `snake_case`.
+    -   Types (structs, enums, traits): `PascalCase`.
+    -   Follow official Rust API Guidelines.
 
 ## Code Quality Standards
 
-- Adhere to general quality standards:
-  - Accuracy: Does the code do what it's supposed to?
-  - Correctness: Are there any bugs?
-  - Efficiency: Does the code execute tasks without wasting resources?
-  - Maintainability: How easy is it to update and modify?
-  - Readability: Is the code easy to understand?
-  - Security: How well does the code protect against vulnerabilities?
-- Apply the DRY principle (Don't Repeat Yourself) to avoid inconsistencies:
-  - Extract common code into shared utilities/services (like our authFetch utility)
-  - Reuse functionality between components and handlers
-  - Keep authentication and validation logic consistent across endpoints
-  - Inconsistent implementations of similar functionality lead to bugs
-- Avoid deep nesting, recursion and other overly complex coding blocks
-- Refactor code into as simple a form as possible after it has been functionally proven
-- Include tests for functions that use algorithms or complex calculations
-- Ensure functions are concise and handle a single task, and that they are suitably commented to provide tooling (e.g. LSP) input and usage.
-- Ensure files are less than 500 lines, and hold code that is conducting similar, or related tasks: DO NOT mix functional code in one source file
-- Ensure that all source files contain suitable comment heading that summarises the file contents and its usage, in a way that will be useful to an LSP and other code editor tooling.
-- Avoid TypeScript non-null assertions (!) where possible:
-  - Instead of `const item = array[0]!` use a check like `if (array.length > 0) const item = array[0]`
-  - Always handle the potential absence of data explicitly
-  - Use proper TypeScript patterns like optional chaining or type guards
+-   Adhere to general quality standards: Accuracy, Correctness, Efficiency, Maintainability, Readability, Security.
+-   **DRY Principle:** Extract common code into shared utilities/services. Avoid duplicating logic.
+-   **Simplicity:** Avoid deep nesting, complex recursion. Refactor for clarity.
+-   **Testing:** Include tests for algorithms, complex calculations, business logic, API endpoints.
+-   **Single Responsibility:** Functions should be concise, handle a single task. Files should group related functionality.
+-   **File Size:** Aim for files under 500 lines.
+-   **Commenting:** Add clear, concise comments for complex logic. Rust functions, structs, enums, and modules should have doc comments (`///` or `//!`). Files should have a header comment summarizing contents and usage if not obvious from structure.
+-   **TypeScript - No Non-Null Assertions (`!`)**:
+    -   Handle potential absence of data explicitly using checks, optional chaining (`?.`), or type guards.
+-   **Error Handling:** Use `Result<T, E>` comprehensively in Rust. Handle errors gracefully and provide meaningful context. Leverage `thiserror` and `anyhow` crates as appropriate.
 
-## TypeScript Strictness Settings
+## TypeScript Strictness Settings (Client)
 
-This project uses a very strict TypeScript configuration with settings similar to Rust's compiler checks:
+The `client/tsconfig.json` is configured for maximum strictness:
+-   `strict: true` (enables all strict type checking options)
+-   `noImplicitAny: true`
+-   `strictNullChecks: true`
+-   `noImplicitReturns: true`
+-   `noUnusedLocals: true` & `noUnusedParameters: true`
+-   `noUncheckedIndexedAccess: true`
+-   `exactOptionalPropertyTypes: true`
 
-- `strict`: true (enables all strict type checking options)
-- `noImplicitAny`: true (raise error on expressions and declarations with an implied 'any' type)
-- `strictNullChecks`: true (enable strict null checking)
-- `noImplicitReturns`: true (ensure every code path returns a value for functions)
-- `noUnusedLocals` & `noUnusedParameters`: true (report errors on unused local variables and parameters)
-- `noUncheckedIndexedAccess`: true (add undefined to index signatures)
-- `exactOptionalPropertyTypes`: true (disable looser handling of undefined in optional properties)
+Always handle nullability explicitly. Ensure all code paths are covered.
 
-Always handle nullability explicitly and ensure all code paths are covered. This prevents most runtime errors.
+## Rust Strictness Settings (Server)
+
+-   The `just check-server` command enforces `cargo clippy --all-targets --all-features -- -D warnings -D clippy::pedantic`. Address all lints reported.
+-   Ensure `Cargo.toml` does not have wildcard dependencies. Pin versions.
 
 ## Environment Variables
 
-- ALL ENV variables including ALL secrets are held in `.envrc` ONLY (managed by direnv)
-- `.envrc` is included in `.gitignore` to prevent committing secrets
-- Required ENV variables:
-  - DATABASE_URL
-  - JWT_SECRET
-- Optional ENV variables for model merging:
-  - OPENAI_API_KEY
-  - GEMINI_API_KEY
-  - MISTRAL_API_KEY
-- Use uppercase for all environment variable names
+-   All environment variables, including secrets, are managed in `web-template/.envrc` using `direnv`.
+-   `.envrc` is in `.gitignore`. Use `web-template/.envrc.example` as a template.
+-   Required ENV variables (examples): `DATABASE_URL`, `JWT_SECRET`.
+-   Optional (for specific features): `OPENAI_API_KEY`, `GEMINI_API_KEY`, `MISTRAL_API_KEY`.
+-   Use uppercase for all environment variable names (e.g., `DATABASE_URL`).
 
-## Pre-commit Hooks
+## Pre-commit Hooks (`.pre-commit-config.yaml`)
 
-- Pre-commit hooks are set up to:
-  - Check for secrets using gitleaks
-  - Run formatting
-  - Run linting
-  - Run type checking
+The project uses pre-commit hooks defined in `web-template/.pre-commit-config.yaml` to ensure code quality and consistency before anything is committed. These hooks automate:
+-   **Secrets Detection:** Using `gitleaks` to prevent committing sensitive information.
+-   **Code Formatting:**
+    -   Client: Prettier (via local `bun run format` hook) for various client file types.
+    -   Server: `cargo fmt` for Rust code.
+-   **Linting:**
+    -   Client: ESLint (via local `bun run lint` hook) for TypeScript and Svelte files.
+    -   Server: `cargo clippy --all-targets --all-features -- -D warnings -D clippy::pedantic` for strict Rust linting.
+-   **Type Checking:** `svelte-check --fail-on-warnings` (via local `bun run check:strict` hook) for the client.
+-   **Lockfile Consistency:** Checks if `Cargo.lock` and `bun.lockb` are up-to-date with their respective manifest files (`Cargo.toml`, `package.json`).
+-   **General Checks:** Trailing whitespace, end-of-file fixing, large file detection (max 1MB), valid JSON/YAML/TOML, merge conflict markers.
 
-## Project Structure
+**To use pre-commit hooks:**
+1.  Ensure `pre-commit` is installed (see `README.md`).
+2.  Run `pre-commit install` once from the repository root (or `web-template/` if it's the git root) to install the hooks into your `.git/hooks` directory.
+After installation, these checks will run automatically when you attempt to `git commit`. If any check fails, the commit will be aborted, and you'll need to fix the reported issues and re-stage the files before trying to commit again.
 
-TODO: SveltKit client with Rust server (REST API)
+## Project Structure (High-Level)
 
-## Presentation Guidelines
+-   `client/`: SvelteKit frontend.
+    -   `src/lib/components/`: Reusable Svelte components.
+    -   `src/lib/services/`: Client-side services (e.g., API calls).
+    -   `src/lib/stores/`: Svelte stores for state management.
+    -   `src/lib/utils/`: Utility functions.
+    -   `src/routes/`: SvelteKit routes.
+    -   `tests/`: Playwright E2E tests and Vitest unit/integration tests.
+-   `server/`: Rust/Axum backend.
+    -   `src/handlers/`: Axum request handlers.
+    -   `src/models/` (or `src/domain/`): Data structures, business objects.
+    -   `src/services/`: Business logic services.
+    -   `src/db/` (or `src/repository/`): Database interaction logic (`sqlx`).
+    -   `src/middleware/`: Axum middleware.
+    -   `src/config.rs`: Application configuration.
+    -   `src/errors.rs`: Custom error types.
+    -   `src/main.rs`: Application entry point.
+    -   `src/routes.rs`: API route definitions.
+    -   `tests/`: Integration tests for handlers and services.
+-   `db/`: Database migrations (managed by `dbmate`).
+    -   `migrations/`: Migration SQL files.
+    -   `schema.sql`: Current DB schema (generated by `dbmate dump`).
+-   `documentation/`: Project documentation (`PRD.md`, `ARCHITECTURE.md`, etc.).
+-   `justfile`: Command definitions for the `web-template` root.
+-   `.envrc`: Environment variables (gitignored).
+-   `.envrc.example`: Template for `.envrc`.
+-   `.pre-commit-config.yaml`: Pre-commit hook definitions.
 
-- Keep presentation markdown (slides.md) as plain text where possible
-- For styling elements (quotes, lists, etc.), add CSS in the index.html file
-- Use standard markdown syntax in slides.md
-- Never use inline HTML or CSS in the markdown files
-- Add all custom styling to the index.html file in the style section
-- Maintain separation of content (markdown) and presentation (CSS)
+## Presentation Guidelines (`slides.md`)
 
-## Important Notes
+-   Keep `slides.md` as plain Markdown.
+-   Styling via CSS in `index.html` (if applicable for the presentation tool).
+-   No inline HTML/CSS in Markdown. Maintain separation of content and presentation.
 
-- Never attempt to commit code, only test commit using dry-run:
-  - `git commit --dry-run -m "message"` to verify what would be committed
-- Never attempt to run the development server with `just dev` or `bun run dev`:
-  - Claude cannot see the server output in the terminal
-  - Let the user run the server themselves
-- Always run `bun run build` after making changes to verify they build successfully:
-  - This ensures changes will pass the pre-commit build check
-  - Building should be done before suggesting commits
-- Do not modify existing, working code:
-  - Only make changes specifically requested in the requirements
-  - If you encounter potential issues in existing code, bring them to the user's attention rather than modifying them directly
-  - Focus on implementing new functionality as specified without refactoring existing code unless explicitly requested
+## Important Claude-Specific Workflow Notes
+
+-   **Reading First:** Always try to read relevant files (`README.md`, `CLAUDE.md`, `CURRENT_TASKS.md`, specific source files) before suggesting changes or asking questions.
+-   **Small, Incremental Changes:** Make small, focused changes.
+-   **Verify After Each Change:** After each modification (especially code):
+    1.  State the file(s) you modified.
+    2.  Suggest running the appropriate formatting command, e.g., `just format-client` or `just format-server`. (Pre-commit hooks will also do this, but manual run is good practice).
+    3.  Suggest running the comprehensive checks: `just check-client` or `just check-server` (or `just check` for both). These include format checks, linting, and type checking.
+    4.  Suggest running `just build` (or `just build-client`/`just build-server`).
+    5.  Suggest running relevant tests: `just test` or more specific variants like `just server-test [pattern]`, `just test-client [pattern]`, `just test-e2e [pattern]`.
+    6.  If diagnostics are reported from these commands, attempt to fix them. If unsure after 1-2 tries, present the diagnostic clearly to the user.
+-   **Committing:** Never attempt to commit code directly. You can suggest a `git commit --dry-run -m "Relevant commit message"` to verify what would be committed based on staged changes. The user handles actual commits. Pre-commit hooks will run automatically on actual commit attempts by the user.
+-   **Running Servers:** Do not attempt to run `just dev` or any other command that starts a long-running server process. The user will handle this.
+-   **Existing Code:** Do not modify existing, working code unless the task explicitly requires it. If you see a potential issue outside your current task, note it for the user to review and prioritize.
+-   **Tool Usage:**
+    -   When providing paths to tools, the path should always begin with `web-template/` if it's a project file.
+    -   Use `grep` for finding symbols or code snippets, `find_path` for locating files by pattern.
+    -   All paths provided to tools must be relative to the current working directory, which is assumed to be the root of the repository containing `web-template`.
+-   **Asking for Clarification:** If requirements are unclear, or you're unsure how to proceed, ask specific clarifying questions.
+-   **Code Block Formatting:** Adhere strictly to the `path/to/Something.blah#L123-456` format for all code blocks. Use `/dev/null/example.ext` for generic examples not tied to project files.
+-   **Adherence to `CLAUDE.md`:** You are expected to follow all guidelines in this document.

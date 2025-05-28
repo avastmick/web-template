@@ -1,0 +1,30 @@
+# web-template/client/.gitignore
+
+# Dependencies
+node_modules/
+.bun/
+
+# SvelteKit build / cache
+.svelte-kit/
+build/
+dist/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Tests
+coverage/

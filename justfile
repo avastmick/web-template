@@ -46,7 +46,7 @@ db-new-migration name:
 # Usage: just client-dev-server
 client-dev: check-env
     @echo "Starting client development server (SvelteKit)..."
-    echo "Client will run on port ${CLIENT_PORT:-5173} and connect to server at ${SERVER_URL:-http://localhost:3000}"
+    echo "Client will run on port ${CLIENT_PORT:-8080} and connect to server at ${SERVER_URL:-http://localhost:8081}"
     cd client && bun run dev
 
 # server-dev-server: Starts the Rust/Axum server development server.
@@ -57,10 +57,10 @@ server-dev +hotreload: check-env
     echo "Starting server development server (Rust/Axum)..."
     if [[ "{{hotreload}}" == "true" ]]; then
         echo "Hot reloading ENABLED. Using 'cargo watch'."
-        cd server && SQLX_OFFLINE=true RUST_LOG=${RUST_LOG:-info} cargo watch -q -c -w src -x run
+        cd server && RUST_LOG=${RUST_LOG:-info} cargo watch -q -c -w src -x run
     else
         echo "Hot reloading DISABLED. Using 'cargo run'."
-        cd server && SQLX_OFFLINE=true RUST_LOG=${RUST_LOG:-info} cargo run
+        cd server && RUST_LOG=${RUST_LOG:-info} cargo run
     fi
 
 # dev: Starts all development servers using Overmind (requires Procfile.dev).
@@ -216,7 +216,7 @@ clean: clean-server clean-client
 # Usage: just setup-client
 setup-client: clean-client
     @echo "Setting up client: installing dependencies (cd client && bun install)..."
-    cd client && bun install
+    cd client && bun install && bunx playwright install
     @echo "✅ Client dependencies installed."
 
 # setup-server: Prepares server (e.g., fetches dependencies and builds) AFTER cleaning.
@@ -241,7 +241,7 @@ client-dev-logs: check-env
     current_date=$(date +"%Y-%m-%d")
     log_file="logs/client_dev_server_${current_date}.log"
     echo "Client logs will be written to ${log_file}"
-    echo "Client will run on port ${CLIENT_PORT:-5173}, connecting to server at ${SERVER_URL:-http://localhost:3000}"
+    echo "Client will run on port ${CLIENT_PORT:-8080}, connecting to server at ${SERVER_URL:-http://localhost:8081}"
     mkdir -p logs
     ln -sf "${log_file}" client_dev_server.log # Symlink for easy access
     (cd client && bun run dev) 2>&1 | tee -a "${log_file}"

@@ -15,7 +15,7 @@ import { authStore } from '$lib/stores/authStore';
 import type { LoginRequest, RegisterRequest, LoginResponse, User, AuthError } from '$lib/types';
 
 // Configuration
-const API_BASE_URL = 'http://localhost:3000'; // This should be configurable via environment variables
+const API_BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT || '8081'}`;
 
 /**
  * Custom error class for API errors

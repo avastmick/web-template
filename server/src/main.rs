@@ -90,7 +90,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Server address
     let host_str = env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-    let port_str = env::var("PORT").unwrap_or_else(|_| "3000".to_string());
+    let port_str = env::var("SERVER_PORT")
+        .or_else(|_| env::var("PORT"))
+        .unwrap_or_else(|_| "8081".to_string());
 
     let port: u16 = port_str.parse().map_err(|e| {
         tracing::error!("Invalid PORT value '{}': {}", port_str, e);

@@ -274,8 +274,8 @@ The authentication system is now ready for production use and provides a solid f
 
 (Tasks for Google OAuth, Stripe, Dark/Light modes, configurable color schemes, GenAI integration, deployment targets will be detailed here once Phase 1 and 2 are stable.)
 
-*   **[ ] Task 3.1: Client - Dark/Light Mode & Color Schemes**
-*   **[ ] Task 3.2: Server & Client - Google OAuth Integration**
+*   **[ ] Task 3.1: Server & Client - Google OAuth Integration**
+*   **[ ] Task 3.2: Client - Dark/Light Mode & Color Schemes**
 *   **[ ] Task 3.3: Server & Client - Stripe Payment Integration**
 *   **[ ] Task 3.4: Server - Generative AI Integration Framework**
 *   **[ ] Task 3.5: Documentation - Deployment Guides (GCP Cloud Run, Vercel, Supabase)**

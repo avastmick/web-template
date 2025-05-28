@@ -20,23 +20,25 @@ db-setup: db-migrate
 # db-migrate: Apply all pending database migrations.
 # Usage: just db-migrate
 db-migrate: check-env
+    @echo "Ensuring database directory exists..."
+    @mkdir -p server/db
     @echo "Applying pending database migrations (dbmate up)..."
-    dbmate up
+    cd server && dbmate up
     @echo "✅ Database migrations applied."
 
 # db-rollback: Rollback the last database migration.
 # Usage: just db-rollback
 db-rollback: check-env
     @echo "Rolling back last database migration (dbmate down)..."
-    dbmate down
+    cd server && dbmate down
     @echo "✅ Last migration rolled back."
 
 # db-new-migration <name>: Create a new database migration file.
 # Usage: just db-new-migration my_new_migration
 db-new-migration name:
     @echo "Creating new migration file: {{name}}..."
-    dbmate new {{name}}
-    @echo "✅ New migration file created: db/migrations/*_{{name}}.sql"
+    cd server && dbmate new {{name}}
+    @echo "✅ New migration file created: server/db/migrations/*_{{name}}.sql"
 
 # --- Development Servers (User Managed) ---
 # These commands are intended for the user to run directly.
@@ -57,10 +59,10 @@ server-dev +hotreload: check-env
     echo "Starting server development server (Rust/Axum)..."
     if [[ "{{hotreload}}" == "true" ]]; then
         echo "Hot reloading ENABLED. Using 'cargo watch'."
-        cd server && RUST_LOG=${RUST_LOG:-info} cargo watch -q -c -w src -x run
+        cd server && SQLX_OFFLINE=true RUST_LOG=${RUST_LOG:-info} cargo watch -q -c -w src -x run
     else
         echo "Hot reloading DISABLED. Using 'cargo run'."
-        cd server && RUST_LOG=${RUST_LOG:-info} cargo run
+        cd server && SQLX_OFFLINE=true RUST_LOG=${RUST_LOG:-info} cargo run
     fi
 
 # dev: Starts all development servers using Overmind (requires Procfile.dev).
@@ -69,6 +71,11 @@ dev: check-env
     @echo "Starting all development servers via Overmind..."
     @echo "Hot reloading should be configured within the Procfile commands (e.g., using 'cargo watch' for server)."
     overmind s
+
+# refresh: Completely refreshes the workspace - cleans everything, sets up fresh, and starts dev servers
+# Usage: just refresh
+refresh: clean setup dev
+    @echo "✅ Workspace refreshed and development servers started."
 
 # --- Building for Production ---
 # build-client: Builds the client application for production.
@@ -203,13 +210,15 @@ clean-client:
     cd client && rm -rf node_modules .svelte-kit build coverage bun.lockb client/.bun
     @echo "✅ Client artifacts and dependencies cleaned."
 
-# clean: Removes all build artifacts, dependencies, and temporary files from project.
+# clean: Removes all build artifacts, dependencies, temporary files, and database from project.
 # Usage: just clean
 clean: clean-server clean-client
     @echo "Cleaning project-level temporary files (logs, .DS_Store)..."
     rm -rf logs
     find . -name ".DS_Store" -delete -print
-    @echo "✅ All project artifacts, dependencies, and temp files cleaned."
+    @echo "Cleaning database file..."
+    @if [ -f "server/db/dev.sqlite3" ]; then rm -f "server/db/dev.sqlite3" && echo "Database file removed."; else echo "No database file found."; fi
+    @echo "✅ All project artifacts, dependencies, temp files, and database cleaned."
 
 # --- Initial Project Setup ---
 # setup-client: Installs client dependencies AFTER cleaning.
@@ -223,15 +232,14 @@ setup-client: clean-client
 # Usage: just setup-server
 setup-server: clean-server
     @echo "Setting up server: fetching dependencies and initial build (cd server && cargo build)..."
-    cd server && cargo build
+    cd server && SQLX_OFFLINE=true cargo build
     @echo "✅ Server dependencies fetched and built."
 
-# setup: Installs all client and server dependencies after cleaning. Sets up .envrc if needed.
+# setup: Installs all client and server dependencies after cleaning. Sets up database.
 # This is the main setup command a user should run first for a fresh environment.
 # Usage: just setup
-setup: check-env setup-client setup-server
-    @echo "Project setup complete. Dependencies installed for client and server."
-    @echo "Consider running 'just db-setup' if you need to initialize/migrate the database."
+setup: check-env setup-client setup-server db-setup
+    @echo "✅ Project setup complete. Dependencies installed and database initialized."
 
 # --- Log Tailing Aliases (from original file, if direct log access needed) ---
 # These are for convenience if not using Overmind\'s aggregated logs.

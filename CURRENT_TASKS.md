@@ -272,13 +272,147 @@ The authentication system is now ready for production use and provides a solid f
 
 ## Phase 3: Enhancements and Other Requirements from PRD
 
-(Tasks for Google OAuth, Stripe, Dark/Light modes, configurable color schemes, GenAI integration, deployment targets will be detailed here once Phase 1 and 2 are stable.)
+### Task 3.1: Server & Client - Google OAuth Integration
 
-*   **[ ] Task 3.1: Server & Client - Google OAuth Integration**
-*   **[ ] Task 3.2: Client - Dark/Light Mode & Color Schemes**
-*   **[ ] Task 3.3: Server & Client - Stripe Payment Integration**
-*   **[ ] Task 3.4: Server - Generative AI Integration Framework**
-*   **[ ] Task 3.5: Documentation - Deployment Guides (GCP Cloud Run, Vercel, Supabase)**
+This task implements Google OAuth as an additional authentication provider alongside the existing local email/password system.
+
+#### Sub-task 3.1.1: Server - OAuth Configuration and Dependencies
+*   **Status:** **[ ] TODO**
+*   **Action:** Add OAuth dependencies and configuration
+*   **Details:**
+    *   Add required crates: `oauth2`, `reqwest` (for token verification)
+    *   Create OAuth configuration module for managing provider settings
+    *   Add Google OAuth environment variables validation to startup
+*   **Files to Create/Modify:**
+    *   `server/Cargo.toml` (add dependencies via `cargo add oauth2 reqwest`)
+    *   `server/src/config/oauth.rs` (OAuth provider configuration)
+    *   `server/src/config/mod.rs` (export oauth module)
+    *   `server/src/main.rs` (validate GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET on startup)
+*   **Quality Checks:**
+    *   `just check-server` (formatting, linting, type checking)
+    *   `just build-server` (ensure compilation succeeds)
+
+#### Sub-task 3.1.2: Server - OAuth Service Implementation
+*   **Status:** **[ ] TODO**
+*   **Action:** Create OAuth service for handling Google authentication flow
+*   **Details:**
+    *   Implement OAuth authorization URL generation
+    *   Handle OAuth callback and token exchange
+    *   Verify Google ID tokens
+    *   Extract user information from Google's response
+    *   Check against ALLOWED_USERS environment variable for access control
+*   **Files to Create/Modify:**
+    *   `server/src/services/oauth_service.rs` (core OAuth logic)
+    *   `server/src/services/mod.rs` (export oauth_service)
+    *   `server/src/models/oauth.rs` (OAuth-related types: OAuthProvider enum, OAuthUserInfo)
+    *   `server/src/models/mod.rs` (export oauth types)
+*   **Quality Checks:**
+    *   Unit tests for OAuth URL generation
+    *   Unit tests for token verification logic
+    *   Mock tests for Google API interactions
+    *   `just server-test oauth` (run OAuth-specific tests)
+
+#### Sub-task 3.1.3: Server - Database Schema Updates for OAuth
+*   **Status:** **[ ] TODO**
+*   **Action:** Extend user model and database to support OAuth providers
+*   **Details:**
+    *   Add provider information to users table (provider type, provider user ID)
+    *   Support nullable password for OAuth-only users
+    *   Add unique constraint on (email, provider) combination
+*   **Files to Create/Modify:**
+    *   `server/db/migrations/YYYYMMDDHHMMSS_add_oauth_to_users.sql` (via `just db-new-migration add_oauth_to_users`)
+    *   `server/src/models/user.rs` (update User struct with OAuth fields)
+    *   `server/src/services/user_service.rs` (add create_or_update_oauth_user method)
+*   **Quality Checks:**
+    *   `just db-rollback` then `just db-migrate` (test migration reversibility)
+    *   `just check-server` (ensure code still compiles with schema changes)
+
+#### Sub-task 3.1.4: Server - OAuth Endpoints Implementation
+*   **Status:** **[ ] TODO**
+*   **Action:** Implement OAuth-specific API endpoints
+*   **Details:**
+    *   `GET /api/auth/oauth/google` - Initiates OAuth flow, returns authorization URL
+    *   `GET /api/auth/oauth/google/callback` - Handles OAuth callback, exchanges code for tokens
+    *   Create or update user based on Google profile
+    *   Issue JWT upon successful authentication
+*   **Files to Create/Modify:**
+    *   `server/src/handlers/oauth_handler.rs` (OAuth request handlers)
+    *   `server/src/handlers/mod.rs` (export oauth_handler)
+    *   `server/src/routes.rs` (add OAuth routes)
+    *   `server/tests/oauth_integration_tests.rs` (comprehensive OAuth flow tests)
+*   **Quality Checks:**
+    *   Integration tests for OAuth endpoints
+    *   Test error cases (invalid code, expired tokens, unauthorized users)
+    *   `just server-test` (all tests should pass)
+
+#### Sub-task 3.1.5: Client - OAuth UI Components
+*   **Status:** **[ ] TODO**
+*   **Action:** Create Google Sign-In button and OAuth flow UI
+*   **Details:**
+    *   Add "Sign in with Google" button to login and registration pages
+    *   Handle OAuth redirect flow
+    *   Show loading state during OAuth callback processing
+    *   Update authStore to handle OAuth tokens
+*   **Files to Create/Modify:**
+    *   `client/src/lib/components/GoogleSignInButton.svelte` (reusable OAuth button)
+    *   `client/src/routes/login/+page.svelte` (add Google sign-in option)
+    *   `client/src/routes/register/+page.svelte` (add Google sign-in option)
+    *   `client/src/routes/auth/google/callback/+page.svelte` (OAuth callback handler)
+*   **Quality Checks:**
+    *   `just check-client` (formatting, linting, type checking)
+    *   Visual testing of OAuth button styling
+    *   `just build-client` (ensure production build succeeds)
+
+#### Sub-task 3.1.6: Client - OAuth API Integration
+*   **Status:** **[ ] TODO**
+*   **Action:** Extend auth service to support OAuth flow
+*   **Details:**
+    *   Add methods for initiating OAuth flow
+    *   Handle OAuth callback and token storage
+    *   Update user type to include provider information
+*   **Files to Create/Modify:**
+    *   `client/src/lib/services/apiAuth.ts` (add OAuth methods: initiateGoogleAuth, handleOAuthCallback)
+    *   `client/src/lib/types/auth.ts` (add OAuth types: OAuthProvider, extend User type)
+    *   `client/src/lib/stores/authStore.ts` (handle OAuth user data)
+*   **Quality Checks:**
+    *   `just check-client`
+    *   Test OAuth flow end-to-end manually
+    *   Ensure existing auth flows still work
+
+#### Sub-task 3.1.7: End-to-End OAuth Testing
+*   **Status:** **[ ] TODO**
+*   **Action:** Create comprehensive E2E tests for OAuth flow
+*   **Details:**
+    *   Test complete OAuth sign-in flow
+    *   Test OAuth registration for new users
+    *   Test linking OAuth to existing accounts (if implemented)
+    *   Test access control (ALLOWED_USERS)
+*   **Files to Create/Modify:**
+    *   `client/e2e/oauth.test.ts` (Playwright tests for OAuth flows)
+*   **Quality Checks:**
+    *   `just test-e2e oauth` (run OAuth E2E tests)
+    *   Manual testing with real Google accounts
+    *   Test on different browsers
+
+### Task 3.2: Client - Dark/Light Mode & Color Schemes
+*   **Status:** **[ ] TODO**
+*   **Action:** Implement theme system with dark/light modes and customizable color schemes
+*   **Details:** (To be expanded)
+
+### Task 3.3: Server & Client - Stripe Payment Integration
+*   **Status:** **[ ] TODO**
+*   **Action:** Integrate Stripe for payment processing
+*   **Details:** (To be expanded)
+
+### Task 3.4: Server - Generative AI Integration Framework
+*   **Status:** **[ ] TODO**
+*   **Action:** Create flexible framework for integrating various AI providers
+*   **Details:** (To be expanded)
+
+### Task 3.5: Documentation - Deployment Guides
+*   **Status:** **[ ] TODO**
+*   **Action:** Create deployment guides for GCP Cloud Run, Vercel, and Supabase
+*   **Details:** (To be expanded)
 
 **Note on Testing:**
 *   **Server:** Unit tests for individual functions/modules. Integration tests for API endpoints (testing request/response, database interaction). Use `cargo test`.

@@ -1,6 +1,15 @@
 # WEB-TEMPLATE CODEBASE GUIDE
 
-Always read `documentation/PRD.md`, the project `README.md`, and `CURRENT_TASKS.md` before starting work.
+## IMPORTANT: SESSION START REQUIREMENTS
+
+**ALWAYS BEGIN EACH SESSION BY READING THE FOLLOWING DOCUMENTATION:**
+1. `documentation/PRD.md` - Product Requirements Document (defines project goals and features)
+2. `documentation/ARCHITECTURE.md` - System architecture and design decisions
+3. `README.md` - Project overview and setup instructions
+4. `CURRENT_TASKS.md` - Current development tasks and progress
+5. This file (`CLAUDE.md`) - Development guidelines and best practices
+
+**DO NOT SKIP THIS STEP.** These documents contain critical context about the project's goals, architecture, current state, and development standards. Reading them ensures you understand the project requirements and can make informed decisions aligned with the project's vision.
 
 ## Overview
 

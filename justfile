@@ -44,7 +44,7 @@ db-new-migration name:
 
 # client-dev-server: Starts the SvelteKit client development server.
 # Usage: just client-dev-server
-client-dev-server: check-env
+client-dev: check-env
     @echo "Starting client development server (SvelteKit)..."
     echo "Client will run on port ${CLIENT_PORT:-5173} and connect to server at ${SERVER_URL:-http://localhost:3000}"
     cd client && bun run dev
@@ -52,24 +52,23 @@ client-dev-server: check-env
 # server-dev-server: Starts the Rust/Axum server development server.
 # Usage: just server-dev-server
 #        just server-dev-server --hotreload  (enables cargo watch for hot-reloading)
-server-dev-server +hotreload: check-env
+server-dev +hotreload: check-env
     #!/usr/bin/env bash
     echo "Starting server development server (Rust/Axum)..."
     if [[ "{{hotreload}}" == "true" ]]; then
         echo "Hot reloading ENABLED. Using 'cargo watch'."
-        cd server && RUST_LOG=${RUST_LOG:-info} cargo watch -q -c -w src -x run
+        cd server && SQLX_OFFLINE=true RUST_LOG=${RUST_LOG:-info} cargo watch -q -c -w src -x run
     else
         echo "Hot reloading DISABLED. Using 'cargo run'."
-        cd server && RUST_LOG=${RUST_LOG:-info} cargo run
+        cd server && SQLX_OFFLINE=true RUST_LOG=${RUST_LOG:-info} cargo run
     fi
 
 # dev: Starts all development servers using Overmind (requires Procfile.dev).
 # Usage: just dev
 dev: check-env
-    @echo "Starting all development servers via Overmind (using Procfile.dev)..."
-    @echo "Ensure Procfile.dev is configured for 'client' and 'server' services."
+    @echo "Starting all development servers via Overmind..."
     @echo "Hot reloading should be configured within the Procfile commands (e.g., using 'cargo watch' for server)."
-    overmind s -f Procfile.dev
+    overmind s
 
 # --- Building for Production ---
 # build-client: Builds the client application for production.

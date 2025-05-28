@@ -101,12 +101,12 @@ server-test pattern="":
     cd server
     if [ -z "{{pattern}}" ]; then
         echo "Running all server tests (cargo test)..."
-        RUST_LOG=${RUST_LOG:-info} cargo test -- --nocapture
+        RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test -- --nocapture
     else
         echo "Running specific server tests matching '{{pattern}}' (cargo test {{pattern}})..."
-        RUST_LOG=${RUST_LOG:-info} cargo test "{{pattern}}" -- --nocapture
+        RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test "{{pattern}}" -- --nocapture
     fi
-    @echo "✅ Server tests complete."
+    echo "✅ Server tests complete."
 
 # test-client [pattern]: Runs client-side unit and integration tests (e.g., Vitest).
 # Usage: just test-client

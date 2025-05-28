@@ -35,6 +35,9 @@ impl std::error::Error for PasswordError {}
 ///
 /// # Returns
 /// A `Result` containing the hashed password string or a `PasswordError`.
+///
+/// # Errors
+/// Returns `PasswordError::HashingError` if the Argon2 hashing process fails.
 pub fn hash_password(password: &str) -> Result<String, PasswordError> {
     let salt = SaltString::generate(&mut OsRng);
     // Argon2::default() provides sensible defaults for hashing parameters.
@@ -56,6 +59,9 @@ pub fn hash_password(password: &str) -> Result<String, PasswordError> {
 /// # Returns
 /// A `Result` indicating whether verification was successful (`Ok(())`) or an error.
 /// `PasswordError::VerificationError` with `argon2::password_hash::Error::Password` indicates a mismatch.
+///
+/// # Errors
+/// Returns `PasswordError::VerificationError` if the hash string is invalid or password verification fails.
 #[allow(dead_code)] // Will be used in login implementation
 pub fn verify_password(password: &str, hashed_password_str: &str) -> Result<(), PasswordError> {
     let parsed_hash = match PasswordHash::new(hashed_password_str) {

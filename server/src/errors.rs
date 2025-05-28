@@ -44,6 +44,9 @@ pub enum AppError {
     #[error("Configuration error: {0}")]
     ConfigError(String),
 
+    #[error("Configuration error: {0}")]
+    ConfigurationError(String),
+
     #[error("JWT error: {0}")]
     JwtError(String),
 }
@@ -90,6 +93,14 @@ impl IntoResponse for AppError {
                 )
             }
             AppError::ConfigError(ref msg) => {
+                tracing::error!("Configuration error: {}", msg);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "A configuration error occurred.".to_string(),
+                    Some(msg.clone()),
+                )
+            }
+            AppError::ConfigurationError(ref msg) => {
                 tracing::error!("Configuration error: {}", msg);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,

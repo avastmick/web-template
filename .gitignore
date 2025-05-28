@@ -54,5 +54,5 @@ context/
 
 # Database
 *.db
-**/.sqlx
+**/.sqlx/
 **/*.sqlite*

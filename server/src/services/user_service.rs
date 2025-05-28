@@ -16,6 +16,7 @@ pub struct UserServiceImpl {
 }
 
 impl UserServiceImpl {
+    #[must_use]
     pub fn new(db_pool: SqlitePool) -> Self {
         Self { db_pool }
     }
@@ -98,5 +99,50 @@ impl UserServiceImpl {
 
         tracing::info!("User created successfully: {}", created_user.email);
         Ok(created_user)
+    }
+
+    /// Finds a user by their email address
+    ///
+    /// # Arguments
+    /// * `email` - The email address to search for
+    ///
+    /// # Returns
+    /// Returns the user if found
+    ///
+    /// # Errors
+    /// Returns `AppError::UserNotFound` if no user with the given email exists
+    /// Returns `AppError::SqlxError` for database errors
+    #[instrument(skip(self), fields(email = %email), err(Debug))]
+    pub async fn find_by_email(&self, email: &str) -> AppResult<User> {
+        tracing::debug!("Searching for user with email: {}", email);
+
+        let db_user = sqlx::query_as!(
+            UserFromDb,
+            "SELECT id, email, hashed_password, created_at, updated_at FROM users WHERE email = $1",
+            email
+        )
+        .fetch_optional(&self.db_pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error while searching for user {}: {}", email, e);
+            AppError::SqlxError(e)
+        })?;
+
+        if let Some(user) = db_user {
+            let domain_user = User::try_from(user).map_err(|conv_err: UserConversionError| {
+                tracing::error!(
+                    "Failed to convert DB user to domain model {}: {}",
+                    email,
+                    conv_err
+                );
+                AppError::InternalServerError(format!("User data conversion error: {conv_err}"))
+            })?;
+
+            tracing::debug!("User found: {}", email);
+            Ok(domain_user)
+        } else {
+            tracing::debug!("User not found: {}", email);
+            Err(AppError::UserNotFound)
+        }
     }
 }

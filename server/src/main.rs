@@ -11,12 +11,13 @@ use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberI
 mod core;
 mod errors;
 mod handlers;
+mod middleware;
 mod models;
 mod routes;
 mod services;
 // mod config; // Future placeholder
 
-use services::UserServiceImpl;
+use services::{AuthService, UserServiceImpl};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -79,9 +80,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Initialize services and application state
     let user_service = Arc::new(UserServiceImpl::new(db_pool.clone()));
+    let auth_service = Arc::new(AuthService::new().map_err(|e| {
+        tracing::error!("Failed to initialize AuthService: {:?}", e);
+        Box::new(e) as Box<dyn std::error::Error>
+    })?);
 
     // Create the main application router
-    let app = routes::create_router(user_service);
+    let app = routes::create_router(user_service, auth_service);
 
     // Server address
     let host_str = env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());

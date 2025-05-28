@@ -32,6 +32,8 @@ The database is SQLite for local development, with `dbmate` for migrations. `jus
 
 This project uses Bun (client) and Cargo (server) exclusively.
 
+**IMPORTANT:** Always use the appropriate package manager commands (`cargo add`, `bun add`) rather than manually editing `Cargo.toml` or `package.json`. Manual edits often result in outdated versions and can cause dependency conflicts.
+
 ### Client - Bun (`web-template/client/`)
 
 -   Install package: `bun add <package-name>` (User runs this command)

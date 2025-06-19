@@ -1,0 +1,75 @@
+# Docker Compose for local testing and production deployment
+# Includes the web application and a database volume
+
+version: '3.8'
+
+services:
+  web-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      # Database configuration
+      - DATABASE_URL=sqlite:/data/production.sqlite3?mode=rwc
+
+      # Authentication secrets (MUST be changed for production)
+      - JWT_SECRET=your-super-secure-64-character-jwt-secret-key-for-production-change-this
+
+      # OAuth configuration (MUST be configured for your Google project)
+      - GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=your-google-client-secret
+      - SERVER_URL=http://localhost:8080
+
+      # Server configuration
+      - HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - ALLOWED_ORIGINS=http://localhost:8080
+
+      # Logging
+      - RUST_LOG=warn,server=info
+
+      # Static files
+      - STATIC_DIR=/app/static
+
+    volumes:
+      # Persistent database storage
+      - db_data:/data
+
+    healthcheck:
+      test: ["/server", "--health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Note: Database is automatically initialized from template on first run
+
+    restart: unless-stopped
+
+    # Security: run as non-root user
+    user: "1000:1000"
+
+volumes:
+  # Named volume for database persistence
+  db_data:
+    driver: local
+
+# Example production override file (docker-compose.prod.yml):
+# version: '3.8'
+# services:
+#   web-app:
+#     environment:
+#       - JWT_SECRET=${JWT_SECRET}
+#       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+#       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+#       - SERVER_URL=${SERVER_URL}
+#       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+#     deploy:
+#       replicas: 2
+#       resources:
+#         limits:
+#           memory: 256M
+#         reservations:
+#           memory: 128M

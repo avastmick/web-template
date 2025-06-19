@@ -12,7 +12,14 @@
  */
 
 import { authStore } from '$lib/stores/authStore';
-import type { LoginRequest, RegisterRequest, LoginResponse, User, AuthError } from '$lib/types';
+import type {
+	LoginRequest,
+	RegisterRequest,
+	LoginResponse,
+	OAuthLoginResponse,
+	User,
+	AuthError
+} from '$lib/types';
 
 // Configuration
 const API_BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT || '8081'}`;
@@ -208,5 +215,73 @@ export async function validateToken(): Promise<boolean> {
 		// If fetch fails, token is invalid or expired
 		authStore.logout();
 		return false;
+	}
+}
+
+/**
+ * Initiate Google OAuth login flow
+ * Redirects the user to the server's OAuth endpoint
+ */
+export function initiateGoogleOAuth(state?: string): void {
+	const url = new URL(`${API_BASE_URL}/api/auth/oauth/google`);
+	if (state) {
+		url.searchParams.set('state', state);
+	}
+
+	// Redirect to OAuth endpoint
+	window.location.href = url.toString();
+}
+
+/**
+ * Handle OAuth callback (called when user returns from OAuth provider)
+ * This should be called on the OAuth callback page
+ */
+export async function handleOAuthCallback(
+	code: string,
+	state?: string
+): Promise<OAuthLoginResponse> {
+	authStore.setLoading(true);
+	authStore.clearError();
+
+	try {
+		const url = new URL(`${API_BASE_URL}/api/auth/oauth/google/callback`);
+		url.searchParams.set('code', code);
+		if (state) {
+			url.searchParams.set('state', state);
+		}
+
+		const response = await fetch(url.toString(), {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
+
+		if (!response.ok) {
+			let errorData: AuthError;
+			try {
+				errorData = await response.json();
+			} catch {
+				errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+			}
+
+			throw new ApiError(
+				errorData.error || `OAuth callback failed with status ${response.status}`,
+				response.status,
+				errorData
+			);
+		}
+
+		const oauthResponse: OAuthLoginResponse = await response.json();
+
+		// Update auth store with login success
+		authStore.loginSuccess(oauthResponse.user, oauthResponse.token);
+
+		return oauthResponse;
+	} catch (error) {
+		authStore.setLoading(false);
+		const errorMessage = error instanceof ApiError ? error.message : 'OAuth login failed';
+		authStore.setError(errorMessage);
+		throw error;
 	}
 }

@@ -8,6 +8,7 @@ use tracing::info;
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt}; // Corrected import
 
 // Declare modules
+mod config;
 mod core;
 mod errors;
 mod handlers;
@@ -15,12 +16,21 @@ mod middleware;
 mod models;
 mod routes;
 mod services;
-// mod config; // Future placeholder
 
-use services::{AuthService, InviteService, UserServiceImpl};
+use services::{AuthService, InviteService, OAuthService, UserServiceImpl};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Handle command line arguments
+    let args: Vec<String> = env::args().collect();
+    if args.len() > 1 {
+        match args[1].as_str() {
+            "--health-check" => return perform_health_check().await,
+            "--init-db" => return init_database(),
+            _ => {}
+        }
+    }
+
     // Attempt to load .env file. This is a fallback if direnv is not used or .envrc is not sourced.
     // For direnv users, .envrc should already have populated the environment.
     if let Ok(path) = dotenvy::dotenv() {
@@ -46,6 +56,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tracing::error!("DATABASE_URL must be set: {}", e);
         errors::AppError::ConfigError("DATABASE_URL must be set".to_string())
     })?;
+
+    // Initialize database from template if it doesn't exist (for containerized deployments)
+    if init_database_if_needed(&database_url).is_err() {
+        tracing::warn!("Could not initialize database from template, assuming it already exists");
+    }
 
     let db_pool_max_connections_str =
         env::var("DB_POOL_MAX_CONNECTIONS").unwrap_or_else(|_| "5".to_string());
@@ -85,9 +100,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Box::new(e) as Box<dyn std::error::Error>
     })?);
     let invite_service = Arc::new(InviteService::new(db_pool.clone()));
+    let oauth_service = Arc::new(OAuthService::new().map_err(|e| {
+        tracing::error!("Failed to initialize OAuthService: {:?}", e);
+        Box::new(e) as Box<dyn std::error::Error>
+    })?);
 
     // Create the main application router
-    let app = routes::create_router(user_service, auth_service, invite_service);
+    let app = routes::create_router(user_service, auth_service, invite_service, oauth_service);
 
     // Server address
     let host_str = env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
@@ -125,4 +144,81 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         })?;
 
     Ok(())
+}
+
+async fn perform_health_check() -> Result<(), Box<dyn std::error::Error>> {
+    // Simple health check that verifies the server can start basic components
+    let database_url = env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "sqlite:/data/production.sqlite3?mode=rwc".to_string());
+
+    // Test database connection
+    let db_pool = SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect(&database_url)
+        .await?;
+
+    // Simple query to verify database is accessible
+    sqlx::query("SELECT 1").fetch_one(&db_pool).await?;
+
+    println!("Health check passed");
+    Ok(())
+}
+
+fn init_database() -> Result<(), Box<dyn std::error::Error>> {
+    use std::fs;
+    use std::path::Path;
+
+    let database_url = env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "sqlite:/data/production.sqlite3?mode=rwc".to_string());
+
+    println!("Initializing database from template...");
+
+    // Extract the file path from the DATABASE_URL
+    if let Some(db_path) = extract_sqlite_path(&database_url) {
+        // Ensure the directory exists
+        if let Some(parent) = Path::new(&db_path).parent() {
+            fs::create_dir_all(parent)?;
+        }
+
+        // Copy template database
+        fs::copy("/app/db-template.sqlite3", &db_path)?;
+        println!("Database initialized successfully at: {db_path}");
+    } else {
+        return Err("Could not extract database path from DATABASE_URL".into());
+    }
+
+    Ok(())
+}
+
+fn init_database_if_needed(database_url: &str) -> Result<(), Box<dyn std::error::Error>> {
+    use std::path::Path;
+
+    // Extract the file path from the DATABASE_URL
+    if let Some(db_path) = extract_sqlite_path(database_url) {
+        // Check if database file already exists
+        if !Path::new(&db_path).exists() {
+            // Copy template database
+            use std::fs;
+
+            // Ensure the directory exists
+            if let Some(parent) = Path::new(&db_path).parent() {
+                fs::create_dir_all(parent)?;
+            }
+
+            fs::copy("/app/db-template.sqlite3", &db_path)?;
+            tracing::info!("Database initialized from template at: {}", db_path);
+        }
+    }
+
+    Ok(())
+}
+
+fn extract_sqlite_path(database_url: &str) -> Option<String> {
+    // Parse SQLite URL format: sqlite:path/to/file.db?options
+    if let Some(stripped) = database_url.strip_prefix("sqlite:") {
+        if let Some(path_part) = stripped.split('?').next() {
+            return Some(path_part.to_string());
+        }
+    }
+    None
 }

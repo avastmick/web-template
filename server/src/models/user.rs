@@ -15,6 +15,8 @@ pub struct User {
     #[serde(skip_serializing)]
     #[allow(dead_code)] // Will be used for password verification in login
     pub hashed_password: String,
+    pub provider: String,
+    pub provider_user_id: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -26,6 +28,8 @@ pub struct UserFromDb {
     pub id: Option<String>,
     pub email: Option<String>,
     pub hashed_password: Option<String>,
+    pub provider: Option<String>,
+    pub provider_user_id: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 }
@@ -57,6 +61,8 @@ impl TryFrom<UserFromDb> for User {
         let hashed_password = db_row.hashed_password.ok_or_else(|| {
             UserConversionError::MissingDatabaseValue("hashed_password".to_string())
         })?;
+        let provider = db_row.provider.unwrap_or_else(|| "local".to_string());
+        let provider_user_id = db_row.provider_user_id;
         let created_at_str = db_row
             .created_at
             .ok_or_else(|| UserConversionError::MissingDatabaseValue("created_at".to_string()))?;
@@ -85,6 +91,8 @@ impl TryFrom<UserFromDb> for User {
             id,
             email,
             hashed_password,
+            provider,
+            provider_user_id,
             created_at,
             updated_at,
         })

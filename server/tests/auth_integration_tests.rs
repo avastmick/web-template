@@ -20,7 +20,7 @@ use uuid::Uuid;
 // Import the application modules we need for testing
 use server::{
     routes::create_router,
-    services::{AuthService, InviteService, UserServiceImpl},
+    services::{AuthService, InviteService, OAuthService, UserServiceImpl},
 };
 
 // Test constants to avoid gitleaks false positives
@@ -93,12 +93,17 @@ fn create_test_app_with_pool(pool: Pool<Sqlite>) -> Router {
             "JWT_SECRET",
             "test_secret_key_that_is_long_enough_for_testing",
         );
+        // Set OAuth environment variables for testing
+        std::env::set_var("GOOGLE_CLIENT_ID", "test_client_id");
+        std::env::set_var("GOOGLE_CLIENT_SECRET", "test_client_secret");
+        std::env::set_var("SERVER_URL", "http://localhost:8081");
     }
 
     let user_service = Arc::new(UserServiceImpl::new(pool.clone()));
     let auth_service = Arc::new(AuthService::new().expect("Failed to create auth service"));
     let invite_service = Arc::new(InviteService::new(pool));
-    create_router(user_service, auth_service, invite_service)
+    let oauth_service = Arc::new(OAuthService::new().expect("Failed to create oauth service"));
+    create_router(user_service, auth_service, invite_service, oauth_service)
 }
 
 /// Helper function to send a JSON request to the test app

@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct UserServiceImpl {
-    db_pool: SqlitePool,
+    pub db_pool: SqlitePool,
 }
 
 impl UserServiceImpl {
@@ -21,6 +21,11 @@ impl UserServiceImpl {
         Self { db_pool }
     }
 
+    /// Create a new user
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if user already exists, password hashing fails, or database operation fails
     #[instrument(skip(self, payload), fields(user_email = %payload.email), err(Debug))]
     pub async fn create_user(&self, payload: &RegisterUserPayload) -> AppResult<User> {
         let existing_user_check = sqlx::query("SELECT id FROM users WHERE email = $1")
@@ -74,7 +79,7 @@ impl UserServiceImpl {
 
         let db_user = sqlx::query_as!(
             UserFromDb,
-            "SELECT id, email, hashed_password, created_at, updated_at FROM users WHERE id = $1",
+            "SELECT id, email, hashed_password, provider, provider_user_id, created_at, updated_at FROM users WHERE id = $1",
             new_user_id_str
         )
         .fetch_one(&self.db_pool)
@@ -118,7 +123,7 @@ impl UserServiceImpl {
 
         let db_user = sqlx::query_as!(
             UserFromDb,
-            "SELECT id, email, hashed_password, created_at, updated_at FROM users WHERE email = $1",
+            "SELECT id, email, hashed_password, provider, provider_user_id, created_at, updated_at FROM users WHERE email = $1",
             email
         )
         .fetch_optional(&self.db_pool)

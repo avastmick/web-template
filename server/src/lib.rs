@@ -5,6 +5,7 @@
 //! This module exposes the core server functionality for use in integration tests
 //! and other consumers of the server as a library.
 
+pub mod config;
 pub mod core;
 pub mod errors;
 pub mod handlers;

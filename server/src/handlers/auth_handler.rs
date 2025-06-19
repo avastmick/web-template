@@ -59,6 +59,11 @@ impl From<User> for UserResponse {
     }
 }
 
+/// Register a new user
+///
+/// # Errors
+///
+/// Returns an error if validation fails, user already exists, or database operation fails
 #[tracing::instrument(skip(state, payload), fields(email = %payload.email), err(Debug))]
 pub async fn register_user_handler(
     State(state): State<Arc<AppState>>,
@@ -145,6 +150,11 @@ pub struct AppState {
     pub invite_service: Arc<InviteService>,
 }
 
+/// Login user
+///
+/// # Errors
+///
+/// Returns an error if validation fails, user not found, password incorrect, or JWT generation fails
 #[tracing::instrument(skip(state, payload), fields(email = %payload.email), err(Debug))]
 pub async fn login_user_handler(
     State(state): State<Arc<AppState>>,

@@ -10,13 +10,21 @@
 
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { fetchCurrentUser, logout } from '$lib/services/apiAuth';
 	import { authStore, currentUser, isAuthenticated, isAuthLoading, authError } from '$lib/stores';
 
 	// Component state
 	let isLoadingProfile = false;
+	let showWelcome = false;
 
 	onMount(async () => {
+		// Check for welcome parameter
+		const urlParams = new URLSearchParams($page.url.search);
+		if (urlParams.get('welcome') === 'true') {
+			showWelcome = true;
+		}
+
 		// If not authenticated, redirect to login
 		if (!$isAuthenticated) {
 			await goto('/login');
@@ -171,6 +179,37 @@
 						</div>
 					</div>
 				</div>
+
+				<!-- Welcome Message -->
+				{#if showWelcome}
+					<div class="mt-6 rounded-md bg-green-50 p-4">
+						<div class="flex">
+							<div class="flex-shrink-0">
+								<svg
+									class="h-5 w-5 text-green-400"
+									viewBox="0 0 20 20"
+									fill="currentColor"
+									aria-hidden="true"
+								>
+									<path
+										fill-rule="evenodd"
+										d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L7.73 10.16a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
+										clip-rule="evenodd"
+									/>
+								</svg>
+							</div>
+							<div class="ml-3">
+								<h3 class="text-sm font-medium text-green-800">Welcome to the application!</h3>
+								<div class="mt-2 text-sm text-green-700">
+									<p>
+										Your account has been successfully created using Google OAuth. You can now
+										access all features of the application.
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				{/if}
 
 				<!-- Error Display -->
 				{#if $authError}

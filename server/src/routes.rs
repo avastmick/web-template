@@ -7,15 +7,18 @@ use axum::{
 };
 use std::{env, sync::Arc};
 use tower_http::cors::CorsLayer;
+use tower_http::services::ServeDir;
 
 use crate::handlers::{
     auth_handler::{AppState, login_user_handler, register_user_handler},
+    health_handler::{health_check, readiness_check},
+    oauth_handler::{OAuthAppState, google_login_init, google_oauth_callback},
     user_handler::get_current_user_handler,
 };
-use crate::services::{AuthService, InviteService, UserServiceImpl};
+use crate::services::{AuthService, InviteService, OAuthService, UserServiceImpl};
 
 /// Creates and returns the main application router.
-/// It takes the shared application state (`UserServiceImpl`, `AuthService`, and `InviteService`) as an argument.
+/// It takes the shared application state (`UserServiceImpl`, `AuthService`, `InviteService`, and `OAuthService`) as an argument.
 ///
 /// # Environment Variables
 ///
@@ -30,6 +33,7 @@ pub fn create_router(
     user_service: Arc<UserServiceImpl>,
     auth_service: Arc<AuthService>,
     invite_service: Arc<InviteService>,
+    oauth_service: Arc<OAuthService>,
 ) -> Router {
     let app_state = Arc::new(AppState {
         user_service,
@@ -37,7 +41,28 @@ pub fn create_router(
         invite_service,
     });
 
+    let oauth_app_state = OAuthAppState {
+        app_state: app_state.clone(),
+        oauth_service,
+    };
+
+    // Create OAuth routes with their own state
+    let oauth_router = Router::new()
+        .route("/api/auth/oauth/google", get(google_login_init))
+        .route(
+            "/api/auth/oauth/google/callback",
+            get(google_oauth_callback),
+        )
+        .with_state(oauth_app_state);
+
+    // Get static directory from environment or use default
+    let static_dir = env::var("STATIC_DIR").unwrap_or_else(|_| "./static".to_string());
+
+    // Main router with standard auth routes
     Router::new()
+        // Health check endpoints (no authentication needed)
+        .route("/health", get(health_check))
+        .route("/ready", get(readiness_check))
         // Authentication routes
         .route("/api/auth/register", post(register_user_handler))
         .route("/api/auth/login", post(login_user_handler))
@@ -45,6 +70,10 @@ pub fn create_router(
         .route("/api/users/me", get(get_current_user_handler))
         // Add other routes here (e.g., for other resources)
         .with_state(app_state)
+        // Merge OAuth routes
+        .merge(oauth_router)
+        // Serve static files (SvelteKit SPA) - this should be last to catch all unmatched routes
+        .fallback_service(ServeDir::new(static_dir).append_index_html_on_directories(true))
         .layer(
             CorsLayer::new()
                 .allow_origin({

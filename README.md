@@ -83,7 +83,12 @@ A more detailed description of the architecture, including data flow, authentica
         ```bash
         cp .envrc.example .envrc
         ```
-    *   Fill in the required environment variables in `.envrc` (e.g., `DATABASE_URL`, `JWT_SECRET`).
+    *   Fill in the required environment variables in `.envrc`:
+        *   `DATABASE_URL`: SQLite database connection string (e.g., `sqlite:./db/dev.sqlite3?mode=rwc`)
+        *   `JWT_SECRET`: A secure 32+ character secret key for JWT token signing
+        *   `GOOGLE_CLIENT_ID`: Your Google OAuth client ID from Google Console
+        *   `GOOGLE_CLIENT_SECRET`: Your Google OAuth client secret from Google Console
+        *   `SERVER_URL`: Your server URL (default: `http://localhost:8081`)
     *   Run `direnv allow` in the project root (`web-template/`) to load the environment variables.
 4.  **Install Pre-commit Hooks:**
     *   Run `pre-commit install` to set up the git hooks defined in `.pre-commit-config.yaml`. This ensures code quality checks are run before each commit.
@@ -91,7 +96,16 @@ A more detailed description of the architecture, including data flow, authentica
     *   Run `just setup`. This command cleans previous build artifacts and dependencies, then installs fresh dependencies for both client and server, and performs an initial build.
 6.  **Database Setup:**
     *   Run `just db-setup` to apply database migrations using `dbmate`. This will create the necessary tables in your database.
-7.  **Run the application (Development):**
+7.  **OAuth Configuration (Required for Authentication):**
+    *   Create a Google Cloud Project at [Google Cloud Console](https://console.cloud.google.com/)
+    *   Enable the Google OAuth 2.0 API
+    *   Create OAuth 2.0 credentials:
+        *   Go to "Credentials" → "Create Credentials" → "OAuth client ID"
+        *   Choose "Web application"
+        *   Add authorized redirect URIs: `http://localhost:8081/api/auth/oauth/google/callback` (development)
+        *   Note the Client ID and Client Secret for your `.envrc` file
+    *   **Note:** This application uses an invite-only system. Users must be invited before they can register via OAuth or email/password.
+8.  **Run the application (Development):**
     *   Run `just dev`. This will start both the client and server development servers using Overmind (ensure `Procfile.dev` is configured in `web-template/`).
     *   Client is typically available at `http://localhost:5173` (or as configured by Vite/SvelteKit).
     *   Server is typically available at `http://localhost:3000` (or as configured in `server/.env` if applicable, or `Rocket.toml` for Rocket).

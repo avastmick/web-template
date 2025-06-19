@@ -10,5 +10,6 @@ export type {
 	LoginRequest,
 	RegisterRequest,
 	LoginResponse,
+	OAuthLoginResponse,
 	AuthError
 } from './auth';

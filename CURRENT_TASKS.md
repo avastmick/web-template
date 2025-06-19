@@ -2,437 +2,39 @@
 
 This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and `PRD.md`.
 
-## Phase 1: Project Setup and Documentation
+### Task 1.1: Server & Client - GitHub OAuth Integration with Invite System
 
-1.  **[X] Update `README.md`**
-    *   **Action:** Align with project goals from `PRD.md`.
-    *   **Action:** Add an \"Architecture\" section.
-    *   **Files:** `web-template/README.md`
-    *   **Quality Checks:** Manual review.
-
-2.  **[X] Update `CLAUDE.md`**
-    *   **Action:** Align with project goals from `PRD.md`.
-    *   **Action:** Ensure it reflects instructions from `INSTRUCTIONS.md` regarding project management and quality.
-    *   **Files:** `web-template/CLAUDE.md`
-    *   **Quality Checks:** Manual review.
-
-3.  **[X] Create `documentation/ARCHITECTURE.md`**
-    *   **Action:** Create the file and add initial content based on `PRD.md` and project structure (`svelte-kit` client, `rust` server).
-    *   **Details:** Describe the client (SvelteKit), server (Rust/Axum), database (SQLite initially), and their interactions. Mention `dbmate` for migrations and `just` for commands. Cover high-level components for auth, payments, and AI integration as per `PRD.md`.
-    *   **Files:** `web-template/documentation/ARCHITECTURE.md`
-    *   **Quality Checks:** Manual review.
-
-4.  **[X] Review and Update `justfile`**
-    *   **Action:** Ensure `justfile` includes commands for project lifecycle.
-    *   **Files:** `web-template/justfile`
-    *   **Quality Checks:** `just --list` and execution of several key commands.
-
-5.  **[X] Configure Pre-commit Hooks**
-    *   **Action:** Create/update `.pre-commit-config.yaml`.
-    *   **Files:** `web-template/.pre-commit-config.yaml`
-    *   **Quality Checks:** User will verify with `git commit --dry-run`.
-
-6.  **[X] Update `README.md` and `CLAUDE.md` with Project Management Details**
-    *   **Action:** Add detailed instructions on `just` commands and quality (pre-commit hooks).
-    *   **Files:** `web-template/README.md`, `web-template/CLAUDE.md`
-    *   **Quality Checks:** Manual review.
-
-## Phase 2: User Registration and Login Feature (Local Provider)
-
-This phase focuses on implementing the core authentication flow: user registration, login, and viewing credentials using a local email/password provider. Rigorous security and best practices are paramount.
-
-### Task 2.1: Design User Authentication Flow
-*   **Status:** **[X] DONE**
-*   **Action:** Define the detailed steps for user registration, login, session management (JWT), and profile viewing.
-*   **Output:** Updated `documentation/ARCHITECTURE.md` with an "Authentication Flow" section.
-*   **Quality Checks:** Manual review for security considerations and completeness.
-
-### Task 2.2: Server - User Model and Database Migration
-*   **Status:** **[X] DONE**
-*   **Action:** Define the Rust struct for the `User` model (and `UserFromDb` for mapping).
-*   **Action:** Create a `dbmate` migration for the `users` table.
-*   **Files:**
-    *   `web-template/server/src/models/user.rs`
-    *   `web-template/server/src/models/mod.rs`
-    *   `web-template/db/migrations/YYYYMMDDHHMMSS_create_users_table.sql`
-*   **Quality Checks:**
-    *   `just check-server` - PASSED (after fixes)
-    *   `just check-client` - PASSED (after fixes)
-    *   `dbmate up` (via `just db-migrate`) - PASSED
-    *   `dbmate down` (via `just db-rollback`) - PASSED
-    *   `dbmate up` again - PASSED
-
-### Task 2.3: Server - Registration Endpoint
-*   **Status:** **[X] DONE**
-*   **Action:** Implement the `POST /api/auth/register` endpoint.
-*   **Details:**
-    *   Request: `email`, `password`.
-    *   Validate email format and uniqueness.
-    *   Validate password strength.
-    *   Hash password securely.
-    *   Store new user in the database.
-    *   Return appropriate success (e.g., 201 Created with user ID/email) or error responses (400, 409, 500).
-*   **Files Created/Modified:**
-    *   `web-template/server/src/handlers/auth_handler.rs`
-    *   `web-template/server/src/handlers/mod.rs`
-    *   `web-template/server/src/services/user_service.rs`
-    *   `web-template/server/src/services/mod.rs`
-    *   `web-template/server/src/core/password_utils.rs`
-    *   `web-template/server/src/core/mod.rs`
-    *   `web-template/server/src/errors.rs`
-    *   `web-template/server/src/routes.rs`
-    *   `web-template/server/src/main.rs`
-    *   `web-template/server/Cargo.toml` (dependencies added via `cargo add`)
-    *   `web-template/server/tests/auth_integration_tests.rs` (comprehensive tests)
-*   **Quality Checks (COMPLETED):**
-    *   `just check-server` - PASSED
-    *   Unit tests for validation logic, password hashing, and user creation service - PASSED
-    *   Integration tests for the `/api/auth/register` endpoint (6 tests) - PASSED
-    *   `just server-test` - PASSED (9 total tests)
-
-### Task 2.4: Server - Login Endpoint and JWT Issuance
-*   **Status:** **[X] DONE**
-*   **Action:** Implement the `POST /api/auth/login` endpoint.
-*   **Action:** Implement JWT generation and signing.
-*   **Details:**
-    *   Request: `email`, `password`.
-    *   Find user by email.
-    *   Verify password against stored hash.
-    *   If valid, generate a JWT containing user ID and other relevant claims.
-    *   JWT secret should be from `JWT_SECRET` environment variable.
-    *   Return JWT in response (e.g., in an HttpOnly cookie or JSON body).
-*   **Files Created/Modified:**
-    *   `web-template/server/src/handlers/auth_handler.rs` (login handler + AppState)
-    *   `web-template/server/src/services/auth_service.rs` (JWT generation/validation)
-    *   `web-template/server/src/services/user_service.rs` (find_by_email method)
-    *   `web-template/server/src/routes.rs` (login route + state management)
-    *   `web-template/server/src/main.rs` (AuthService initialization)
-    *   Dependencies added via `cargo add`: `jsonwebtoken`, `chrono`
-*   **Quality Checks (COMPLETED):**
-    *   `just check-server` - PASSED
-    *   Unit tests for password verification and JWT generation/validation - PASSED
-    *   Integration tests for `/api/auth/login` endpoint (6 tests) - PASSED
-    *   `just server-test` - PASSED (18 total tests)
-
-### Task 2.5: Server - Protected Endpoint (View Credentials)
-*   **Status:** **[X] DONE**
-*   **Action:** Create a protected endpoint (e.g., `GET /api/users/me`) that requires a valid JWT.
-*   **Action:** Implement JWT validation middleware/extractor.
-*   **Details:**
-    *   Middleware should extract JWT from `Authorization` header (Bearer token) or cookie.
-    *   Validate JWT signature and expiry.
-    *   If valid, extract user ID and fetch user details (excluding password).
-    *   Return user credentials (e.g., email, user ID).
-*   **Files Created/Modified:**
-    *   `web-template/server/src/middleware/auth_middleware.rs` (JWT extractor with FromRequestParts)
-    *   `web-template/server/src/middleware/mod.rs` (module exports)
-    *   `web-template/server/src/handlers/user_handler.rs` (GET /api/users/me)
-    *   `web-template/server/src/routes.rs` (protected route)
-    *   Dependencies added via `cargo add`: `axum-extra`, `async-trait`
-*   **Quality Checks (COMPLETED):**
-    *   `just check-server` - PASSED
-    *   Unit tests for JWT validation logic - PASSED
-    *   Integration tests for `/api/users/me` (6 tests) - PASSED:
-        *   With valid JWT - PASSED
-        *   Without JWT (expect 401) - PASSED
-        *   With invalid/expired JWT (expect 401) - PASSED
-        *   With malformed token (expect 401) - PASSED
-        *   With empty bearer token (expect 401) - PASSED
-        *   With wrong auth scheme (expect 401) - PASSED
-    *   `just server-test` - PASSED (18 total tests)
-
-### Task 2.6: Client - State Management for Auth
-*   **Status:** **[X] DONE**
-*   **Action:** Set up Svelte stores for managing authentication state (e.g., current user, JWT, loading status, errors).
-*   **Files Created/Modified:**
-    *   `web-template/client/src/lib/stores/authStore.ts` (main auth store with localStorage integration)
-    *   `web-template/client/src/lib/stores/index.ts` (store exports)
-    *   `web-template/client/src/lib/types/auth.ts` (TypeScript types)
-    *   `web-template/client/src/lib/types/index.ts` (type exports)
-    *   `web-template/client/src/lib/index.ts` (main lib exports)
-*   **Quality Checks (COMPLETED):**
-    *   `just check-client` - PASSED
-    *   Store provides reactive state management with localStorage persistence - IMPLEMENTED
-    *   `just build-client` - PASSED
-
-### Task 2.7: Client - API Service for Auth
-*   **Status:** **[X] DONE**
-*   **Action:** Create a service/module to handle API calls to the server's auth endpoints.
-*   **Details:**
-    *   Functions for `register(email, password)`, `login(email, password)`, `fetchCurrentUser()`.
-    *   Should handle setting/clearing JWT (e.g., in localStorage or a secure cookie if client can access).
-    *   Integrate with `authStore` to update state.
-*   **Files Created/Modified:**
-    *   `web-template/client/src/lib/services/apiAuth.ts` (comprehensive API service with error handling)
-    *   `web-template/client/src/lib/services/index.ts` (service exports)
-    *   Updated `web-template/client/src/lib/index.ts` (added service exports)
-*   **Quality Checks (COMPLETED):**
-    *   `just check-client` - PASSED
-    *   API service includes proper error handling, JWT management, and store integration - IMPLEMENTED
-    *   Functions: register(), login(), fetchCurrentUser(), logout(), validateToken() - IMPLEMENTED
-    *   `just build-client` - PASSED
-
-### Task 2.8: Client - Registration Page/Component
-*   **Status:** **[X] DONE**
-*   **Action:** Create a Svelte component/page for user registration.
-*   **Details:**
-    *   Form with email and password fields.
-    *   Client-side validation (mirroring server-side, but server is authoritative).
-    *   Call `apiAuth.register()` on submit.
-    *   Display success/error messages.
-    *   Redirect on successful registration (e.g., to login page or dashboard).
-*   **Files Created/Modified:**
-    *   `web-template/client/src/routes/register/+page.svelte` (complete registration form with validation)
-*   **Quality Checks (COMPLETED):**
-    *   `just check-client` - PASSED
-    *   Registration form includes email/password validation matching server requirements - IMPLEMENTED
-    *   Form validation: email format, password strength (12+ chars, upper/lower/numbers), password confirmation - IMPLEMENTED
-    *   Error handling and loading states with proper UI feedback - IMPLEMENTED
-    *   Redirects to login page on successful registration - IMPLEMENTED
-    *   `just build-client` - PASSED
-
-### Task 2.9: Client - Login Page/Component
-*   **Status:** **[X] DONE**
-*   **Action:** Create a Svelte component/page for user login.
-*   **Details:**
-    *   Form with email and password fields.
-    *   Call `apiAuth.login()` on submit.
-    *   Store JWT and update `authStore` on successful login.
-    *   Display success/error messages.
-    *   Redirect to a protected page (e.g., profile/dashboard).
-*   **Files Created/Modified:**
-    *   `web-template/client/src/routes/login/+page.svelte` (complete login form with validation)
-*   **Quality Checks (COMPLETED):**
-    *   `just check-client` - PASSED
-    *   Login form with email/password validation and proper error handling - IMPLEMENTED
-    *   JWT token storage and authStore integration on successful login - IMPLEMENTED
-    *   Success message display for users coming from registration - IMPLEMENTED
-    *   Redirects to profile page on successful login - IMPLEMENTED
-    *   Redirects already authenticated users to profile - IMPLEMENTED
-    *   `just build-client` - PASSED
-
-### Task 2.10: Client - Profile Page (View Credentials)
-*   **Status:** **[X] DONE**
-*   **Action:** Create a Svelte component/page to display user credentials.
-*   **Details:**
-    *   This page should be protected (require authentication). Use SvelteKit layouts or hooks for route protection.
-    *   On load, if user data is not in `authStore`, call `apiAuth.fetchCurrentUser()`.
-    *   Display user email and other non-sensitive info.
-    *   Include a logout button that clears JWT and `authStore`, then redirects to login/home.
-*   **Files Created/Modified:**
-    *   `web-template/client/src/routes/profile/+page.svelte` (protected profile page with user info display)
-    *   `web-template/client/src/routes/profile/+layout.svelte` (authentication guard layout)
-    *   `web-template/client/src/routes/+page.svelte` (updated home page with auth-aware navigation)
-*   **Quality Checks (COMPLETED):**
-    *   `just check-client` - PASSED
-    *   Protected route with authentication guard - IMPLEMENTED
-    *   Profile page displays user ID, email, creation date, last updated - IMPLEMENTED
-    *   Refresh profile data functionality - IMPLEMENTED
-    *   Logout functionality with redirect to login - IMPLEMENTED
-    *   Route protection: unauthenticated users redirected to login - IMPLEMENTED
-    *   Token validation on profile page access - IMPLEMENTED
-    *   `just build-client` - PASSED
-
-## Phase 2 Summary: ✅ COMPLETE
-
-**All Phase 2 tasks have been successfully completed!** The application now features a complete, secure authentication system with:
-
-### Server Implementation (Rust/Axum):
-- ✅ **JWT-based authentication** with 24-hour token expiration
-- ✅ **Argon2 password hashing** for secure credential storage
-- ✅ **REST API endpoints**: `/api/auth/register`, `/api/auth/login`, `/api/users/me`
-- ✅ **Comprehensive validation**: Email format, password strength, duplicate user prevention
-- ✅ **18 integration tests** covering all authentication scenarios
-- ✅ **JWT middleware** for protected route authentication
-- ✅ **Error handling** with proper HTTP status codes and messages
-
-### Client Implementation (SvelteKit/TypeScript):
-- ✅ **Reactive state management** with Svelte stores and localStorage persistence
-- ✅ **Protected routing** with authentication guards and automatic redirects
-- ✅ **Form validation** matching server-side requirements
-- ✅ **Modern UI** with Tailwind CSS, loading states, and error messages
-- ✅ **Complete user flows**: Registration → Login → Profile access
-- ✅ **Type safety** with strict TypeScript configuration
-
-### Quality Assurance:
-- ✅ **All quality checks passing**: formatting, linting, type checking, compilation
-- ✅ **Production builds successful** for both client and server
-- ✅ **Security best practices** implemented throughout
-- ✅ **Comprehensive testing** with 18 integration tests
-
-### Available Features:
-- **User Registration** with password strength validation
-- **User Login** with JWT token management
-- **Protected Profile Page** showing user credentials
-- **Logout functionality** with state cleanup
-- **Automatic token validation** and session management
-- **Responsive design** with mobile-friendly interface
-
-The authentication system is now ready for production use and provides a solid foundation for Phase 3 enhancements.
-
-## Phase 3: Enhancements and Other Requirements from PRD
-
-### Task 3.0: Server - Invite System Implementation
-
-This task implements an invite system where only users who have been pre-invited can register or login through any authentication method (local or OAuth).
-
-#### Sub-task 3.0.1: Database Schema for Invites
-*   **Status:** **[ ] TODO**
-*   **Action:** Create database table for user invites
-*   **Details:**
-    *   Create `user_invites` table with columns: id, email, invited_by, invited_at, used_at, expires_at
-    *   Email should be unique and case-insensitive
-    *   Add index on email for fast lookups
-    *   Support expiring invites (optional)
-*   **Files to Create/Modify:**
-    *   `server/db/migrations/YYYYMMDDHHMMSS_create_user_invites_table.sql` (via `just db-new-migration create_user_invites_table`)
-*   **Quality Checks:**
-    *   `just db-migrate` (apply migration)
-    *   `just db-rollback` then `just db-migrate` (test reversibility)
-
-#### Sub-task 3.0.2: Server - Invite Model and Service
-*   **Status:** **[ ] TODO**
-*   **Action:** Create invite model and service layer
-*   **Details:**
-    *   Create UserInvite struct matching database schema
-    *   Create invite service with methods: check_invite_exists, mark_invite_used, create_invite
-    *   Implement case-insensitive email matching
-*   **Files to Create/Modify:**
-    *   `server/src/models/invite.rs` (UserInvite model)
-    *   `server/src/models/mod.rs` (export invite module)
-    *   `server/src/services/invite_service.rs` (invite validation logic)
-    *   `server/src/services/mod.rs` (export invite_service)
-*   **Quality Checks:**
-    *   Unit tests for invite service methods
-    *   `just check-server`
-
-#### Sub-task 3.0.3: Server - Update Registration Flow
-*   **Status:** **[ ] TODO**
-*   **Action:** Add invite validation to existing registration endpoint
-*   **Details:**
-    *   Before creating user, check if email exists in user_invites table
-    *   If not invited, return 403 Forbidden with message "Registration is by invitation only"
-    *   If invited, proceed with registration and mark invite as used
-    *   Add transaction to ensure atomicity
-*   **Files to Modify:**
-    *   `server/src/handlers/auth_handler.rs` (add invite check to register handler)
-    *   `server/src/services/user_service.rs` (update create_user to include invite validation)
-    *   `server/src/errors.rs` (add InviteNotFound error type)
-*   **Quality Checks:**
-    *   Update existing registration tests to include invite setup
-    *   Add new tests for invite validation scenarios
-    *   `just server-test auth`
-
-#### Sub-task 3.0.4: Server - Update Login Flow
-*   **Status:** **[ ] TODO**
-*   **Action:** Add invite validation to login endpoint for new users
-*   **Details:**
-    *   For existing users, allow login without invite check
-    *   For non-existent users attempting login, check invite table
-    *   Return appropriate error message for non-invited users
-*   **Files to Modify:**
-    *   `server/src/handlers/auth_handler.rs` (add invite awareness to login handler)
-*   **Quality Checks:**
-    *   Integration tests for login with/without invites
-    *   `just server-test`
-
-#### Sub-task 3.0.5: Server - Invite Management Endpoints (Optional)
-*   **Status:** **[ ] TODO**
-*   **Action:** Create admin endpoints for managing invites
-*   **Details:**
-    *   `POST /api/admin/invites` - Create new invite (admin only)
-    *   `GET /api/admin/invites` - List all invites (admin only)
-    *   `DELETE /api/admin/invites/:id` - Revoke invite (admin only)
-    *   Requires admin role/permission system
-*   **Files to Create/Modify:**
-    *   `server/src/handlers/invite_handler.rs` (invite management handlers)
-    *   `server/src/handlers/mod.rs` (export invite_handler)
-    *   `server/src/routes.rs` (add invite management routes)
-*   **Quality Checks:**
-    *   Integration tests for invite management
-    *   `just server-test`
-
-#### Sub-task 3.0.6: Documentation Updates
-*   **Status:** **[ ] TODO**
-*   **Action:** Update documentation to reflect invite system
-*   **Details:**
-    *   Update ARCHITECTURE.md with invite flow
-    *   Add invite system details to README.md
-    *   Document how to seed initial invites
-*   **Files to Modify:**
-    *   `documentation/ARCHITECTURE.md`
-    *   `README.md`
-*   **Quality Checks:**
-    *   Manual review
-
-### Task 3.1: Server & Client - Google OAuth Integration with Invite System
-
-This task implements Google OAuth as an additional authentication provider alongside the existing local email/password system. Additionally, it implements an invite system where only users who have been pre-invited (stored in a `user_invite` table) can register or login through any authentication method.
+This task implements GitHub OAuth as an additional authentication provider alongside the existing oAuth provider, Google.
 
 **Key Requirements:**
 - Only invited users can register or login (both local and OAuth)
 - Invites are stored in a `user_invite` table with email addresses
-- Registration/login attempts by non-invited users should be rejected with appropriate error messages
+- Registration/login attempts by non-invited users should be rejected with appropriate on-screen error messages
 - Invite validation should occur before user creation in both local and OAuth flows
 
-#### Sub-task 3.1.1: Server - OAuth Configuration and Dependencies
+#### Sub-task 1.1.1: Server - OAuth Configuration and Dependencies to support GitHub
 *   **Status:** **[ ] TODO**
-*   **Action:** Add OAuth dependencies and configuration
+*   **Action:** Add OAuth dependencies and configuration to support GitHub
 *   **Details:**
     *   Add required crates: `oauth2`, `reqwest` (for token verification)
     *   Create OAuth configuration module for managing provider settings
-    *   Add Google OAuth environment variables validation to startup
+    *   Add GitHub OAuth environment variables validation to startup
 *   **Files to Create/Modify:**
-    *   `server/Cargo.toml` (add dependencies via `cargo add oauth2 reqwest`)
     *   `server/src/config/oauth.rs` (OAuth provider configuration)
     *   `server/src/config/mod.rs` (export oauth module)
-    *   `server/src/main.rs` (validate GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET on startup)
+    *   `server/src/main.rs` (validate GitHub env variables on startup)
 *   **Quality Checks:**
     *   `just check-server` (formatting, linting, type checking)
     *   `just build-server` (ensure compilation succeeds)
 
-#### Sub-task 3.1.2: Server - OAuth Service Implementation
-*   **Status:** **[ ] TODO**
-*   **Action:** Create OAuth service for handling Google authentication flow
-*   **Details:**
-    *   Implement OAuth authorization URL generation
-    *   Handle OAuth callback and token exchange
-    *   Verify Google ID tokens
-    *   Extract user information from Google's response
-    *   Check against ALLOWED_USERS environment variable for access control
-*   **Files to Create/Modify:**
-    *   `server/src/services/oauth_service.rs` (core OAuth logic)
-    *   `server/src/services/mod.rs` (export oauth_service)
-    *   `server/src/models/oauth.rs` (OAuth-related types: OAuthProvider enum, OAuthUserInfo)
-    *   `server/src/models/mod.rs` (export oauth types)
-*   **Quality Checks:**
-    *   Unit tests for OAuth URL generation
-    *   Unit tests for token verification logic
-    *   Mock tests for Google API interactions
-    *   `just server-test oauth` (run OAuth-specific tests)
 
-#### Sub-task 3.1.3: Server - Database Schema Updates for OAuth
-*   **Status:** **[ ] TODO**
-*   **Action:** Extend user model and database to support OAuth providers
-*   **Details:**
-    *   Add provider information to users table (provider type, provider user ID)
-    *   Support nullable password for OAuth-only users
-    *   Add unique constraint on (email, provider) combination
-*   **Files to Create/Modify:**
-    *   `server/db/migrations/YYYYMMDDHHMMSS_add_oauth_to_users.sql` (via `just db-new-migration add_oauth_to_users`)
-    *   `server/src/models/user.rs` (update User struct with OAuth fields)
-    *   `server/src/services/user_service.rs` (add create_or_update_oauth_user method)
-*   **Quality Checks:**
-    *   `just db-rollback` then `just db-migrate` (test migration reversibility)
-    *   `just check-server` (ensure code still compiles with schema changes)
-
-#### Sub-task 3.1.4: Server - OAuth Endpoints Implementation
+#### Sub-task 1.1.4: Server - OAuth Endpoints Implementation
 *   **Status:** **[ ] TODO**
 *   **Action:** Implement OAuth-specific API endpoints
 *   **Details:**
     *   `GET /api/auth/oauth/google` - Initiates OAuth flow, returns authorization URL
     *   `GET /api/auth/oauth/google/callback` - Handles OAuth callback, exchanges code for tokens
-    *   Create or update user based on Google profile
+    *   Create or update user based on GitHub profile
     *   Issue JWT upon successful authentication
 *   **Files to Create/Modify:**
     *   `server/src/handlers/oauth_handler.rs` (OAuth request handlers)
@@ -444,25 +46,25 @@ This task implements Google OAuth as an additional authentication provider along
     *   Test error cases (invalid code, expired tokens, unauthorized users)
     *   `just server-test` (all tests should pass)
 
-#### Sub-task 3.1.5: Client - OAuth UI Components
+#### Sub-task 1.1.5: Client - OAuth UI Components
 *   **Status:** **[ ] TODO**
-*   **Action:** Create Google Sign-In button and OAuth flow UI
+*   **Action:** Create GitHub Sign-In button and OAuth flow UI
 *   **Details:**
-    *   Add "Sign in with Google" button to login and registration pages
+    *   Add "Sign in with GitHub" button to login and registration pages
     *   Handle OAuth redirect flow
     *   Show loading state during OAuth callback processing
     *   Update authStore to handle OAuth tokens
 *   **Files to Create/Modify:**
-    *   `client/src/lib/components/GoogleSignInButton.svelte` (reusable OAuth button)
-    *   `client/src/routes/login/+page.svelte` (add Google sign-in option)
-    *   `client/src/routes/register/+page.svelte` (add Google sign-in option)
+    *   `client/src/lib/components/GitHubSignInButton.svelte` (reusable OAuth button)
+    *   `client/src/routes/login/+page.svelte` (add GitHub sign-in option)
+    *   `client/src/routes/register/+page.svelte` (add GitHub sign-in option)
     *   `client/src/routes/auth/google/callback/+page.svelte` (OAuth callback handler)
 *   **Quality Checks:**
     *   `just check-client` (formatting, linting, type checking)
     *   Visual testing of OAuth button styling
     *   `just build-client` (ensure production build succeeds)
 
-#### Sub-task 3.1.6: Client - OAuth API Integration
+#### Sub-task 1.1.6: Client - OAuth API Integration
 *   **Status:** **[ ] TODO**
 *   **Action:** Extend auth service to support OAuth flow
 *   **Details:**
@@ -470,7 +72,7 @@ This task implements Google OAuth as an additional authentication provider along
     *   Handle OAuth callback and token storage
     *   Update user type to include provider information
 *   **Files to Create/Modify:**
-    *   `client/src/lib/services/apiAuth.ts` (add OAuth methods: initiateGoogleAuth, handleOAuthCallback)
+    *   `client/src/lib/services/apiAuth.ts` (add OAuth methods: initiateGitHubAuth, handleOAuthCallback)
     *   `client/src/lib/types/auth.ts` (add OAuth types: OAuthProvider, extend User type)
     *   `client/src/lib/stores/authStore.ts` (handle OAuth user data)
 *   **Quality Checks:**
@@ -478,9 +80,9 @@ This task implements Google OAuth as an additional authentication provider along
     *   Test OAuth flow end-to-end manually
     *   Ensure existing auth flows still work
 
-#### Sub-task 3.1.7: End-to-End OAuth Testing
+#### Sub-task 1.1.7: End-to-End OAuth Testing
 *   **Status:** **[ ] TODO**
-*   **Action:** Create comprehensive E2E tests for OAuth flow
+*   **Action:** Create comprehensive E2E tests for OAuth flow for GitHub
 *   **Details:**
     *   Test complete OAuth sign-in flow
     *   Test OAuth registration for new users
@@ -490,28 +92,39 @@ This task implements Google OAuth as an additional authentication provider along
     *   `client/e2e/oauth.test.ts` (Playwright tests for OAuth flows)
 *   **Quality Checks:**
     *   `just test-e2e oauth` (run OAuth E2E tests)
-    *   Manual testing with real Google accounts
+    *   Manual testing with real GitHub accounts
     *   Test on different browsers
 
-### Task 3.2: Client - Dark/Light Mode & Color Schemes
+### Task 2.1: Client - Layout and styling using tailwindcss
+*   **Status:** **[ ] TODO**
+*   **Action:** Implement UI layout and base styling
+*   **Details:** (To be expanded)
+
+### Task 2.2: Client - Dark/Light Mode & Color Schemes
 *   **Status:** **[ ] TODO**
 *   **Action:** Implement theme system with dark/light modes and customizable color schemes
 *   **Details:** (To be expanded)
 
-### Task 3.3: Server & Client - Stripe Payment Integration
-*   **Status:** **[ ] TODO**
-*   **Action:** Integrate Stripe for payment processing
-*   **Details:** (To be expanded)
-
-### Task 3.4: Server - Generative AI Integration Framework
+### Task 2.3: Server - Generative AI Integration Framework
 *   **Status:** **[ ] TODO**
 *   **Action:** Create flexible framework for integrating various AI providers
 *   **Details:** (To be expanded)
 
-### Task 3.5: Documentation - Deployment Guides
+### Task 2.4: Server & Client - Stripe Payment Integration
+*   **Status:** **[ ] TODO**
+*   **Action:** Integrate Stripe for payment processing
+*   **Details:** (To be expanded)
+
+### Task 2.5: Documentation - Deployment Guides
 *   **Status:** **[ ] TODO**
 *   **Action:** Create deployment guides for GCP Cloud Run, Vercel, and Supabase
 *   **Details:** (To be expanded)
+
+### Task 2.6: Template usage - create a simple means of using the current template for a new project
+*   **Status:** **[ ] TODO**
+*   **Action:** Create script that will use a clean template instance for a new project
+*   **Details:** (To be expanded)
+
 
 **Note on Testing:**
 *   **Server:** Unit tests for individual functions/modules. Integration tests for API endpoints (testing request/response, database interaction). Use `cargo test`.

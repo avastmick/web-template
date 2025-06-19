@@ -15,11 +15,12 @@ use serde_json::{Value, json};
 use sqlx::{Pool, Sqlite, SqlitePool};
 use std::sync::Arc;
 use tower::ServiceExt; // for `oneshot` and `ready`
+use uuid::Uuid;
 
 // Import the application modules we need for testing
 use server::{
     routes::create_router,
-    services::{AuthService, UserServiceImpl},
+    services::{AuthService, InviteService, UserServiceImpl},
 };
 
 // Test constants to avoid gitleaks false positives
@@ -53,11 +54,39 @@ async fn create_test_db() -> Pool<Sqlite> {
     .await
     .expect("Failed to create users table in test database");
 
+    // Create the user_invites table for testing
+    sqlx::query(
+        r"
+        CREATE TABLE user_invites (
+            id TEXT PRIMARY KEY NOT NULL,
+            email TEXT UNIQUE NOT NULL COLLATE NOCASE,
+            invited_by TEXT,
+            invited_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            used_at DATETIME,
+            expires_at DATETIME,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX idx_user_invites_email ON user_invites(email);
+        CREATE INDEX idx_user_invites_used_at ON user_invites(used_at) WHERE used_at IS NULL;
+        CREATE INDEX idx_user_invites_expires_at ON user_invites(expires_at) WHERE expires_at IS NOT NULL;
+        ",
+    )
+    .execute(&pool)
+    .await
+    .expect("Failed to create user_invites table in test database");
+
     pool
 }
 
 /// Helper function to create the test app with database pool
 async fn create_test_app() -> Router {
+    let pool = create_test_db().await;
+    create_test_app_with_pool(pool)
+}
+
+/// Helper function to create the test app with a specific database pool
+fn create_test_app_with_pool(pool: Pool<Sqlite>) -> Router {
     // Set up JWT secret for testing
     unsafe {
         std::env::set_var(
@@ -66,10 +95,10 @@ async fn create_test_app() -> Router {
         );
     }
 
-    let pool = create_test_db().await;
-    let user_service = Arc::new(UserServiceImpl::new(pool));
+    let user_service = Arc::new(UserServiceImpl::new(pool.clone()));
     let auth_service = Arc::new(AuthService::new().expect("Failed to create auth service"));
-    create_router(user_service, auth_service)
+    let invite_service = Arc::new(InviteService::new(pool));
+    create_router(user_service, auth_service, invite_service)
 }
 
 /// Helper function to send a JSON request to the test app
@@ -109,7 +138,29 @@ async fn send_authenticated_request(
     app.oneshot(request).await.unwrap()
 }
 
+/// Helper function to create an invite in the test database
+async fn create_test_invite(email: &str) -> Pool<Sqlite> {
+    let pool = create_test_db().await;
+
+    // Create an invite for the test user
+    sqlx::query(
+        r"
+        INSERT INTO user_invites (id, email, invited_by, invited_at, created_at, updated_at)
+        VALUES (?1, ?2, ?3, datetime('now'), datetime('now'), datetime('now'))
+        ",
+    )
+    .bind(format!("test-invite-{}", Uuid::new_v4()))
+    .bind(email.to_lowercase())
+    .bind("test-admin")
+    .execute(&pool)
+    .await
+    .expect("Failed to create test invite");
+
+    pool
+}
+
 /// Helper function to register a user and get a valid JWT token
+/// Note: This assumes the invite has already been created
 async fn register_and_login_user(app: Router, email: &str, password: &str) -> String {
     // Register the user
     let email_val = email;
@@ -144,7 +195,9 @@ async fn register_and_login_user(app: Router, email: &str, password: &str) -> St
 
 #[tokio::test]
 async fn test_register_user_success() {
-    let app = create_test_app().await;
+    // Create invite first
+    let pool = create_test_invite(TEST_EMAIL).await;
+    let app = create_test_app_with_pool(pool);
 
     let test_email = TEST_EMAIL;
     let test_pass = TEST_SECURE_PASS;
@@ -162,6 +215,25 @@ async fn test_register_user_success() {
     assert_eq!(json_body["email"], "test@example.com");
     assert!(json_body["created_at"].is_string());
     assert!(json_body["updated_at"].is_string());
+}
+
+#[tokio::test]
+async fn test_register_user_without_invite() {
+    let app = create_test_app().await;
+
+    let test_email = "noinvite@example.com";
+    let test_pass = TEST_SECURE_PASS;
+    let payload = json!({
+        "email": test_email,
+        "password": test_pass
+    });
+
+    let response = send_json_request(app, Method::POST, "/api/auth/register", payload).await;
+
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+
+    let json_body = extract_json_response(response).await;
+    assert_eq!(json_body["error"], "Registration is by invitation only.");
 }
 
 #[tokio::test]
@@ -290,10 +362,12 @@ async fn test_register_user_empty_body() {
 
 #[tokio::test]
 async fn test_login_user_success() {
-    let app = create_test_app().await;
+    // Create invite for the test user
+    let login_email = "login_test@example.com";
+    let pool = create_test_invite(login_email).await;
+    let app = create_test_app_with_pool(pool);
 
     // First, register a user
-    let login_email = "login_test@example.com";
     let test_pass = TEST_SECURE_PASS;
     let register_payload = json!({
         "email": login_email,
@@ -378,10 +452,12 @@ async fn test_login_user_nonexistent_email() {
 
 #[tokio::test]
 async fn test_login_user_wrong_password() {
-    let app = create_test_app().await;
+    // Create invite for the test user
+    let wrong_pass_email = "wrong_password_test@example.com";
+    let pool = create_test_invite(wrong_pass_email).await;
+    let app = create_test_app_with_pool(pool);
 
     // First, register a user
-    let wrong_pass_email = "wrong_password_test@example.com";
     let correct_pass = TEST_CORRECT_PASS;
     let register_payload = json!({
         "email": wrong_pass_email,
@@ -469,10 +545,12 @@ async fn test_login_user_empty_password() {
 
 #[tokio::test]
 async fn test_get_current_user_success() {
-    let app = create_test_app().await;
+    // Create invite for the test user
+    let protected_email = "protected_test@example.com";
+    let pool = create_test_invite(protected_email).await;
+    let app = create_test_app_with_pool(pool);
 
     // Register and login to get a valid token
-    let protected_email = "protected_test@example.com";
     let test_pass = TEST_SECURE_PASS;
     let token = register_and_login_user(app.clone(), protected_email, test_pass).await;
 

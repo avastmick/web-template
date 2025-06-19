@@ -17,7 +17,7 @@ mod routes;
 mod services;
 // mod config; // Future placeholder
 
-use services::{AuthService, UserServiceImpl};
+use services::{AuthService, InviteService, UserServiceImpl};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -84,9 +84,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tracing::error!("Failed to initialize AuthService: {:?}", e);
         Box::new(e) as Box<dyn std::error::Error>
     })?);
+    let invite_service = Arc::new(InviteService::new(db_pool.clone()));
 
     // Create the main application router
-    let app = routes::create_router(user_service, auth_service);
+    let app = routes::create_router(user_service, auth_service, invite_service);
 
     // Server address
     let host_str = env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());

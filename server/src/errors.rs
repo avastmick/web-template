@@ -49,6 +49,18 @@ pub enum AppError {
 
     #[error("JWT error: {0}")]
     JwtError(String),
+
+    #[error("Invite not found")]
+    InviteNotFound,
+
+    #[error("Invite expired")]
+    InviteExpired,
+
+    #[error("Invite already used")]
+    InviteAlreadyUsed,
+
+    #[error("Registration is by invitation only")]
+    RegistrationRequiresInvite,
 }
 
 impl IntoResponse for AppError {
@@ -116,6 +128,21 @@ impl IntoResponse for AppError {
                     None,
                 )
             }
+            AppError::InviteNotFound | AppError::RegistrationRequiresInvite => (
+                StatusCode::FORBIDDEN,
+                "Registration is by invitation only.".to_string(),
+                None,
+            ),
+            AppError::InviteExpired => (
+                StatusCode::FORBIDDEN,
+                "Your invitation has expired.".to_string(),
+                None,
+            ),
+            AppError::InviteAlreadyUsed => (
+                StatusCode::FORBIDDEN,
+                "Your invitation has already been used.".to_string(),
+                None,
+            ),
         };
 
         let mut body = json!({ "error": error_message });

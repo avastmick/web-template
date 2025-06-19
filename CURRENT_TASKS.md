@@ -272,9 +272,108 @@ The authentication system is now ready for production use and provides a solid f
 
 ## Phase 3: Enhancements and Other Requirements from PRD
 
-### Task 3.1: Server & Client - Google OAuth Integration
+### Task 3.0: Server - Invite System Implementation
 
-This task implements Google OAuth as an additional authentication provider alongside the existing local email/password system.
+This task implements an invite system where only users who have been pre-invited can register or login through any authentication method (local or OAuth).
+
+#### Sub-task 3.0.1: Database Schema for Invites
+*   **Status:** **[ ] TODO**
+*   **Action:** Create database table for user invites
+*   **Details:**
+    *   Create `user_invites` table with columns: id, email, invited_by, invited_at, used_at, expires_at
+    *   Email should be unique and case-insensitive
+    *   Add index on email for fast lookups
+    *   Support expiring invites (optional)
+*   **Files to Create/Modify:**
+    *   `server/db/migrations/YYYYMMDDHHMMSS_create_user_invites_table.sql` (via `just db-new-migration create_user_invites_table`)
+*   **Quality Checks:**
+    *   `just db-migrate` (apply migration)
+    *   `just db-rollback` then `just db-migrate` (test reversibility)
+
+#### Sub-task 3.0.2: Server - Invite Model and Service
+*   **Status:** **[ ] TODO**
+*   **Action:** Create invite model and service layer
+*   **Details:**
+    *   Create UserInvite struct matching database schema
+    *   Create invite service with methods: check_invite_exists, mark_invite_used, create_invite
+    *   Implement case-insensitive email matching
+*   **Files to Create/Modify:**
+    *   `server/src/models/invite.rs` (UserInvite model)
+    *   `server/src/models/mod.rs` (export invite module)
+    *   `server/src/services/invite_service.rs` (invite validation logic)
+    *   `server/src/services/mod.rs` (export invite_service)
+*   **Quality Checks:**
+    *   Unit tests for invite service methods
+    *   `just check-server`
+
+#### Sub-task 3.0.3: Server - Update Registration Flow
+*   **Status:** **[ ] TODO**
+*   **Action:** Add invite validation to existing registration endpoint
+*   **Details:**
+    *   Before creating user, check if email exists in user_invites table
+    *   If not invited, return 403 Forbidden with message "Registration is by invitation only"
+    *   If invited, proceed with registration and mark invite as used
+    *   Add transaction to ensure atomicity
+*   **Files to Modify:**
+    *   `server/src/handlers/auth_handler.rs` (add invite check to register handler)
+    *   `server/src/services/user_service.rs` (update create_user to include invite validation)
+    *   `server/src/errors.rs` (add InviteNotFound error type)
+*   **Quality Checks:**
+    *   Update existing registration tests to include invite setup
+    *   Add new tests for invite validation scenarios
+    *   `just server-test auth`
+
+#### Sub-task 3.0.4: Server - Update Login Flow
+*   **Status:** **[ ] TODO**
+*   **Action:** Add invite validation to login endpoint for new users
+*   **Details:**
+    *   For existing users, allow login without invite check
+    *   For non-existent users attempting login, check invite table
+    *   Return appropriate error message for non-invited users
+*   **Files to Modify:**
+    *   `server/src/handlers/auth_handler.rs` (add invite awareness to login handler)
+*   **Quality Checks:**
+    *   Integration tests for login with/without invites
+    *   `just server-test`
+
+#### Sub-task 3.0.5: Server - Invite Management Endpoints (Optional)
+*   **Status:** **[ ] TODO**
+*   **Action:** Create admin endpoints for managing invites
+*   **Details:**
+    *   `POST /api/admin/invites` - Create new invite (admin only)
+    *   `GET /api/admin/invites` - List all invites (admin only)
+    *   `DELETE /api/admin/invites/:id` - Revoke invite (admin only)
+    *   Requires admin role/permission system
+*   **Files to Create/Modify:**
+    *   `server/src/handlers/invite_handler.rs` (invite management handlers)
+    *   `server/src/handlers/mod.rs` (export invite_handler)
+    *   `server/src/routes.rs` (add invite management routes)
+*   **Quality Checks:**
+    *   Integration tests for invite management
+    *   `just server-test`
+
+#### Sub-task 3.0.6: Documentation Updates
+*   **Status:** **[ ] TODO**
+*   **Action:** Update documentation to reflect invite system
+*   **Details:**
+    *   Update ARCHITECTURE.md with invite flow
+    *   Add invite system details to README.md
+    *   Document how to seed initial invites
+*   **Files to Modify:**
+    *   `documentation/ARCHITECTURE.md`
+    *   `README.md`
+*   **Quality Checks:**
+    *   Manual review
+
+### Task 3.1: Server & Client - Google OAuth Integration with Invite System
+
+This task implements Google OAuth as an additional authentication provider alongside the existing local email/password system. Additionally, it implements an invite system where only users who have been pre-invited (stored in a `user_invite` table) can register or login through any authentication method.
+
+**Key Requirements:**
+- Only invited users can register or login (both local and OAuth)
+- Invites are stored in a `user_invite` table with email addresses
+- Registration/login attempts by non-invited users should be rejected with appropriate error messages
+- Invite validation should occur before user creation in both local and OAuth flows
 
 #### Sub-task 3.1.1: Server - OAuth Configuration and Dependencies
 *   **Status:** **[ ] TODO**

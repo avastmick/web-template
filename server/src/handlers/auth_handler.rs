@@ -9,7 +9,7 @@ use crate::{
     core::password_utils::verify_password,
     errors::{AppError, AppResult},
     models::User,
-    services::{AuthService, UserServiceImpl},
+    services::{AuthService, InviteService, UserServiceImpl},
 };
 
 #[derive(Debug, Deserialize, Validate)]
@@ -93,9 +93,34 @@ pub async fn register_user_handler(
         payload.email
     );
 
-    // 2. Call the user service to attempt user creation
+    // 2. Check if user has a valid invite
+    let has_invite = state
+        .invite_service
+        .check_invite_exists(&payload.email)
+        .await?;
+    if !has_invite {
+        tracing::warn!(
+            "Registration attempt without invite for email: {}",
+            payload.email
+        );
+        return Err(AppError::RegistrationRequiresInvite);
+    }
+
+    tracing::info!("Valid invite found for email: {}", payload.email);
+
+    // 3. Call the user service to attempt user creation
     match state.user_service.create_user(&payload).await {
         Ok(created_user) => {
+            // Mark invite as used
+            if let Err(e) = state.invite_service.mark_invite_used(&payload.email).await {
+                tracing::error!(
+                    "Failed to mark invite as used for email {}: {:?}",
+                    payload.email,
+                    e
+                );
+                // We don't fail the registration since the user is already created
+            }
+
             tracing::info!(
                 "User successfully created with email: {}",
                 created_user.email
@@ -112,10 +137,12 @@ pub async fn register_user_handler(
     }
 }
 
-/// Application state for handlers that need both services
+/// Application state for handlers that need all services
+#[allow(clippy::struct_field_names)]
 pub struct AppState {
     pub user_service: Arc<UserServiceImpl>,
     pub auth_service: Arc<AuthService>,
+    pub invite_service: Arc<InviteService>,
 }
 
 #[tracing::instrument(skip(state, payload), fields(email = %payload.email), err(Debug))]

@@ -12,10 +12,10 @@ use crate::handlers::{
     auth_handler::{AppState, login_user_handler, register_user_handler},
     user_handler::get_current_user_handler,
 };
-use crate::services::{AuthService, UserServiceImpl};
+use crate::services::{AuthService, InviteService, UserServiceImpl};
 
 /// Creates and returns the main application router.
-/// It takes the shared application state (`UserServiceImpl` and `AuthService`) as an argument.
+/// It takes the shared application state (`UserServiceImpl`, `AuthService`, and `InviteService`) as an argument.
 ///
 /// # Environment Variables
 ///
@@ -26,10 +26,15 @@ use crate::services::{AuthService, UserServiceImpl};
 ///
 /// Panics if the `CLIENT_PORT` environment variable contains an invalid port number
 /// that cannot be formatted into a valid HTTP origin URL.
-pub fn create_router(user_service: Arc<UserServiceImpl>, auth_service: Arc<AuthService>) -> Router {
+pub fn create_router(
+    user_service: Arc<UserServiceImpl>,
+    auth_service: Arc<AuthService>,
+    invite_service: Arc<InviteService>,
+) -> Router {
     let app_state = Arc::new(AppState {
         user_service,
         auth_service,
+        invite_service,
     });
 
     Router::new()

@@ -19,14 +19,16 @@ impl InviteService {
     pub async fn check_invite_exists(&self, email: &str) -> Result<bool, AppError> {
         let email_lower = email.to_lowercase();
 
+        let current_time = Utc::now();
         let result = sqlx::query!(
             r#"
             SELECT id FROM user_invites
             WHERE email = ?1
             AND used_at IS NULL
-            AND (expires_at IS NULL OR expires_at > datetime('now'))
+            AND (expires_at IS NULL OR expires_at > ?2)
             "#,
-            email_lower
+            email_lower,
+            current_time
         )
         .fetch_optional(&self.db)
         .await?;

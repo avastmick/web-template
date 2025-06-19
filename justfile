@@ -97,6 +97,19 @@ build-server:
 build: build-client build-server
     @echo "✅ All production builds complete."
 
+# docker-build: Builds the Docker image for production.
+# Usage: just docker-build
+docker-build:
+    @echo "Building Docker image for production..."
+    docker build -t web-template .
+    @echo "✅ Docker image built successfully."
+
+# docker-run: Runs the Docker container using local environment variables.
+# Usage: just docker-run
+docker-run: check-env
+    @echo "Running Docker container with local environment variables..."
+    ./scripts/run-docker.sh
+
 # --- Testing ---
 # server-test [pattern]: Runs Rust server tests.
 # Usage: just server-test

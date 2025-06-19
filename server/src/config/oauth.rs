@@ -44,7 +44,9 @@ impl OAuthConfig {
         let client_url =
             env::var("CLIENT_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
 
-        let redirect_url = format!("{server_url}/api/auth/oauth/google/callback");
+        // Prefer explicit GOOGLE_REDIRECT_URI if set, otherwise construct from SERVER_URL
+        let redirect_url = env::var("GOOGLE_REDIRECT_URI")
+            .unwrap_or_else(|_| format!("{server_url}/api/auth/oauth/google/callback"));
 
         Ok(Self {
             google_client_id,

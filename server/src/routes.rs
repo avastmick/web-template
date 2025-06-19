@@ -1,13 +1,14 @@
 // web-template/server/src/routes.rs
 
-use axum::http::{HeaderValue, Method};
+use axum::http::{HeaderValue, Method, StatusCode};
 use axum::{
     Router,
+    routing::get_service,
     routing::{get, post},
 };
 use std::{env, sync::Arc};
 use tower_http::cors::CorsLayer;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 
 use crate::handlers::{
     auth_handler::{AppState, login_user_handler, register_user_handler},
@@ -72,8 +73,19 @@ pub fn create_router(
         .with_state(app_state)
         // Merge OAuth routes
         .merge(oauth_router)
-        // Serve static files (SvelteKit SPA) - this should be last to catch all unmatched routes
-        .fallback_service(ServeDir::new(static_dir).append_index_html_on_directories(true))
+        // Serve static files with SPA fallback - this should be last to catch all unmatched routes
+        .fallback(
+            get_service(
+                ServeDir::new(&static_dir)
+                    .fallback(ServeFile::new(format!("{static_dir}/index.html"))),
+            )
+            .handle_error(|_| async move {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to serve front-end application.",
+                )
+            }),
+        )
         .layer(
             CorsLayer::new()
                 .allow_origin({

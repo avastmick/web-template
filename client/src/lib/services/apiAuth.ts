@@ -22,7 +22,10 @@ import type {
 } from '$lib/types';
 
 // Configuration
-const API_BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT || '8081'}`;
+// In production/Docker, client and server run on the same port
+// In development, they run on separate ports (client on CLIENT_PORT, server on VITE_SERVER_PORT)
+const SERVER_PORT = import.meta.env.VITE_SERVER_PORT || window.location.port || '8081';
+const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:${SERVER_PORT}`;
 
 /**
  * Custom error class for API errors

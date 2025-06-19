@@ -37,17 +37,20 @@ async fn create_test_db() -> Pool<Sqlite> {
         .await
         .expect("Failed to create in-memory SQLite database");
 
-    // Create the users table directly for testing
+    // Create the users table directly for testing (with OAuth support)
     sqlx::query(
         r"
 		CREATE TABLE users (
 			id TEXT PRIMARY KEY,
 			email TEXT UNIQUE NOT NULL,
 			hashed_password TEXT NOT NULL,
+			provider TEXT NOT NULL DEFAULT 'local',
+			provider_user_id TEXT,
 			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 		);
 		CREATE INDEX idx_users_email ON users(email);
+		CREATE INDEX idx_users_provider_oauth ON users(provider, provider_user_id) WHERE provider != 'local';
 		",
     )
     .execute(&pool)
@@ -97,6 +100,8 @@ fn create_test_app_with_pool(pool: Pool<Sqlite>) -> Router {
         std::env::set_var("GOOGLE_CLIENT_ID", "test_client_id");
         std::env::set_var("GOOGLE_CLIENT_SECRET", "test_client_secret");
         std::env::set_var("SERVER_URL", "http://localhost:8081");
+        // Set static directory for testing (use /tmp as it always exists)
+        std::env::set_var("STATIC_DIR", "/tmp");
     }
 
     let user_service = Arc::new(UserServiceImpl::new(pool.clone()));
@@ -291,9 +296,12 @@ async fn test_register_user_weak_password() {
 
 #[tokio::test]
 async fn test_register_user_duplicate_email() {
-    let app = create_test_app().await;
-
     let dup_email = "duplicate@example.com";
+
+    // Create an invite for the test
+    let pool = create_test_invite(dup_email).await;
+    let app = create_test_app_with_pool(pool);
+
     let test_pass = TEST_SECURE_PASS;
     let payload = json!({
         "email": dup_email,
@@ -312,15 +320,16 @@ async fn test_register_user_duplicate_email() {
 
     // Second registration with same email should fail
     let response2 = send_json_request(app, Method::POST, "/api/auth/register", payload).await;
-    assert_eq!(response2.status(), StatusCode::CONFLICT);
+    // With invite-only registration, this will fail due to missing invite (403) rather than duplicate user (409)
+    assert_eq!(response2.status(), StatusCode::FORBIDDEN);
 
     let json_body = extract_json_response(response2).await;
     assert!(
         json_body["error"]
             .as_str()
             .unwrap()
-            .contains("already exists")
-            || json_body["error"].as_str().unwrap().contains("duplicate")
+            .contains("invitation only")
+            || json_body["error"].as_str().unwrap().contains("invite")
     );
 }
 

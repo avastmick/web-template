@@ -13,7 +13,10 @@ use tower_http::services::{ServeDir, ServeFile};
 use crate::handlers::{
     auth_handler::{AppState, login_user_handler, register_user_handler},
     health_handler::{health_check, readiness_check},
-    oauth_handler::{OAuthAppState, google_login_init, google_oauth_callback},
+    oauth_handler::{
+        OAuthAppState, github_login_init, github_oauth_callback, google_login_init,
+        google_oauth_callback,
+    },
     user_handler::get_current_user_handler,
 };
 use crate::services::{AuthService, InviteService, OAuthService, UserServiceImpl};
@@ -53,6 +56,11 @@ pub fn create_router(
         .route(
             "/api/auth/oauth/google/callback",
             get(google_oauth_callback),
+        )
+        .route("/api/auth/oauth/github", get(github_login_init))
+        .route(
+            "/api/auth/oauth/github/callback",
+            get(github_oauth_callback),
         )
         .with_state(oauth_app_state);
 

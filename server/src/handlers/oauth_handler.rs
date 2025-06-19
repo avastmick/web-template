@@ -11,7 +11,10 @@ use uuid::Uuid;
 use crate::{
     errors::AppError,
     handlers::auth_handler::AppState,
-    models::{OAuthUserInfo, User},
+    models::{
+        User,
+        oauth::{OAuthProvider, OAuthUserInfo},
+    },
     services::OAuthService,
 };
 
@@ -72,6 +75,29 @@ pub async fn google_login_init(
     Ok(Redirect::permanent(&auth_url))
 }
 
+/// Initiate GitHub OAuth login flow
+///
+/// Redirects the user to GitHub's OAuth authorization URL
+///
+/// # Errors
+///
+/// Returns an error if OAuth configuration is invalid or redirect URL construction fails
+#[instrument(skip(state), err(Debug))]
+pub async fn github_login_init(
+    State(state): State<OAuthAppState>,
+    Query(params): Query<OAuthInitRequest>,
+) -> Result<Redirect, AppError> {
+    // Generate a random state for CSRF protection if not provided
+    let csrf_state = params.state.unwrap_or_else(|| Uuid::new_v4().to_string());
+
+    // Get GitHub OAuth authorization URL
+    let auth_url = state.oauth_service.get_github_auth_url(&csrf_state);
+
+    tracing::info!("Initiating GitHub OAuth login with state: {}", csrf_state);
+
+    Ok(Redirect::permanent(&auth_url))
+}
+
 /// Handle Google OAuth callback
 ///
 /// Exchanges the authorization code for user information and either creates a new user
@@ -85,13 +111,38 @@ pub async fn google_oauth_callback(
     State(state): State<OAuthAppState>,
     Query(params): Query<OAuthCallbackQuery>,
 ) -> Result<Redirect, AppError> {
+    handle_oauth_callback(state, params, OAuthProvider::Google).await
+}
+
+/// Handle GitHub OAuth callback
+///
+/// Exchanges the authorization code for user information and either creates a new user
+/// or logs in an existing user
+///
+/// # Errors
+///
+/// Returns an error if OAuth exchange fails, user info retrieval fails, or JWT generation fails
+#[instrument(skip(state), fields(code = %params.code), err(Debug))]
+pub async fn github_oauth_callback(
+    State(state): State<OAuthAppState>,
+    Query(params): Query<OAuthCallbackQuery>,
+) -> Result<Redirect, AppError> {
+    handle_oauth_callback(state, params, OAuthProvider::GitHub).await
+}
+
+/// Generic OAuth callback handler
+async fn handle_oauth_callback(
+    state: OAuthAppState,
+    params: OAuthCallbackQuery,
+    provider: OAuthProvider,
+) -> Result<Redirect, AppError> {
     // Check for OAuth error
     if let Some(error) = params.error {
         return Ok(redirect_with_error(&state, &error));
     }
 
     // Exchange authorization code for user info
-    let Ok(oauth_user_info) = exchange_oauth_code(&state, &params.code).await else {
+    let Ok(oauth_user_info) = exchange_oauth_code(&state, &params.code, provider).await else {
         return Ok(redirect_with_error(&state, "oauth_exchange_failed"));
     };
 
@@ -148,12 +199,20 @@ fn redirect_with_success(
 }
 
 /// Exchange OAuth authorization code for user info
-async fn exchange_oauth_code(state: &OAuthAppState, code: &str) -> Result<OAuthUserInfo, AppError> {
-    let oauth_user_info = state.oauth_service.handle_google_callback(code).await?;
+async fn exchange_oauth_code(
+    state: &OAuthAppState,
+    code: &str,
+    provider: OAuthProvider,
+) -> Result<OAuthUserInfo, AppError> {
+    let oauth_user_info = match provider {
+        OAuthProvider::Google => state.oauth_service.handle_google_callback(code).await?,
+        OAuthProvider::GitHub => state.oauth_service.handle_github_callback(code).await?,
+    };
 
     tracing::info!(
-        "OAuth callback successful for user: {}",
-        oauth_user_info.email
+        "OAuth callback successful for user: {} (provider: {})",
+        oauth_user_info.email,
+        provider
     );
 
     Ok(oauth_user_info)

@@ -120,10 +120,10 @@ server-test pattern="":
     cd server
     if [ -z "{{pattern}}" ]; then
         echo "Running all server tests (cargo test)..."
-        RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test -- --nocapture
+        RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test -- --nocapture --test-threads=1
     else
         echo "Running specific server tests matching '{{pattern}}' (cargo test {{pattern}})..."
-        RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test "{{pattern}}" -- --nocapture
+        RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test "{{pattern}}" -- --nocapture --test-threads=1
     fi
     echo "✅ Server tests complete."
 
@@ -140,7 +140,7 @@ test-client pattern="": # Corresponds to `just test-client` in CLAUDE.md
 #        just test-e2e specific_flow_or_test_name
 test-e2e pattern="": # Corresponds to `just test-e2e` in CLAUDE.md
     #!/usr/bin/env bash
-    @echo "Running client E2E tests (Playwright via 'cd client && bun playwright test')..."
+    echo "Running client E2E tests (Playwright via 'cd client && bun playwright test')..."
     cd client
     if [ -z "{{pattern}}" ]; then
         echo "Running all Playwright tests..."
@@ -149,7 +149,7 @@ test-e2e pattern="": # Corresponds to `just test-e2e` in CLAUDE.md
         echo "Running specific Playwright tests matching '{{pattern}}'..."
         bun playwright test --grep "{{pattern}}"
     fi
-    @echo "✅ Client E2E tests complete."
+    echo "✅ Client E2E tests complete."
 
 # test [server_pattern] [client_pattern] [e2e_pattern]: Runs all tests.
 # Patterns are optional. If a pattern is not provided, all tests for that category run.

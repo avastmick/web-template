@@ -16,7 +16,9 @@ use crate::errors::AppError;
 pub struct OAuthConfig {
     pub google_client_id: String,
     pub google_client_secret: String,
-    pub redirect_url: String,
+    pub github_client_id: Option<String>,
+    pub github_client_secret: Option<String>,
+    pub server_url: String,
     pub client_url: String,
 }
 
@@ -39,19 +41,21 @@ impl OAuthConfig {
             )
         })?;
 
+        // GitHub OAuth is optional
+        let github_client_id = env::var("GITHUB_CLIENT_ID").ok();
+        let github_client_secret = env::var("GITHUB_CLIENT_SECRET").ok();
+
         let server_url =
             env::var("SERVER_URL").unwrap_or_else(|_| "http://localhost:8081".to_string());
         let client_url =
             env::var("CLIENT_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
 
-        // Prefer explicit GOOGLE_REDIRECT_URI if set, otherwise construct from SERVER_URL
-        let redirect_url = env::var("GOOGLE_REDIRECT_URI")
-            .unwrap_or_else(|_| format!("{server_url}/api/auth/oauth/google/callback"));
-
         Ok(Self {
             google_client_id,
             google_client_secret,
-            redirect_url,
+            github_client_id,
+            github_client_secret,
+            server_url,
             client_url,
         })
     }
@@ -101,7 +105,72 @@ impl OAuthConfig {
                     .expect("Valid Google token URL"),
             )
             .set_redirect_uri(
-                RedirectUrl::new(self.redirect_url.clone()).expect("Valid redirect URL"),
+                RedirectUrl::new(format!(
+                    "{}/api/auth/oauth/google/callback",
+                    self.server_url
+                ))
+                .expect("Valid redirect URL"),
+            )
+    }
+
+    /// Get the GitHub OAuth authorization URL with required scopes
+    #[must_use]
+    pub fn get_github_auth_url(&self, state: &str) -> String {
+        let github_client = self.create_github_client();
+        let (auth_url, _) = github_client
+            .authorize_url(|| CsrfToken::new(state.to_string()))
+            .add_scope(Scope::new("read:user".to_string()))
+            .add_scope(Scope::new("user:email".to_string()))
+            .url();
+
+        auth_url.to_string()
+    }
+
+    /// Create a GitHub OAuth client
+    ///
+    /// # Panics
+    ///
+    /// Panics if the GitHub OAuth URLs are invalid (which should never happen with hardcoded URLs)
+    #[must_use]
+    pub fn create_github_client(
+        &self,
+    ) -> Client<
+        BasicErrorResponse,
+        BasicTokenResponse,
+        BasicTokenIntrospectionResponse,
+        StandardRevocableToken,
+        BasicRevocationErrorResponse,
+        EndpointSet,
+        oauth2::EndpointNotSet,
+        oauth2::EndpointNotSet,
+        oauth2::EndpointNotSet,
+        EndpointSet,
+    > {
+        let client_id = self
+            .github_client_id
+            .as_ref()
+            .expect("GitHub client ID must be set");
+        let client_secret = self
+            .github_client_secret
+            .as_ref()
+            .expect("GitHub client secret must be set");
+
+        BasicClient::new(ClientId::new(client_id.clone()))
+            .set_client_secret(ClientSecret::new(client_secret.clone()))
+            .set_auth_uri(
+                AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
+                    .expect("Valid GitHub auth URL"),
+            )
+            .set_token_uri(
+                TokenUrl::new("https://github.com/login/oauth/access_token".to_string())
+                    .expect("Valid GitHub token URL"),
+            )
+            .set_redirect_uri(
+                RedirectUrl::new(format!(
+                    "{}/api/auth/oauth/github/callback",
+                    self.server_url
+                ))
+                .expect("Valid redirect URL"),
             )
     }
 }
@@ -113,21 +182,25 @@ mod tests {
 
     #[test]
     fn test_oauth_config_creation_success() {
-        // Set up test environment variables
+        // Set up test environment variables - ensure all required vars are set
         unsafe {
             env::set_var("GOOGLE_CLIENT_ID", "test_client_id");
             env::set_var("GOOGLE_CLIENT_SECRET", "test_client_secret");
             env::set_var("SERVER_URL", "http://localhost:8081");
+            env::set_var("CLIENT_URL", "http://localhost:8080");
+            // Set optional GitHub vars to empty to prevent interference
+            env::remove_var("GITHUB_CLIENT_ID");
+            env::remove_var("GITHUB_CLIENT_SECRET");
         }
 
         let config = OAuthConfig::new();
         assert!(config.is_ok());
 
         let config = config.unwrap();
-        assert_eq!(
-            config.redirect_url,
-            "http://localhost:8081/api/auth/oauth/google/callback"
-        );
+        assert_eq!(config.server_url, "http://localhost:8081");
+        assert_eq!(config.client_url, "http://localhost:8080");
+        assert!(config.github_client_id.is_none());
+        assert!(config.github_client_secret.is_none());
     }
 
     #[test]
@@ -135,10 +208,17 @@ mod tests {
         unsafe {
             env::remove_var("GOOGLE_CLIENT_ID");
             env::set_var("GOOGLE_CLIENT_SECRET", "test_client_secret");
+            env::set_var("SERVER_URL", "http://localhost:8081");
+            env::set_var("CLIENT_URL", "http://localhost:8080");
+            env::remove_var("GITHUB_CLIENT_ID");
+            env::remove_var("GITHUB_CLIENT_SECRET");
         }
 
         let config = OAuthConfig::new();
-        assert!(config.is_err());
+        assert!(
+            config.is_err(),
+            "Config creation should fail when GOOGLE_CLIENT_ID is missing"
+        );
     }
 
     #[test]
@@ -146,6 +226,10 @@ mod tests {
         unsafe {
             env::set_var("GOOGLE_CLIENT_ID", "test_client_id");
             env::remove_var("GOOGLE_CLIENT_SECRET");
+            env::set_var("SERVER_URL", "http://localhost:8081");
+            env::set_var("CLIENT_URL", "http://localhost:8080");
+            env::remove_var("GITHUB_CLIENT_ID");
+            env::remove_var("GITHUB_CLIENT_SECRET");
         }
 
         let config = OAuthConfig::new();
@@ -157,6 +241,10 @@ mod tests {
         unsafe {
             env::set_var("GOOGLE_CLIENT_ID", "test_client_id");
             env::set_var("GOOGLE_CLIENT_SECRET", "test_client_secret");
+            env::set_var("SERVER_URL", "http://localhost:8081");
+            env::set_var("CLIENT_URL", "http://localhost:8080");
+            env::remove_var("GITHUB_CLIENT_ID");
+            env::remove_var("GITHUB_CLIENT_SECRET");
         }
 
         let config = OAuthConfig::new().unwrap();

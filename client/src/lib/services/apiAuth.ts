@@ -236,6 +236,20 @@ export function initiateGoogleOAuth(state?: string): void {
 }
 
 /**
+ * Initiate GitHub OAuth login flow
+ * Redirects the user to the server's OAuth endpoint
+ */
+export function initiateGitHubOAuth(state?: string): void {
+	const url = new URL(`${API_BASE_URL}/api/auth/oauth/github`);
+	if (state) {
+		url.searchParams.set('state', state);
+	}
+
+	// Redirect to OAuth endpoint
+	window.location.href = url.toString();
+}
+
+/**
  * Handle OAuth callback (called when user returns from OAuth provider)
  * This should be called on the OAuth callback page
  */

@@ -1,0 +1,297 @@
+/**
+ * Advanced Theme Definitions
+ *
+ * Extends the base design tokens with comprehensive theming
+ * - Light and dark theme variants
+ * - High contrast themes
+ * - Reduced motion support
+ * - Custom theme variants (future extensibility)
+ * - Smooth transitions between themes
+ */
+
+/* === LIGHT THEME (DEFAULT) === */
+:root,
+.light {
+	/* Background colors */
+	--color-background-primary: #bae6fd; /* sky-200 */
+	--color-background-secondary: #dbeafe; /* sky-100 */
+	--color-background-tertiary: #e0f2fe; /* sky-100 variant */
+	--color-background-accent: var(--color-blue-50);
+
+	/* Text colors */
+	--color-text-primary: var(--color-neutral-900);
+	--color-text-secondary: var(--color-neutral-600);
+	--color-text-muted: var(--color-neutral-500);
+	--color-text-accent: var(--color-blue-700);
+	--color-text-inverse: var(--color-neutral-50);
+
+	/* Border colors */
+	--color-border-default: var(--color-neutral-300);
+	--color-border-light: var(--color-neutral-200);
+	--color-border-dark: var(--color-neutral-400);
+	--color-border-accent: var(--color-blue-300);
+
+	/* Action colors */
+	--color-action-primary: var(--color-blue-500);
+	--color-action-primary-hover: var(--color-blue-600);
+	--color-action-primary-active: var(--color-blue-700);
+	--color-action-primary-disabled: var(--color-neutral-300);
+
+	/* Status colors */
+	--color-success: #10b981;
+	--color-success-background: #d1fae5;
+	--color-warning: #f59e0b;
+	--color-warning-background: #fef3c7;
+	--color-error: #ef4444;
+	--color-error-background: #fee2e2;
+	--color-info: var(--color-blue-500);
+	--color-info-background: var(--color-blue-50);
+
+	/* Surface colors for cards, modals, etc. */
+	--color-surface-primary: #f0f9ff; /* sky-50 */
+	--color-surface-secondary: #e0f2fe; /* sky-100 */
+	--color-surface-raised: #ffffff; /* white for elevation */
+	--color-surface-overlay: rgba(0, 0, 0, 0.1);
+
+	/* Shadows */
+	--shadow-color: rgba(0, 0, 0, 0.1);
+	--shadow-color-strong: rgba(0, 0, 0, 0.25);
+}
+
+/* === DARK THEME === */
+.dark {
+	/* Background colors */
+	--color-background-primary: #312e81; /* indigo-900 */
+	--color-background-secondary: #3730a3; /* indigo-800 */
+	--color-background-tertiary: #4338ca; /* indigo-700 */
+	--color-background-accent: #1e3a8a;
+
+	/* Text colors */
+	--color-text-primary: var(--color-neutral-50);
+	--color-text-secondary: var(--color-neutral-400);
+	--color-text-muted: var(--color-neutral-500);
+	--color-text-accent: #60a5fa;
+	--color-text-inverse: var(--color-neutral-900);
+
+	/* Border colors */
+	--color-border-default: var(--color-neutral-700);
+	--color-border-light: var(--color-neutral-800);
+	--color-border-dark: var(--color-neutral-600);
+	--color-border-accent: #3b82f6;
+
+	/* Action colors */
+	--color-action-primary: #3b82f6;
+	--color-action-primary-hover: #2563eb;
+	--color-action-primary-active: #1d4ed8;
+	--color-action-primary-disabled: var(--color-neutral-700);
+
+	/* Status colors */
+	--color-success: #34d399;
+	--color-success-background: #064e3b;
+	--color-warning: #fbbf24;
+	--color-warning-background: #451a03;
+	--color-error: #f87171;
+	--color-error-background: #7f1d1d;
+	--color-info: #60a5fa;
+	--color-info-background: #1e3a8a;
+
+	/* Surface colors */
+	--color-surface-primary: #1e1b4b; /* indigo-950 */
+	--color-surface-secondary: #312e81; /* indigo-900 */
+	--color-surface-raised: #3730a3; /* indigo-800 for elevation */
+	--color-surface-overlay: rgba(255, 255, 255, 0.1);
+
+	/* Shadows */
+	--shadow-color: rgba(0, 0, 0, 0.3);
+	--shadow-color-strong: rgba(0, 0, 0, 0.6);
+}
+
+/* === HIGH CONTRAST THEMES === */
+
+/* High contrast light theme */
+@media (prefers-contrast: high) {
+	:root,
+	.light {
+		--color-background-primary: #ffffff;
+		--color-background-secondary: #ffffff;
+		--color-text-primary: #000000;
+		--color-text-secondary: #000000;
+		--color-border-default: #000000;
+		--color-action-primary: #0000ff;
+		--color-action-primary-hover: #000080;
+	}
+
+	.dark {
+		--color-background-primary: #000000;
+		--color-background-secondary: #000000;
+		--color-text-primary: #ffffff;
+		--color-text-secondary: #ffffff;
+		--color-border-default: #ffffff;
+		--color-action-primary: #00ffff;
+		--color-action-primary-hover: #ffffff;
+	}
+}
+
+/* === THEME TRANSITIONS === */
+
+/* Smooth transitions when theme changes */
+* {
+	transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+	transition-duration: var(--transition-duration-normal);
+	transition-timing-function: var(--transition-easing-smooth);
+}
+
+/* Disable transitions during theme change to prevent flicker */
+.theme-transitioning * {
+	transition: none !important;
+}
+
+/* Re-enable transitions after theme change */
+.theme-transitioning.theme-transition-complete * {
+	transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+	transition-duration: var(--transition-duration-normal);
+	transition-timing-function: var(--transition-easing-smooth);
+}
+
+/* === REDUCED MOTION SUPPORT === */
+@media (prefers-reduced-motion: reduce) {
+	* {
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+	}
+
+	/* Keep essential accessibility transitions */
+	:focus-visible {
+		transition: outline-offset var(--transition-duration-fast) ease;
+	}
+}
+
+/* === THEME-SPECIFIC COMPONENT STYLES === */
+
+/* Selection colors */
+::selection {
+	background-color: var(--color-action-primary);
+	color: var(--color-text-inverse);
+}
+
+/* Scrollbar styling (webkit browsers) */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: var(--color-background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--color-border-default);
+	border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: var(--color-border-dark);
+}
+
+/* Firefox scrollbar */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-border-default) var(--color-background-secondary);
+}
+
+/* === PRINT THEME === */
+@media print {
+	:root,
+	.dark {
+		/* Force light theme for printing */
+		--color-background-primary: white;
+		--color-background-secondary: white;
+		--color-text-primary: black;
+		--color-text-secondary: #333333;
+		--color-border-default: #cccccc;
+		--color-action-primary: #0066cc;
+
+		/* Remove shadows for print */
+		--shadow-sm: none;
+		--shadow-default: none;
+		--shadow-md: none;
+		--shadow-lg: none;
+	}
+
+	/* Ensure good contrast for print */
+	* {
+		background-color: transparent !important;
+		color: black !important;
+		box-shadow: none !important;
+		text-shadow: none !important;
+	}
+
+	/* Preserve essential styling */
+	a {
+		color: #0066cc !important;
+		text-decoration: underline !important;
+	}
+}
+
+/* === FUTURE THEME VARIANTS === */
+
+/* Custom theme support - can be extended in the future */
+.theme-sepia {
+	--color-background-primary: #f7f3e9;
+	--color-background-secondary: #f0e6d2;
+	--color-text-primary: #3c2e1e;
+	--color-text-secondary: #5d4e37;
+	--color-border-default: #d4c5a9;
+	--color-action-primary: #8b4513;
+}
+
+.theme-high-contrast-dark {
+	--color-background-primary: #000000;
+	--color-background-secondary: #111111;
+	--color-text-primary: #ffffff;
+	--color-text-secondary: #ffffff;
+	--color-border-default: #ffffff;
+	--color-action-primary: #00ff00;
+	--color-action-primary-hover: #ffffff;
+}
+
+/* === THEME UTILITIES === */
+
+/* Hide elements in specific themes */
+.light-only {
+	display: block;
+}
+
+.dark-only {
+	display: none;
+}
+
+.dark .light-only {
+	display: none;
+}
+
+.dark .dark-only {
+	display: block;
+}
+
+/* Theme-aware images */
+.theme-image {
+	transition: opacity var(--transition-duration-normal) var(--transition-easing-smooth);
+}
+
+.theme-image[data-theme='light'] {
+	opacity: 1;
+}
+
+.theme-image[data-theme='dark'] {
+	opacity: 0;
+}
+
+.dark .theme-image[data-theme='light'] {
+	opacity: 0;
+}
+
+.dark .theme-image[data-theme='dark'] {
+	opacity: 1;
+}

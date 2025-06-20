@@ -13,8 +13,8 @@ test.describe('GitHub OAuth Integration', () => {
 		await expect(githubIcon).toBeVisible();
 
 		// Verify button styling and classes
-		await expect(githubButton).toHaveClass(/border-gray-300/);
-		await expect(githubButton).toHaveClass(/bg-white/);
+		await expect(githubButton).toHaveClass(/border-border-default/);
+		await expect(githubButton).toHaveClass(/bg-transparent/);
 	});
 
 	test('register page has GitHub OAuth button', async ({ page }) => {
@@ -29,8 +29,8 @@ test.describe('GitHub OAuth Integration', () => {
 		await expect(githubIcon).toBeVisible();
 
 		// Verify button styling and classes
-		await expect(githubButton).toHaveClass(/border-gray-300/);
-		await expect(githubButton).toHaveClass(/bg-white/);
+		await expect(githubButton).toHaveClass(/border-border-default/);
+		await expect(githubButton).toHaveClass(/bg-transparent/);
 	});
 
 	test('OAuth callback page shows loading state briefly with valid parameters', async ({
@@ -139,8 +139,18 @@ test.describe('GitHub OAuth Integration', () => {
 		await expect(googleButton).toBeVisible();
 		await expect(githubButton).toBeVisible();
 
-		// They should be in the same container with space between them
-		const oauthContainer = page.locator('.space-y-3').filter({ has: githubButton });
+		// They should be in the same container
+		// Look for a container that has both buttons using a more flexible selector
+		const oauthContainer = page
+			.locator('div')
+			.filter({
+				has: page.locator('button:has-text("Continue with GitHub")')
+			})
+			.filter({
+				has: page.locator('button:has-text("Continue with Google")')
+			})
+			.first();
+
 		await expect(oauthContainer).toBeVisible();
 		await expect(oauthContainer).toContainText('Continue with Google');
 		await expect(oauthContainer).toContainText('Continue with GitHub');

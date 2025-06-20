@@ -1,3 +1,329 @@
+/* Import design tokens first */
+@import './lib/styles/tokens.css';
+
+/* Import advanced theme definitions */
+@import './lib/styles/themes.css';
+
+/* Import accessibility styles */
+@import './lib/styles/accessibility.css';
+
+/* Tailwind CSS 4.0 with plugins */
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+/**
+ * Global Styles - Modern Minimalist Design System
+ *
+ * Following "Form follows feeling" design philosophy
+ * - Clean typography with maximum 4 font sizes
+ * - 8px grid spacing system
+ * - 60-30-10 color rule implementation
+ * - Mobile-first responsive design
+ *
+ * @see documentation/UI-UX_SPECIFICATION.md
+ */
+
+/* === RESET & BASE STYLES === */
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	/* Use system font stack for better performance */
+	font-family:
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		'Roboto',
+		'Ubuntu',
+		'Cantarell',
+		'Noto Sans',
+		sans-serif,
+		'Apple Color Emoji',
+		'Segoe UI Emoji',
+		'Segoe UI Symbol',
+		'Noto Color Emoji';
+	font-size: var(--font-size-base);
+	line-height: var(--line-height-normal);
+	color: var(--color-text-primary);
+	background-color: var(--color-background-primary);
+
+	/* Improve text rendering */
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-rendering: optimizeLegibility;
+
+	/* Use modern viewport units for better mobile support */
+	min-height: 100dvh;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	min-height: 100dvh;
+
+	/* Prevent horizontal scroll on mobile */
+	overflow-x: hidden;
+}
+
+/* === TYPOGRAPHY SCALE === */
+
+h1 {
+	font-size: var(--font-size-3xl);
+	font-weight: var(--font-weight-extrabold);
+	line-height: var(--line-height-tight);
+	margin: 0 0 var(--space-6) 0;
+}
+
+h2 {
+	font-size: var(--font-size-2xl);
+	font-weight: var(--font-weight-bold);
+	line-height: var(--line-height-tight);
+	margin: 0 0 var(--space-4) 0;
+}
+
+h3 {
+	font-size: var(--font-size-xl);
+	font-weight: var(--font-weight-semibold);
+	line-height: var(--line-height-snug);
+	margin: 0 0 var(--space-4) 0;
+}
+
+h4,
+h5,
+h6 {
+	font-size: var(--font-size-lg);
+	font-weight: var(--font-weight-medium);
+	line-height: var(--line-height-snug);
+	margin: 0 0 var(--space-3) 0;
+}
+
+p {
+	font-size: var(--font-size-base);
+	line-height: var(--line-height-relaxed);
+	margin: 0 0 var(--space-4) 0;
+}
+
+small {
+	font-size: var(--font-size-sm);
+	color: var(--color-text-secondary);
+}
+
+/* === FOCUS MANAGEMENT === */
+
+/* Remove default focus outline */
+:focus {
+	outline: none;
+}
+
+/* Custom focus ring for better accessibility */
+:focus-visible {
+	outline: var(--focus-ring);
+	outline-offset: var(--focus-ring-offset);
+	border-radius: var(--radius-sm);
+}
+
+/* === BUTTON RESET === */
+
+button {
+	/* Reset default button styles */
+	border: none;
+	background: none;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+
+	/* Ensure minimum touch target size */
+	min-height: var(--touch-target-min);
+	min-width: var(--touch-target-min);
+}
+
+/* === FORM ELEMENTS === */
+
+input,
+textarea,
+select {
+	font: inherit;
+	color: var(--color-text-primary);
+	background-color: var(--color-background-primary);
+	border: 1px solid var(--color-border-default);
+	border-radius: var(--radius-default);
+	padding: var(--space-3) var(--space-4);
+
+	/* Ensure minimum touch target size */
+	min-height: var(--touch-target-min);
+
+	/* Smooth transitions */
+	transition:
+		border-color var(--transition-duration-normal) var(--transition-easing-smooth),
+		box-shadow var(--transition-duration-normal) var(--transition-easing-smooth);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+	border-color: var(--color-action-primary);
+	box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* === LINK STYLES === */
+
+a {
+	color: var(--color-action-primary);
+	text-decoration: none;
+	transition: color var(--transition-duration-fast) var(--transition-easing-smooth);
+}
+
+a:hover {
+	color: var(--color-action-primary-hover);
+	text-decoration: underline;
+}
+
+/* === UTILITY CLASSES === */
+
+/* Screen reader only content */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* Container with responsive padding */
+.container {
+	width: 100%;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 var(--space-4);
+}
+
+@media (min-width: 768px) {
+	.container {
+		padding: 0 var(--space-6);
+	}
+}
+
+@media (min-width: 1024px) {
+	.container {
+		padding: 0 var(--space-8);
+	}
+}
+
+/* === RESPONSIVE BREAKPOINTS === */
+
+/* Mobile-first approach with consistent breakpoints */
+/* Base styles are mobile (320px+) */
+
+/* Tablet */
+@media (min-width: 768px) {
+	/* Larger typography on bigger screens */
+	h1 {
+		font-size: calc(var(--font-size-3xl) * 1.2);
+	}
+
+	h2 {
+		font-size: calc(var(--font-size-2xl) * 1.1);
+	}
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+	/* Even larger typography on desktop */
+	h1 {
+		font-size: calc(var(--font-size-3xl) * 1.4);
+	}
+}
+
+/* Large desktop */
+@media (min-width: 1280px) {
+	h1 {
+		font-size: calc(var(--font-size-3xl) * 1.5);
+	}
+}
+
+/* === ACCESSIBILITY === */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+	input,
+	textarea,
+	select {
+		border-width: 2px;
+	}
+
+	button {
+		border: 2px solid currentColor;
+	}
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+/* Print styles */
+@media print {
+	* {
+		background: transparent !important;
+		color: black !important;
+		box-shadow: none !important;
+		text-shadow: none !important;
+	}
+
+	a,
+	a:visited {
+		text-decoration: underline;
+	}
+
+	abbr[title]::after {
+		content: ' (' attr(title) ')';
+	}
+
+	pre,
+	blockquote {
+		border: 1px solid #999;
+		page-break-inside: avoid;
+	}
+
+	thead {
+		display: table-header-group;
+	}
+
+	tr,
+	img {
+		page-break-inside: avoid;
+	}
+
+	img {
+		max-width: 100% !important;
+	}
+
+	p,
+	h2,
+	h3 {
+		orphans: 3;
+		widows: 3;
+	}
+
+	h2,
+	h3 {
+		page-break-after: avoid;
+	}
+}

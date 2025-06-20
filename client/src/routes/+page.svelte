@@ -1,13 +1,8 @@
 <!-- web-template/client/src/routes/+page.svelte -->
 
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { authStore, isAuthenticated, currentUser } from '$lib/stores';
-
-	onMount(() => {
-		// Initialize auth store on app load
-		authStore.init();
-	});
+	import { isAuthenticated, currentUser } from '$lib/stores';
+	import { Button, Container, Grid, Flex } from '$lib/components/ui/index.js';
 </script>
 
 <svelte:head>
@@ -15,25 +10,25 @@
 	<meta name="description" content="A modern web application template with authentication" />
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50">
-	<div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-		<div class="text-center">
-			<h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+<main id="main-content" tabindex="-1">
+	<Container class="py-16">
+		<Flex direction="col" align="center" gap="6" class="text-center">
+			<h1 class="text-text-primary text-3xl font-extrabold tracking-tight lg:text-5xl xl:text-6xl">
 				Web Application Template
 			</h1>
-			<p class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600">
+			<p class="text-text-secondary max-w-2xl text-lg leading-relaxed lg:text-xl">
 				A modern, secure web application built with SvelteKit and Rust. Features user
-				authentication, protected routes, and a beautiful UI.
+				authentication, protected routes, and a beautiful UI with advanced theming.
 			</p>
 
 			{#if $isAuthenticated && $currentUser}
 				<!-- Authenticated User View -->
-				<div class="mt-10">
-					<div class="rounded-md bg-green-50 p-4">
-						<div class="flex items-center justify-center">
+				<Flex direction="col" gap="6" class="w-full max-w-md">
+					<div class="bg-color-success-background border-color-success rounded-md border p-4">
+						<Flex align="center" gap="3">
 							<div class="flex-shrink-0">
 								<svg
-									class="h-5 w-5 text-green-400"
+									class="text-color-success h-5 w-5"
 									viewBox="0 0 20 20"
 									fill="currentColor"
 									aria-hidden="true"
@@ -45,73 +40,89 @@
 									/>
 								</svg>
 							</div>
-							<div class="ml-3">
-								<p class="text-sm font-medium text-green-800">
-									Welcome back, {$currentUser.email}!
-								</p>
-							</div>
-						</div>
+							<p class="text-color-success text-sm font-medium">
+								Welcome back, {$currentUser.email}!
+							</p>
+						</Flex>
 					</div>
 
-					<div class="mt-10 flex items-center justify-center gap-x-6">
-						<a
-							href="/profile"
-							class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-						>
-							View Profile
-						</a>
-					</div>
-				</div>
+					<Flex justify="center" gap="4">
+						<Button>
+							<a href="/profile" class="text-inherit no-underline"> View Profile </a>
+						</Button>
+					</Flex>
+				</Flex>
 			{:else}
 				<!-- Guest User View -->
-				<div class="mt-10 flex items-center justify-center gap-x-6">
-					<a
-						href="/login"
-						class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-					>
-						Sign In
-					</a>
-					<a
-						href="/register"
-						class="text-sm leading-6 font-semibold text-gray-900 hover:text-indigo-600"
-					>
-						Create Account <span aria-hidden="true">→</span>
-					</a>
-				</div>
+				<Flex justify="center" gap="4" class="flex-wrap">
+					<Button>
+						<a href="/login" class="text-inherit no-underline"> Sign In </a>
+					</Button>
+					<Button variant="ghost">
+						<a href="/register" class="text-inherit no-underline"> Create Account → </a>
+					</Button>
+				</Flex>
 			{/if}
+		</Flex>
 
-			<!-- Features Section -->
-			<div class="mt-16">
-				<h2 class="text-2xl font-bold text-gray-900">Features</h2>
-				<div class="mx-auto mt-8 max-w-2xl">
-					<dl class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-						<div class="rounded-lg bg-white p-6 shadow">
-							<dt class="text-base font-semibold text-gray-900">🔒 Secure Authentication</dt>
-							<dd class="mt-2 text-sm text-gray-600">
-								JWT-based authentication with Argon2 password hashing
-							</dd>
-						</div>
-						<div class="rounded-lg bg-white p-6 shadow">
-							<dt class="text-base font-semibold text-gray-900">⚡ High Performance</dt>
-							<dd class="mt-2 text-sm text-gray-600">
-								Rust backend with SvelteKit frontend for optimal speed
-							</dd>
-						</div>
-						<div class="rounded-lg bg-white p-6 shadow">
-							<dt class="text-base font-semibold text-gray-900">🎨 Beautiful UI</dt>
-							<dd class="mt-2 text-sm text-gray-600">
-								Tailwind CSS with responsive design and accessibility
-							</dd>
-						</div>
-						<div class="rounded-lg bg-white p-6 shadow">
-							<dt class="text-base font-semibold text-gray-900">🛡️ Type Safety</dt>
-							<dd class="mt-2 text-sm text-gray-600">
-								Full TypeScript support with strict type checking
-							</dd>
-						</div>
-					</dl>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
+		<!-- Features Section -->
+		<section class="mt-16 w-full" aria-labelledby="features-heading">
+			<h2
+				id="features-heading"
+				class="text-text-primary text-center text-2xl font-bold lg:text-3xl"
+			>
+				Features
+			</h2>
+			<Grid cols={{ sm: 1, lg: 2 }} gap="6" class="mx-auto mt-8 max-w-4xl" role="list">
+				<article
+					class="bg-surface-primary border-border-default rounded-lg border p-6 shadow"
+					role="listitem"
+				>
+					<h3 class="text-text-primary text-base font-semibold">
+						<span aria-hidden="true">🔒</span>
+						Secure Authentication
+					</h3>
+					<p class="text-text-secondary mt-2 text-sm">
+						JWT-based authentication with Argon2 password hashing and OAuth support
+					</p>
+				</article>
+				<article
+					class="bg-surface-primary border-border-default rounded-lg border p-6 shadow"
+					role="listitem"
+				>
+					<h3 class="text-text-primary text-base font-semibold">
+						<span aria-hidden="true">⚡</span>
+						High Performance
+					</h3>
+					<p class="text-text-secondary mt-2 text-sm">
+						Rust backend with SvelteKit frontend for optimal speed and reliability
+					</p>
+				</article>
+				<article
+					class="bg-surface-primary border-border-default rounded-lg border p-6 shadow"
+					role="listitem"
+				>
+					<h3 class="text-text-primary text-base font-semibold">
+						<span aria-hidden="true">🎨</span>
+						Advanced Theming
+					</h3>
+					<p class="text-text-secondary mt-2 text-sm">
+						Dark/light modes with system preference detection and design tokens
+					</p>
+				</article>
+				<article
+					class="bg-surface-primary border-border-default rounded-lg border p-6 shadow"
+					role="listitem"
+				>
+					<h3 class="text-text-primary text-base font-semibold">
+						<span aria-hidden="true">🛡️</span>
+						Type Safety
+					</h3>
+					<p class="text-text-secondary mt-2 text-sm">
+						Full TypeScript support with strict type checking and modern tooling
+					</p>
+				</article>
+			</Grid>
+		</section>
+	</Container>
+</main>

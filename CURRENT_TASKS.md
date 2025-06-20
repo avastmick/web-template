@@ -10,6 +10,20 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 - Code formatting and quality checks passing
 - Test suite issues resolved (environment variable isolation in server tests)
 
+**Phase 2: UI/UX Foundation** - **[✓] COMPLETED**
+- Task 2.1: Foundation UI System Setup (design tokens, Tailwind CSS 4.0) - **[✓] COMPLETED**
+- Task 2.2: Component Library Integration (shadcn-svelte) - **[✓] COMPLETED**
+- Task 2.3: Dark/Light Mode & Advanced Theming - **[✓] COMPLETED**
+- Task 2.4: Responsive Layout System - **[✓] COMPLETED**
+- Task 2.5: Accessibility & WCAG Compliance - **[✓] COMPLETED**
+- Task 2.6: Internationalization (i18n) Framework - **[ ] TODO**
+
+**Phase 3: Advanced Features** - **[ ] TODO**
+- Task 3.1: Generative AI Integration Framework
+- Task 3.2: Stripe Payment Integration
+- Task 3.3: Deployment Guides & DevOps
+- Task 3.4: Template Scaffolding Tools
+
 ---
 
 ### Task 1.1: Server & Client - GitHub OAuth Integration with Invite System
@@ -145,35 +159,281 @@ This task implements GitHub OAuth as an additional authentication provider along
     *   All tests should pass
     *   No flaky tests
 
-### Task 2.1: Client - Layout and styling using tailwindcss
-*   **Status:** **[ ] TODO**
-*   **Action:** Implement UI layout and base styling
-*   **Details:** (To be expanded)
+### Task 2.1: Client - Foundation UI System Setup
+*   **Status:** **[✓] COMPLETED**
+*   **Completion Notes:**
+    *   Created comprehensive design token system with W3C DTCG standard (`design-tokens.json`)
+    *   Implemented CSS custom properties for theming (`tokens.css`)
+    *   Set up 8px grid spacing system and typography scale
+    *   Configured sky-200/indigo-900 color scheme for light/dark themes
+    *   All design tokens properly integrated with Tailwind CSS
+*   **Action:** Set up modern UI foundation with Tailwind CSS 4.0 and design tokens
+*   **Details:**
+    *   Install and configure Tailwind CSS 4.0 with modern features
+    *   Implement design token system following W3C DTCG standard
+    *   Set up CSS custom properties for consistent theming
+    *   Create base typography scale (4 font sizes max)
+    *   Implement 8px grid spacing system
+    *   Configure color system following 60-30-10 rule
+*   **Files to Create/Modify:**
+    *   `client/src/lib/styles/tokens.css` (design tokens)
+    *   `client/src/app.css` (global styles with design system)
+    *   `client/tailwind.config.js` (Tailwind 4.0 configuration)
+    *   `client/src/lib/styles/design-tokens.json` (W3C DTCG token definitions)
+*   **Implementation Notes:**
+    *   Follow UI/UX specification in `documentation/UI-UX_SPECIFICATION.md`
+    *   Implement minimalist "Form follows feeling" design philosophy
+    *   Ensure mobile-first responsive design
+    *   Use modern viewport units (dvh, svh) for layouts
+*   **Quality Checks:**
+    *   `just check-client` (formatting, linting, type checking)
+    *   `just build-client` (ensure compilation succeeds)
+    *   Visual regression testing for design consistency
 
-### Task 2.2: Client - Dark/Light Mode & Color Schemes
-*   **Status:** **[ ] TODO**
-*   **Action:** Implement theme system with dark/light modes and customizable color schemes
-*   **Details:** (To be expanded)
+### Task 2.2: Client - Component Library Integration
+*   **Status:** **[✓] COMPLETED**
+*   **Action:** Integrate shadcn-svelte UI component library
+*   **Details:**
+    *   Install and configure shadcn-svelte with TypeScript support
+    *   Set up Bits UI as headless component foundation
+    *   Create base UI components (Button, Dialog, Form, Input)
+    *   Implement component composition patterns
+    *   Set up component documentation and examples
+    *   Ensure full accessibility compliance (WCAG 2.1 AA)
+*   **Files to Create/Modify:**
+    *   `client/src/lib/components/ui/` (shadcn-svelte components)
+    *   `client/components.json` (shadcn-svelte configuration)
+    *   `client/src/lib/components/ui/button.svelte` (button component)
+    *   `client/src/lib/components/ui/dialog.svelte` (dialog component)
+    *   `client/src/lib/components/ui/input.svelte` (input component)
+*   **Implementation Notes:**
+    *   Use shadcn-svelte copy-paste approach for zero bundle impact
+    *   Ensure minimum 44px touch targets for mobile
+    *   Implement proper ARIA patterns and keyboard navigation
+    *   Test with screen readers (NVDA/VoiceOver)
+*   **Quality Checks:**
+    *   Accessibility audit with axe-core
+    *   Cross-browser compatibility testing
+    *   Component playground/storybook for documentation
 
-### Task 2.3: Server - Generative AI Integration Framework
-*   **Status:** **[ ] TODO**
-*   **Action:** Create flexible framework for integrating various AI providers
-*   **Details:** (To be expanded)
+### Task 2.3: Client - Dark/Light Mode & Advanced Theming
+*   **Status:** **[✓] COMPLETED**
+*   **Action:** Implement comprehensive theme system with dark/light modes
+*   **Details:**
+    *   Set up theme store with system preference detection
+    *   Implement Tailwind CSS 4.0 custom variant for dark mode
+    *   Create theme switching UI component
+    *   Prevent Flash of Incorrect Theme (FOIT) in app.html
+    *   Support color scheme preferences and custom theme variants
+    *   Implement theme persistence with localStorage
+*   **Files to Create/Modify:**
+    *   `client/src/lib/stores/theme.js` (theme management store)
+    *   `client/src/lib/components/ThemeToggle.svelte` (theme switcher UI)
+    *   `client/src/app.html` (FOIT prevention script)
+    *   `client/tailwind.config.js` (dark mode custom variants)
+    *   `client/src/lib/styles/themes.css` (theme definitions)
+*   **Implementation Notes:**
+    *   Use `light-dark()` CSS function for automatic theme switching
+    *   Implement system preference detection with `prefers-color-scheme`
+    *   Support manual theme override (light/dark/system)
+    *   Ensure proper color contrast ratios (4.5:1 normal, 3:1 large text)
+*   **Quality Checks:**
+    *   Test theme switching across all components
+    *   Verify accessibility in both light and dark modes
+    *   Cross-browser testing for theme persistence
 
-### Task 2.4: Server & Client - Stripe Payment Integration
-*   **Status:** **[ ] TODO**
-*   **Action:** Integrate Stripe for payment processing
-*   **Details:** (To be expanded)
+### Task 2.4: Client - Responsive Layout System
+*   **Status:** **[✓] COMPLETED**
+*   **Action:** Implement modern responsive layout with CSS Grid and mobile-first design
+*   **Details:**
+    *   Create main application layout using CSS Grid
+    *   Implement responsive navigation with mobile drawer
+    *   Set up container query patterns for component responsiveness
+    *   Create breakpoint system aligned with Tailwind CSS
+    *   Implement touch-friendly interactions and gestures
+    *   Add iOS safe area handling
+*   **Files to Create/Modify:**
+    *   `client/src/lib/components/layout/AppLayout.svelte` (main layout)
+    *   `client/src/lib/components/layout/Navigation.svelte` (responsive nav)
+    *   `client/src/lib/components/layout/MobileDrawer.svelte` (mobile menu)
+    *   `client/src/lib/styles/layout.css` (layout utilities)
+    *   `client/src/routes/+layout.svelte` (root layout implementation)
+*   **Implementation Notes:**
+    *   Use CSS Grid with named grid areas for semantic layouts
+    *   Implement mobile-first responsive design approach
+    *   Ensure 8px minimum spacing between interactive elements
+    *   Use modern viewport units (dvh/svh) for full-height layouts
+    *   Add swipe gestures for mobile navigation
+*   **Quality Checks:**
+    *   Test across all device sizes (mobile, tablet, desktop)
+    *   Verify touch target sizes (minimum 44×44px)
+    *   Performance testing on mobile devices
 
-### Task 2.5: Documentation - Deployment Guides
-*   **Status:** **[ ] TODO**
-*   **Action:** Create deployment guides for GCP Cloud Run, Vercel, and Supabase
-*   **Details:** (To be expanded)
+### Task 2.5: Client - Accessibility & WCAG Compliance
+*   **Status:** **[✓] COMPLETED**
+*   **Action:** Implement comprehensive accessibility features and WCAG 2.1 AA compliance
+*   **Details:**
+    *   Set up automated accessibility testing with axe-core
+    *   Implement proper focus management and keyboard navigation
+    *   Add ARIA patterns for complex UI components
+    *   Ensure semantic HTML structure throughout
+    *   Implement high contrast mode support
+    *   Add screen reader testing and optimization
+*   **Files to Create/Modify:**
+    *   `client/src/lib/utils/accessibility.js` (a11y utilities)
+    *   `client/tests/accessibility.test.js` (automated a11y tests)
+    *   `client/src/lib/components/SkipToContent.svelte` (skip navigation)
+    *   `client/src/lib/stores/a11y.js` (accessibility preferences)
+*   **Implementation Notes:**
+    *   Integrate axe-core into CI/CD pipeline
+    *   Test with NVDA, VoiceOver, and JAWS screen readers
+    *   Implement logical tab order throughout application
+    *   Ensure all interactive elements have proper labels
+    *   Support Windows High Contrast Mode
+*   **Quality Checks:**
+    *   Automated accessibility testing in CI
+    *   Manual screen reader testing
+    *   Keyboard navigation testing
+    *   Color contrast verification
 
-### Task 2.6: Template usage - create a simple means of using the current template for a new project
+### Task 2.6: Client - Internationalization (i18n) Framework
 *   **Status:** **[ ] TODO**
-*   **Action:** Create script that will use a clean template instance for a new project
-*   **Details:** (To be expanded)
+*   **Action:** Implement svelte-i18n with lazy loading and RTL support
+*   **Details:**
+    *   Install and configure svelte-i18n with TypeScript
+    *   Set up hierarchical translation key structure
+    *   Implement route-based lazy loading of translations
+    *   Add RTL language support and direction switching
+    *   Create translation management workflow
+    *   Implement locale detection and persistence
+*   **Files to Create/Modify:**
+    *   `client/src/lib/stores/i18n.js` (i18n store configuration)
+    *   `client/src/lib/i18n/` (translation files directory)
+    *   `client/src/lib/i18n/en.json` (English translations)
+    *   `client/src/lib/i18n/es.json` (Spanish translations example)
+    *   `client/src/lib/components/LanguageSelector.svelte` (language picker)
+*   **Implementation Notes:**
+    *   Use namespace organization for efficient bundle splitting
+    *   Implement lazy loading to reduce initial bundle size
+    *   Support pluralization and interpolation
+    *   Add date/number formatting for different locales
+    *   Test with RTL languages (Arabic, Hebrew)
+*   **Quality Checks:**
+    *   Bundle size analysis for translation splits
+    *   RTL layout testing
+    *   Locale switching performance testing
+
+### Task 3.1: Server - Generative AI Integration Framework
+*   **Status:** **[ ] TODO**
+*   **Action:** Create flexible framework for integrating various AI providers (OpenAI, Google)
+*   **Details:**
+    *   Design abstract AI provider interface with common methods
+    *   Implement OpenAI GPT integration (chat completions, embeddings)
+    *   Implement Google Gemini integration (generateContent API)
+    *   Add streaming response support for real-time chat
+    *   Implement token counting and cost tracking
+    *   Add rate limiting and error handling with exponential backoff
+*   **Files to Create/Modify:**
+    *   `server/src/services/ai/` (AI provider services directory)
+    *   `server/src/services/ai/provider.rs` (abstract AI provider trait)
+    *   `server/src/services/ai/openai.rs` (OpenAI implementation)
+    *   `server/src/services/ai/google.rs` (Google Gemini implementation, including Vertex)
+    *   `server/src/handlers/ai_handler.rs` (AI API endpoints)
+    *   `server/src/models/ai.rs` (AI request/response models)
+*   **Implementation Notes:**
+    *   Use async streams for real-time responses
+    *   Implement proper error handling for API failures
+    *   Add configuration for model selection and parameters
+    *   Support both text and multimodal inputs where available
+*   **Quality Checks:**
+    *   Unit tests for each AI provider
+    *   Integration tests with mock API responses
+    *   Load testing for concurrent AI requests
+
+### Task 3.2: Server & Client - Stripe Payment Integration
+*   **Status:** **[ ] TODO**
+*   **Action:** Integrate Stripe for subscription and one-time payment processing
+*   **Details:**
+    *   Set up Stripe webhook handling for payment events
+    *   Implement subscription management (create, update, cancel)
+    *   Add one-time payment processing
+    *   Create payment UI components with Stripe Elements
+    *   Implement billing dashboard and invoice management
+    *   Add payment method management (cards, bank accounts)
+    *   Handle failed payments and dunning management
+*   **Files to Create/Modify:**
+    *   `server/src/services/payment_service.rs` (Stripe integration)
+    *   `server/src/handlers/payment_handler.rs` (payment endpoints)
+    *   `server/src/models/payment.rs` (payment data models)
+    *   `server/src/middleware/stripe_webhook.rs` (webhook verification)
+    *   `client/src/lib/components/payments/` (payment UI components)
+    *   `client/src/lib/services/payments.ts` (payment API client)
+    *   `client/src/routes/billing/` (billing dashboard routes)
+*   **Implementation Notes:**
+    *   Use Stripe's official Rust SDK
+    *   Implement idempotency for payment operations
+    *   Add comprehensive webhook event handling
+    *   Ensure PCI compliance best practices
+*   **Quality Checks:**
+    *   Test with Stripe test mode and webhook testing
+    *   Security audit for payment data handling
+    *   Integration tests for payment flows
+
+### Task 3.3: Documentation - Deployment Guides
+*   **Status:** **[ ] TODO**
+*   **Action:** Create comprehensive deployment guides for major cloud platforms
+*   **Details:**
+    *   Create GCP Cloud Run deployment guide with Docker
+    *   Create Vercel deployment guide for client-side
+    *   Create Railway/Render deployment guide for full-stack
+    *   Add database deployment options (Supabase, PlanetScale, Neon)
+    *   Create CI/CD pipeline examples (GitHub Actions)
+    *   Add monitoring and logging setup guides
+    *   Create environment variable management guides
+*   **Files to Create:**
+    *   `documentation/deployment/gcp-cloud-run.md`
+    *   `documentation/deployment/vercel.md`
+    *   `documentation/deployment/railway.md`
+    *   `documentation/deployment/database-setup.md`
+    *   `documentation/deployment/ci-cd.md`
+    *   `documentation/deployment/monitoring.md`
+    *   `.github/workflows/` (CI/CD workflow examples)
+*   **Implementation Notes:**
+    *   Include Docker configurations for production
+    *   Add health check endpoints for deployment platforms
+    *   Document scaling considerations and performance tuning
+    *   Include cost optimization strategies
+*   **Quality Checks:**
+    *   Test deployment guides on actual platforms
+    *   Verify all environment variables and configurations
+    *   Document troubleshooting common issues
+
+### Task 3.4: Developer Experience - Template Scaffolding
+*   **Status:** **[ ] TODO**
+*   **Action:** Create scaffolding tools for new projects using this template
+*   **Details:**
+    *   Create CLI tool for project initialization
+    *   Implement interactive project setup wizard
+    *   Add template customization options (features to include/exclude)
+    *   Create project renaming and rebranding automation
+    *   Add development environment setup automation
+    *   Implement feature flag system for optional components
+    *   Create update mechanism for template improvements
+*   **Files to Create:**
+    *   `scripts/create-project.js` (project scaffolding script)
+    *   `scripts/setup-wizard.js` (interactive setup)
+    *   `scripts/update-template.js` (template update utility)
+    *   `template.config.json` (template configuration)
+    *   `documentation/template-usage.md` (usage guide)
+*   **Implementation Notes:**
+    *   Use Node.js for cross-platform compatibility
+    *   Implement file templating with variable substitution
+    *   Add Git repository initialization and cleanup
+    *   Support different database options during setup
+*   **Quality Checks:**
+    *   Test project creation on different operating systems
+    *   Verify generated projects build and run correctly
+    *   Test with different configuration combinations
 
 
 **Note on Testing:**

@@ -325,30 +325,60 @@ This task implements GitHub OAuth as an additional authentication provider along
 
 ### Task 3.1: Server - Generative AI Integration Framework
 *   **Status:** **[ ] TODO**
-*   **Action:** Create flexible framework for integrating various AI providers (OpenAI, Google)
+*   **Action:** Create flexible framework for integrating various AI providers using the OpenRouter API (which uses the OpenAI API format)
 *   **Details:**
     *   Design abstract AI provider interface with common methods
     *   Implement OpenAI GPT integration (chat completions, embeddings)
-    *   Implement Google Gemini integration (generateContent API)
     *   Add streaming response support for real-time chat
     *   Implement token counting and cost tracking
     *   Add rate limiting and error handling with exponential backoff
 *   **Files to Create/Modify:**
     *   `server/src/services/ai/` (AI provider services directory)
-    *   `server/src/services/ai/provider.rs` (abstract AI provider trait)
+    *   `server/src/services/ai/provider.rs` (abstract AI provider trait to allow for later changes if required)
     *   `server/src/services/ai/openai.rs` (OpenAI implementation)
-    *   `server/src/services/ai/google.rs` (Google Gemini implementation, including Vertex)
     *   `server/src/handlers/ai_handler.rs` (AI API endpoints)
     *   `server/src/models/ai.rs` (AI request/response models)
 *   **Implementation Notes:**
+    *   Use the `openai-api-rs` (version 6.0.6 is latest) crate for interaction with the OpenRouter API
+    *   Update endpoint (see below for example)
     *   Use async streams for real-time responses
     *   Implement proper error handling for API failures
     *   Add configuration for model selection and parameters
     *   Support both text and multimodal inputs where available
+    *   MUST support structured outputs with easy definition of output JSON schema
+    *   MUST support easy means of prompt definition, including programmatic, conditional, composite prompt composition using `handlebars`, or similar.
 *   **Quality Checks:**
-    *   Unit tests for each AI provider
-    *   Integration tests with mock API responses
-    *   Load testing for concurrent AI requests
+    *   Unit tests
+    *   Integration tests with real API responses
+
+#### `openai-api-rs` usage
+
+```rust
+let api_key = std::env::var("OPENROUTER_API_KEY")
+    .map_err(|_| anyhow::anyhow!("OPENROUTER_API_KEY not found. Fatal error."))?;
+
+let mut client = OpenAIClient::builder()
+    .with_endpoint("https://openrouter.ai/api/v1")
+    .with_api_key(api_key)
+    .build()?;
+```
+
+```rust
+
+let model_name = std::env::var("MODEL_NAME")
+    .map_err(|_| anyhow::anyhow!("MODEL_NAME not found. Fatal error."))?;
+
+let req = ChatCompletionRequest::new(
+    model_name,
+    vec![chat_completion::ChatCompletionMessage {
+        role: chat_completion::MessageRole::user,
+        content: chat_completion::Content::Text(String::from("What is bitcoin?")),
+        name: None,
+        tool_calls: None,
+        tool_call_id: None,
+    }],
+);
+```
 
 ### Task 3.2: Server & Client - Stripe Payment Integration
 *   **Status:** **[ ] TODO**

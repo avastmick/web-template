@@ -3,22 +3,22 @@
 <script lang="ts">
 	import { isAuthenticated, currentUser } from '$lib/stores';
 	import { Button, Container, Grid, Flex } from '$lib/components/ui/index.js';
+	import { _ } from 'svelte-i18n';
 </script>
 
 <svelte:head>
-	<title>Web Template - Home</title>
-	<meta name="description" content="A modern web application template with authentication" />
+	<title>{$_('home.title')}</title>
+	<meta name="description" content={$_('home.description')} />
 </svelte:head>
 
 <main id="main-content" tabindex="-1">
 	<Container class="py-16">
 		<Flex direction="col" align="center" gap="6" class="text-center">
 			<h1 class="text-text-primary text-3xl font-extrabold tracking-tight lg:text-5xl xl:text-6xl">
-				Web Application Template
+				{$_('home.title')}
 			</h1>
 			<p class="text-text-secondary max-w-2xl text-lg leading-relaxed lg:text-xl">
-				A modern, secure web application built with SvelteKit and Rust. Features user
-				authentication, protected routes, and a beautiful UI with advanced theming.
+				{$_('home.description')}
 			</p>
 
 			{#if $isAuthenticated && $currentUser}
@@ -41,14 +41,14 @@
 								</svg>
 							</div>
 							<p class="text-color-success text-sm font-medium">
-								Welcome back, {$currentUser.email}!
+								{$_('home.welcomeBack', { values: { email: $currentUser.email } })}
 							</p>
 						</Flex>
 					</div>
 
 					<Flex justify="center" gap="4">
 						<Button>
-							<a href="/profile" class="text-inherit no-underline"> View Profile </a>
+							<a href="/profile" class="text-inherit no-underline">{$_('home.viewProfile')}</a>
 						</Button>
 					</Flex>
 				</Flex>
@@ -56,10 +56,10 @@
 				<!-- Guest User View -->
 				<Flex justify="center" gap="4" class="flex-wrap">
 					<Button>
-						<a href="/login" class="text-inherit no-underline"> Sign In </a>
+						<a href="/login" class="text-inherit no-underline">{$_('auth.login.submit')}</a>
 					</Button>
 					<Button variant="ghost">
-						<a href="/register" class="text-inherit no-underline"> Create Account → </a>
+						<a href="/register" class="text-inherit no-underline">{$_('home.createAccount')}</a>
 					</Button>
 				</Flex>
 			{/if}
@@ -71,7 +71,7 @@
 				id="features-heading"
 				class="text-text-primary text-center text-2xl font-bold lg:text-3xl"
 			>
-				Features
+				{$_('home.features')}
 			</h2>
 			<Grid cols={{ sm: 1, lg: 2 }} gap="6" class="mx-auto mt-8 max-w-4xl" role="list">
 				<article
@@ -80,10 +80,10 @@
 				>
 					<h3 class="text-text-primary text-base font-semibold">
 						<span aria-hidden="true">🔒</span>
-						Secure Authentication
+						{$_('home.feature.auth.title')}
 					</h3>
 					<p class="text-text-secondary mt-2 text-sm">
-						JWT-based authentication with Argon2 password hashing and OAuth support
+						{$_('home.feature.auth.description')}
 					</p>
 				</article>
 				<article
@@ -92,10 +92,10 @@
 				>
 					<h3 class="text-text-primary text-base font-semibold">
 						<span aria-hidden="true">⚡</span>
-						High Performance
+						{$_('home.feature.performance.title')}
 					</h3>
 					<p class="text-text-secondary mt-2 text-sm">
-						Rust backend with SvelteKit frontend for optimal speed and reliability
+						{$_('home.feature.performance.description')}
 					</p>
 				</article>
 				<article
@@ -104,10 +104,10 @@
 				>
 					<h3 class="text-text-primary text-base font-semibold">
 						<span aria-hidden="true">🎨</span>
-						Advanced Theming
+						{$_('home.feature.theming.title')}
 					</h3>
 					<p class="text-text-secondary mt-2 text-sm">
-						Dark/light modes with system preference detection and design tokens
+						{$_('home.feature.theming.description')}
 					</p>
 				</article>
 				<article
@@ -116,10 +116,10 @@
 				>
 					<h3 class="text-text-primary text-base font-semibold">
 						<span aria-hidden="true">🛡️</span>
-						Type Safety
+						{$_('home.feature.types.title')}
 					</h3>
 					<p class="text-text-secondary mt-2 text-sm">
-						Full TypeScript support with strict type checking and modern tooling
+						{$_('home.feature.types.description')}
 					</p>
 				</article>
 			</Grid>

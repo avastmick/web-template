@@ -14,6 +14,7 @@
 	import { Container, Flex, Button, Input } from '$lib/components/ui/index.js';
 	import { GoogleOAuthButton, GitHubOAuthButton } from '$lib/components/auth/index.js';
 	import type { RegisterRequest } from '$lib/types';
+	import { _ } from 'svelte-i18n';
 
 	// Form state
 	let email = '';
@@ -34,12 +35,12 @@
 	 */
 	function validateEmail(): boolean {
 		if (!email.trim()) {
-			emailError = 'Email is required';
+			emailError = $_('validation.required');
 			return false;
 		}
 
 		if (!EMAIL_REGEX.test(email)) {
-			emailError = 'Email must be a valid email address';
+			emailError = $_('validation.email');
 			return false;
 		}
 
@@ -52,28 +53,28 @@
 	 */
 	function validatePassword(): boolean {
 		if (!password) {
-			passwordError = 'Password is required';
+			passwordError = $_('validation.required');
 			return false;
 		}
 
 		if (password.length < 12) {
-			passwordError = 'Password must be at least 12 characters long';
+			passwordError = $_('validation.passwordMinLength');
 			return false;
 		}
 
 		// Additional strength checks
 		if (!/[a-z]/.test(password)) {
-			passwordError = 'Password must contain at least one lowercase letter';
+			passwordError = $_('validation.passwordLowercase');
 			return false;
 		}
 
 		if (!/[A-Z]/.test(password)) {
-			passwordError = 'Password must contain at least one uppercase letter';
+			passwordError = $_('validation.passwordUppercase');
 			return false;
 		}
 
 		if (!/[0-9]/.test(password)) {
-			passwordError = 'Password must contain at least one number';
+			passwordError = $_('validation.passwordNumber');
 			return false;
 		}
 
@@ -86,12 +87,12 @@
 	 */
 	function validateConfirmPassword(): boolean {
 		if (!confirmPassword) {
-			confirmPasswordError = 'Please confirm your password';
+			confirmPasswordError = $_('validation.confirmPassword');
 			return false;
 		}
 
 		if (password !== confirmPassword) {
-			confirmPasswordError = 'Passwords do not match';
+			confirmPasswordError = $_('auth.register.passwordMismatch');
 			return false;
 		}
 
@@ -154,8 +155,8 @@
 </script>
 
 <svelte:head>
-	<title>Register - Create Account</title>
-	<meta name="description" content="Create a new account to get started" />
+	<title>{$_('auth.register.pageTitle')}</title>
+	<meta name="description" content={$_('auth.register.pageDescription')} />
 </svelte:head>
 
 <main id="main-content" tabindex="-1">
@@ -164,15 +165,15 @@
 			<div class="w-full max-w-md">
 				<Flex direction="col" align="center" gap="6" class="mb-8 text-center">
 					<h1 class="text-text-primary text-3xl font-extrabold tracking-tight">
-						Create your account
+						{$_('auth.register.title')}
 					</h1>
 					<p class="text-text-secondary">
-						Or
+						{$_('auth.register.or')}
 						<a
 							href="/login"
 							class="text-primary focus-visible-ring rounded-sm font-medium hover:underline"
 						>
-							sign in to your existing account
+							{$_('auth.register.signIn')}
 						</a>
 					</p>
 				</Flex>
@@ -183,8 +184,8 @@
 						<Input
 							id="email"
 							type="email"
-							label="Email address"
-							placeholder="Enter your email"
+							label={$_('auth.register.email')}
+							placeholder={$_('auth.register.emailPlaceholder')}
 							bind:value={email}
 							onblur={handleEmailBlur}
 							disabled={isSubmitting || $isAuthLoading}
@@ -197,25 +198,23 @@
 						<Input
 							id="password"
 							type="password"
-							label="Password"
-							placeholder="Enter your password"
+							label={$_('auth.register.password')}
+							placeholder={$_('auth.register.passwordPlaceholder')}
 							bind:value={password}
 							onblur={handlePasswordBlur}
 							disabled={isSubmitting || $isAuthLoading}
 							error={passwordError}
 							required
 							autocomplete="new-password"
-							helpText={passwordError
-								? undefined
-								: 'Password must be at least 12 characters with uppercase, lowercase, and numbers'}
+							helpText={passwordError ? undefined : $_('validation.passwordHelp')}
 						/>
 
 						<!-- Confirm Password Field -->
 						<Input
 							id="confirm-password"
 							type="password"
-							label="Confirm Password"
-							placeholder="Confirm your password"
+							label={$_('auth.register.confirmPassword')}
+							placeholder={$_('auth.register.confirmPasswordPlaceholder')}
 							bind:value={confirmPassword}
 							onblur={handleConfirmPasswordBlur}
 							disabled={isSubmitting || $isAuthLoading}
@@ -235,7 +234,7 @@
 								class="text-text-secondary px-2"
 								style="background-color: var(--color-background-primary);"
 							>
-								Or continue with
+								{$_('auth.oauth.continueWith')}
 							</span>
 						</div>
 					</div>
@@ -265,7 +264,7 @@
 									</svg>
 								</div>
 								<div>
-									<h3 class="text-sm font-medium text-red-800">Registration failed</h3>
+									<h3 class="text-sm font-medium text-red-800">{$_('auth.register.error')}</h3>
 									<p class="mt-1 text-sm text-red-700">{$authError}</p>
 								</div>
 							</Flex>
@@ -277,10 +276,10 @@
 						type="submit"
 						disabled={isSubmitting || $isAuthLoading}
 						loading={isSubmitting || $isAuthLoading}
-						loadingText="Creating Account..."
+						loadingText={$_('auth.register.loadingText')}
 						class="w-full"
 					>
-						Create Account
+						{$_('auth.register.submit')}
 					</Button>
 				</form>
 			</div>

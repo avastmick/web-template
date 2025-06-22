@@ -15,8 +15,10 @@
 	import { isAuthenticated, currentUser } from '$lib/stores';
 	import { Container, Flex, Button } from '$lib/components/ui/index.js';
 	import ThemeToggle from './ThemeToggle.svelte';
+	import LanguageSelector from './LanguageSelector.svelte';
 	import { Menu, X, User, Home, ChevronDown, LogOut } from 'lucide-svelte';
 	import { cn } from '$lib/utils/index.js';
+	import { _ } from 'svelte-i18n';
 
 	// Mobile menu state
 	let mobileMenuOpen = false;
@@ -25,11 +27,19 @@
 
 	// Navigation items based on authentication state
 	$: navigationItems = $isAuthenticated
-		? [{ href: '/', label: 'Home', current: $page.url.pathname === '/', icon: Home }]
+		? [{ href: '/', label: $_('nav.home'), current: $page.url.pathname === '/', icon: Home }]
 		: [
-				{ href: '/', label: 'Home', current: $page.url.pathname === '/', icon: Home },
-				{ href: '/login', label: 'Sign In', current: $page.url.pathname === '/login' },
-				{ href: '/register', label: 'Register', current: $page.url.pathname === '/register' }
+				{ href: '/', label: $_('nav.home'), current: $page.url.pathname === '/', icon: Home },
+				{
+					href: '/login',
+					label: $_('auth.login.submit'),
+					current: $page.url.pathname === '/login'
+				},
+				{
+					href: '/register',
+					label: $_('auth.register.submit'),
+					current: $page.url.pathname === '/register'
+				}
 			];
 
 	// Close mobile menu when clicking outside or on navigation
@@ -139,7 +149,7 @@
 													onclick={closeUserDropdown}
 												>
 													<User class="h-4 w-4" aria-hidden="true" />
-													Profile
+													{$_('nav.profile')}
 												</a>
 												<button
 													type="button"
@@ -148,13 +158,16 @@
 													onclick={handleLogout}
 												>
 													<LogOut class="h-4 w-4" aria-hidden="true" />
-													Logout
+													{$_('nav.logout')}
 												</button>
 											</div>
 										</div>
 									{/if}
 								</div>
 							{/if}
+
+							<!-- Language Selector -->
+							<LanguageSelector />
 
 							<!-- Theme Toggle -->
 							<ThemeToggle />
@@ -165,6 +178,9 @@
 				<!-- Mobile Menu Button -->
 				<div class="md:hidden">
 					<Flex align="center" gap="2">
+						<!-- Language Selector (Mobile) -->
+						<LanguageSelector />
+
 						<!-- Theme Toggle (Mobile) -->
 						<ThemeToggle />
 
@@ -234,7 +250,7 @@
 										onclick={closeMobileMenu}
 									>
 										<User class="h-4 w-4" aria-hidden="true" />
-										Profile
+										{$_('nav.profile')}
 									</a>
 									<button
 										type="button"
@@ -242,7 +258,7 @@
 										onclick={handleLogout}
 									>
 										<LogOut class="h-4 w-4" aria-hidden="true" />
-										Logout
+										{$_('nav.logout')}
 									</button>
 								</div>
 							</div>

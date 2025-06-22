@@ -16,7 +16,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 - Task 2.3: Dark/Light Mode & Advanced Theming - **[✓] COMPLETED**
 - Task 2.4: Responsive Layout System - **[✓] COMPLETED**
 - Task 2.5: Accessibility & WCAG Compliance - **[✓] COMPLETED**
-- Task 2.6: Internationalization (i18n) Framework - **[ ] TODO**
+- Task 2.6: Internationalization (i18n) Framework - **[✓] COMPLETED**
 
 **Phase 3: Advanced Features** - **[ ] TODO**
 - Task 3.1: Generative AI Integration Framework
@@ -297,61 +297,194 @@ This task implements GitHub OAuth as an additional authentication provider along
     *   Color contrast verification
 
 ### Task 2.6: Client - Internationalization (i18n) Framework
-*   **Status:** **[ ] TODO**
+*   **Status:** **[✓] COMPLETED**
+*   **Completion Notes:**
+    *   Successfully implemented svelte-i18n with TypeScript support
+    *   Created comprehensive i18n infrastructure with 4 languages (en-US, es-ES, zh-CN, ar-SA)
+    *   Implemented lazy loading for translation bundles with code splitting
+    *   Added locale store with localStorage persistence and browser detection
+    *   Created LanguageSelector component with accessibility features
+    *   Implemented RTL support with automatic direction switching for Arabic
+    *   Complete translation coverage for all UI components (navigation, forms, buttons, etc.)
+    *   Written comprehensive Playwright E2E test suite (12/12 tests passing)
+    *   Fixed UI styling issues (input field shadows, language selector styling)
+    *   All client checks, builds, and tests passing
 *   **Action:** Implement svelte-i18n with lazy loading and RTL support
-*   **Details:**
-    *   Install and configure svelte-i18n with TypeScript
-    *   Set up hierarchical translation key structure
-    *   Implement route-based lazy loading of translations
-    *   Add RTL language support and direction switching
-    *   Create translation management workflow
-    *   Implement locale detection and persistence
+*   **Architecture Decisions:**
+    *   Default locale: `en-US`
+    *   Translation key structure: Flat structure for lightweight frontend (e.g., `"login.button.text"`)
+    *   Locale persistence: localStorage only (no cookies, no URL prefixes)
+    *   URL structure: Keep URLs clean without locale prefixes
+*   **Detailed Sub-tasks:**
+    1.  **Research and design i18n architecture for SvelteKit with svelte-i18n**
+        *   Analyze svelte-i18n documentation and best practices
+        *   Design flat translation key structure for efficiency
+        *   Plan lazy loading strategy for translation bundles
+    2.  **Install and configure svelte-i18n with TypeScript support**
+        *   Add svelte-i18n dependency
+        *   Configure TypeScript types for translations
+        *   Set up build-time optimizations
+    3.  **Create i18n store with locale detection and persistence**
+        *   Implement locale store with localStorage persistence
+        *   Add browser language detection fallback
+        *   Handle SSR/hydration considerations
+    4.  **Set up translation file structure and lazy loading**
+        *   Create flat JSON structure for translations
+        *   Implement dynamic import for translation bundles
+        *   Configure Vite for optimal code splitting
+    5.  **Implement LanguageSelector component**
+        *   Create accessible dropdown/menu component
+        *   Add language display names in native languages
+        *   Integrate with theme system for consistent styling
+    6.  **Add RTL support and direction switching**
+        *   Implement `dir` attribute switching on `<html>`
+        *   Add RTL-aware CSS utilities
+        *   Test with RTL languages (Arabic, Hebrew)
+    7.  **Create translation keys for existing UI components**
+        *   Audit all user-facing text in components
+        *   Extract strings to translation files
+        *   Implement translation function usage
+    8.  **Write unit tests for i18n functionality**
+        *   Test locale switching and persistence
+        *   Test translation loading and fallbacks
+        *   Test RTL direction switching
+    9.  **Write Playwright E2E tests for language switching**
+        *   Test complete language switching flow
+        *   Verify persistence across page reloads
+        *   Test RTL layout rendering
 *   **Files to Create/Modify:**
-    *   `client/src/lib/stores/i18n.js` (i18n store configuration)
+    *   `client/src/lib/stores/i18n.ts` (i18n store configuration with TypeScript)
     *   `client/src/lib/i18n/` (translation files directory)
-    *   `client/src/lib/i18n/en.json` (English translations)
-    *   `client/src/lib/i18n/es.json` (Spanish translations example)
+    *   `client/src/lib/i18n/en-US.json` (English US translations)
+    *   `client/src/lib/i18n/es-ES.json` (Spanish translations example)
+    *   `client/src/lib/i18n/zh-CN.json` (Chinese translations example)
+    *   `client/src/lib/i18n/ar-SA.json` (Arabic translations for RTL testing)
     *   `client/src/lib/components/LanguageSelector.svelte` (language picker)
+    *   `client/src/lib/utils/i18n.ts` (i18n utilities and helpers)
 *   **Implementation Notes:**
-    *   Use namespace organization for efficient bundle splitting
+    *   Use flat key structure: `"auth.login.title"`, `"auth.login.submit"`
     *   Implement lazy loading to reduce initial bundle size
     *   Support pluralization and interpolation
     *   Add date/number formatting for different locales
-    *   Test with RTL languages (Arabic, Hebrew)
+    *   Ensure proper TypeScript types for translation keys
 *   **Quality Checks:**
     *   Bundle size analysis for translation splits
-    *   RTL layout testing
+    *   RTL layout testing with Arabic/Hebrew
     *   Locale switching performance testing
+    *   Accessibility testing for language selector
+    *   Unit tests: `just test-client i18n`
+    *   E2E tests: `just test-e2e language`
 
 ### Task 3.1: Server - Generative AI Integration Framework
 *   **Status:** **[ ] TODO**
 *   **Action:** Create flexible framework for integrating various AI providers using the OpenRouter API (which uses the OpenAI API format)
-*   **Details:**
-    *   Design abstract AI provider interface with common methods
-    *   Implement OpenAI GPT integration (chat completions, embeddings)
-    *   Add streaming response support for real-time chat
-    *   Implement token counting and cost tracking
-    *   Add rate limiting and error handling with exponential backoff
+*   **Architecture Decisions:**
+    *   Models: Use models defined in `.envrc.example` (via environment variables)
+    *   Prompt organization: Feature-specific paths for reusability
+    *   Chat persistence: Store conversations per-user in database
+    *   Rate limiting: Per-user configurable limits
+    *   API design: WebSockets/SSE for real-time streaming (future: voice support)
+*   **Detailed Sub-tasks:**
+    1.  **Design AI service architecture and provider abstraction**
+        *   Define provider trait for multiple AI backends
+        *   Design modular service structure
+        *   Plan WebSocket/SSE streaming architecture
+    2.  **Add OpenRouter/OpenAI dependencies to server**
+        *   Add `openai-api-rs` v6.0.6 to Cargo.toml
+        *   Add `handlebars` for templating
+        *   Add `serde_json` and schema dependencies
+    3.  **Implement AI provider trait and OpenRouter provider**
+        *   Create abstract `AiProvider` trait
+        *   Implement `OpenRouterProvider` with OpenAI API format
+        *   Configure endpoint and authentication
+    4.  **Create prompt template system with Handlebars**
+        *   Set up Handlebars template engine
+        *   Create feature-specific template directories
+        *   Implement template composition and partials
+    5.  **Implement structured output with JSON schemas**
+        *   Create composable schema components
+        *   Implement schema assembly for requests
+        *   Add response validation against schemas
+    6.  **Add streaming support for AI responses**
+        *   Implement SSE endpoint for streaming
+        *   Add WebSocket support for bidirectional communication
+        *   Handle stream interruption and reconnection
+    7.  **Implement token counting and cost tracking**
+        *   Add token counting utilities
+        *   Track usage per user and model
+        *   Store cost data in database
+    8.  **Create AI chat API endpoints**
+        *   Implement REST endpoint for single completions
+        *   Add SSE endpoint for streaming responses
+        *   Create WebSocket handler for chat sessions
+    9.  **Add rate limiting and error handling**
+        *   Implement per-user rate limiting (configurable)
+        *   Add exponential backoff for API failures
+        *   Create comprehensive error types
+    10. **Write integration tests for AI service**
+        *   Test provider abstraction
+        *   Test streaming functionality
+        *   Test rate limiting and error scenarios
+    11. **Create client-side chat UI component**
+        *   Build chat interface component
+        *   Implement streaming message display
+        *   Add typing indicators and status updates
+    12. **Write E2E tests for chat functionality**
+        *   Test complete chat flow
+        *   Test streaming and interruption
+        *   Test rate limiting from client perspective
 *   **Files to Create/Modify:**
-    *   `server/src/services/ai/` (AI provider services directory)
-    *   `server/src/services/ai/provider.rs` (abstract AI provider trait to allow for later changes if required)
-    *   `server/src/services/ai/openai.rs` (OpenAI implementation)
-    *   `server/src/handlers/ai_handler.rs` (AI API endpoints)
-    *   `server/src/models/ai.rs` (AI request/response models)
+    Align to the following sourcecode layout:
+    ```
+    server/src/services/ai/
+    ├── assistant/
+    │   └── mod.rs         # Lifecycle management, orchestration
+    ├── context/
+    │   └── mod.rs         # Context assembly, caching
+    ├── prompt/
+    │   ├── mod.rs         # Handlebars engine, template loading
+    │   ├── templates/     # Feature-specific templates
+    │   │   ├── chat/      # Chat-specific prompts
+    │   │   └── common/    # Shared prompt partials
+    │   └── schema/
+    │       ├── mod.rs     # Schema assembly
+    │       └── components/# Reusable schema parts
+    └── provider/
+        ├── mod.rs         # Provider trait definition
+        └── openrouter.rs  # OpenRouter implementation
+    ```
+
+    Plus the following to enable the client interaction:
+    *   `server/src/handlers/ai_handler.rs` (REST/SSE/WebSocket endpoints)
+    *   `server/src/models/ai.rs` (request/response models)
+    *   `server/src/db/chat.rs` (chat persistence)
+    *   `client/src/lib/services/ai.ts` (AI service client)
+    *   `client/src/lib/components/Chat.svelte` (chat UI component)
+    *   `client/src/lib/stores/chat.ts` (chat state management)
 *   **Implementation Notes:**
-    *   Use the `openai-api-rs` (version 6.0.6 is latest) crate for interaction with the OpenRouter API
-    *   Update endpoint (see below for example)
-    *   Use async streams for real-time responses
-    *   Implement proper error handling for API failures
-    *   Add configuration for model selection and parameters
-    *   Support both text and multimodal inputs where available
-    *   MUST support structured outputs with easy definition of output JSON schema
-    *   MUST support easy means of prompt definition, including programmatic, conditional, composite prompt composition using `handlebars`, or similar.
+    *   Use `openai-api-rs` v6.0.6 with custom endpoint:
+        ```rust
+        let client = OpenAIClient::builder()
+            .with_endpoint("https://openrouter.ai/api/v1")
+            .with_api_key(api_key)
+            .build()?;
+        ```
+    *   Environment variables: `OPENROUTER_API_KEY`, `MODEL_NAME`
+    *   All AI interactions use structured JSON outputs
+    *   Handlebars templates support conditionals and partials
+    *   WebSocket/SSE for streaming (prepare for voice in future)
+    *   Per-user rate limits stored in database
 *   **Quality Checks:**
-    *   Unit tests
-    *   Integration tests with real API responses
+    *   Unit tests for all service modules
+    *   Integration tests with mocked API responses
+    *   Load testing for rate limiting
+    *   E2E tests for complete chat flow
+    *   Security audit for prompt injection
+    *   Performance testing for streaming
 
 #### `openai-api-rs` usage
+
+See [openai-api-rs](https://github.com/dongri/openai-api-rs)
 
 ```rust
 let api_key = std::env::var("OPENROUTER_API_KEY")
@@ -379,6 +512,7 @@ let req = ChatCompletionRequest::new(
     }],
 );
 ```
+
 
 ### Task 3.2: Server & Client - Stripe Payment Integration
 *   **Status:** **[ ] TODO**

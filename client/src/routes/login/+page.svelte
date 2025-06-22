@@ -16,6 +16,7 @@
 	import { Container, Flex, Button, Input } from '$lib/components/ui/index.js';
 	import { GoogleOAuthButton, GitHubOAuthButton } from '$lib/components/auth/index.js';
 	import type { LoginRequest } from '$lib/types';
+	import { _ } from 'svelte-i18n';
 
 	// Form state
 	let email = '';
@@ -38,7 +39,7 @@
 		const urlParams = new URLSearchParams($page.url.search);
 		if (urlParams.get('registered') === 'true') {
 			showSuccessMessage = true;
-			successMessage = 'Account created successfully! Please sign in below.';
+			successMessage = $_('auth.register.success') + ' ' + $_('auth.login.subtitle');
 		}
 
 		// If user is already authenticated, redirect to profile
@@ -52,12 +53,12 @@
 	 */
 	function validateEmail(): boolean {
 		if (!email.trim()) {
-			emailError = 'Email is required';
+			emailError = $_('validation.required');
 			return false;
 		}
 
 		if (!EMAIL_REGEX.test(email)) {
-			emailError = 'Email must be a valid email address';
+			emailError = $_('validation.email');
 			return false;
 		}
 
@@ -70,7 +71,7 @@
 	 */
 	function validatePassword(): boolean {
 		if (!password) {
-			passwordError = 'Password is required';
+			passwordError = $_('validation.required');
 			return false;
 		}
 
@@ -129,8 +130,8 @@
 </script>
 
 <svelte:head>
-	<title>Sign In - Login to Your Account</title>
-	<meta name="description" content="Sign in to your account to access your profile" />
+	<title>{$_('auth.login.pageTitle')}</title>
+	<meta name="description" content={$_('auth.login.pageDescription')} />
 </svelte:head>
 
 <main id="main-content" tabindex="-1">
@@ -139,15 +140,18 @@
 			<div class="w-full max-w-md">
 				<Flex direction="col" align="center" gap="6" class="mb-8 text-center">
 					<h1 class="text-text-primary text-3xl font-extrabold tracking-tight">
-						Sign in to your account
+						{$_('auth.login.title')}
 					</h1>
 					<p class="text-text-secondary">
-						Or
+						{$_('auth.login.subtitle')}
+					</p>
+					<p class="text-text-secondary">
+						{$_('auth.login.noAccount')}
 						<a
 							href="/register"
 							class="text-primary focus-visible-ring rounded-sm font-medium hover:underline"
 						>
-							create a new account
+							{$_('auth.login.signUp')}
 						</a>
 					</p>
 				</Flex>
@@ -181,8 +185,8 @@
 						<Input
 							id="email"
 							type="email"
-							label="Email address"
-							placeholder="Enter your email"
+							label={$_('auth.login.email')}
+							placeholder={$_('auth.login.email')}
 							bind:value={email}
 							onblur={handleEmailBlur}
 							disabled={isSubmitting || $isAuthLoading}
@@ -195,8 +199,8 @@
 						<Input
 							id="password"
 							type="password"
-							label="Password"
-							placeholder="Enter your password"
+							label={$_('auth.login.password')}
+							placeholder={$_('auth.login.password')}
 							bind:value={password}
 							onblur={handlePasswordBlur}
 							disabled={isSubmitting || $isAuthLoading}
@@ -216,7 +220,7 @@
 								class="text-text-secondary px-2"
 								style="background-color: var(--color-background-primary);"
 							>
-								Or continue with
+								{$_('auth.login.or')}
 							</span>
 						</div>
 					</div>
@@ -246,7 +250,7 @@
 									</svg>
 								</div>
 								<div>
-									<h3 class="text-sm font-medium text-red-800">Sign in failed</h3>
+									<h3 class="text-sm font-medium text-red-800">{$_('auth.login.error')}</h3>
 									<p class="mt-1 text-sm text-red-700">{$authError}</p>
 								</div>
 							</Flex>
@@ -258,10 +262,10 @@
 						type="submit"
 						disabled={isSubmitting || $isAuthLoading}
 						loading={isSubmitting || $isAuthLoading}
-						loadingText="Signing in..."
+						loadingText={$_('auth.login.submit') + '...'}
 						class="w-full"
 					>
-						Sign In
+						{$_('auth.login.submit')}
 					</Button>
 
 					<!-- Additional Options -->
@@ -271,10 +275,10 @@
 							class="text-primary focus-visible-ring rounded-sm text-sm font-medium underline hover:no-underline"
 							onclick={() => {
 								// TODO: Implement password reset functionality
-								alert('Password reset functionality coming soon!');
+								alert($_('auth.forgotPassword.success'));
 							}}
 						>
-							Forgot your password?
+							{$_('auth.login.forgotPassword')}
 						</button>
 					</div>
 				</form>

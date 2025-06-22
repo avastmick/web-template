@@ -40,7 +40,7 @@
 
 	// Base styles using our design tokens
 	const baseClasses =
-		'flex w-full rounded-md border px-4 py-3 text-base file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 transition-colors min-h-touch-target';
+		'flex w-full rounded-md border px-4 py-3 text-base file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 transition-colors min-h-touch-target shadow-sm';
 
 	// Helper for determining if there's an error
 	const hasError = typeof error === 'string' ? error.length > 0 : !!error;

@@ -16,7 +16,6 @@ pub struct UserInvite {
 
 impl UserInvite {
     #[must_use]
-    #[allow(dead_code)]
     pub fn new(email: &str, invited_by: Option<String>, expires_at: Option<DateTime<Utc>>) -> Self {
         let now = Utc::now();
         Self {
@@ -32,14 +31,12 @@ impl UserInvite {
     }
 
     #[must_use]
-    #[allow(dead_code)]
     pub fn is_valid(&self) -> bool {
         // Invite is valid if not used and not expired
         self.used_at.is_none() && !self.is_expired()
     }
 
     #[must_use]
-    #[allow(dead_code)]
     pub fn is_expired(&self) -> bool {
         if let Some(expires_at) = self.expires_at {
             Utc::now() > expires_at
@@ -48,7 +45,6 @@ impl UserInvite {
         }
     }
 
-    #[allow(dead_code)]
     pub fn mark_used(&mut self) {
         self.used_at = Some(Utc::now());
         self.updated_at = Utc::now();

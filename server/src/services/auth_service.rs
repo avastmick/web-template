@@ -24,7 +24,6 @@ pub struct Claims {
 /// Authentication service for JWT operations
 pub struct AuthService {
     encoding_key: EncodingKey,
-    #[allow(dead_code)] // Will be used for JWT validation in protected endpoints
     decoding_key: DecodingKey,
 }
 
@@ -91,7 +90,6 @@ impl AuthService {
     ///
     /// # Errors
     /// Returns `AppError::Unauthorized` if the token is invalid, expired, or malformed
-    #[allow(dead_code)] // Will be used for JWT validation in protected endpoints
     pub fn validate_token(&self, token: &str) -> AppResult<Claims> {
         let validation = Validation::new(Algorithm::HS256);
 
@@ -113,7 +111,6 @@ impl AuthService {
     ///
     /// # Errors
     /// Returns `AppError::Unauthorized` if the token is invalid or the user ID cannot be parsed
-    #[allow(dead_code)] // Will be used for JWT validation in protected endpoints
     pub fn get_user_id_from_token(&self, token: &str) -> AppResult<Uuid> {
         let claims = self.validate_token(token)?;
 

@@ -19,11 +19,11 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 - Task 2.6: Internationalization (i18n) Framework - **[✓] COMPLETED**
 - Task 2.7: Complete i18n Implementation Across All Pages - **[✓] COMPLETED**
 
-**Phase 3: Advanced Features** - **[ ] TODO**
-- Task 3.1: Generative AI Integration Framework
-- Task 3.2: Stripe Payment Integration
-- Task 3.3: Deployment Guides & DevOps
-- Task 3.4: Template Scaffolding Tools
+**Phase 3: Advanced Features** - **[🔄] IN PROGRESS**
+- Task 3.1: Generative AI Integration Framework - **[✅] IMPLEMENTATION COMPLETE - TESTS NEEDED**
+- Task 3.2: Stripe Payment Integration - **[ ] TODO**
+- Task 3.3: Deployment Guides & DevOps - **[ ] TODO**
+- Task 3.4: Template Scaffolding Tools - **[ ] TODO**
 
 ---
 
@@ -440,7 +440,17 @@ This task implements GitHub OAuth as an additional authentication provider along
     *   E2E tests: `just test-e2e language`
 
 ### Task 3.1: Server - Generative AI Integration Framework
-*   **Status:** **[ ] TODO**
+*   **Status:** **[✅] IMPLEMENTATION COMPLETE - INTEGRATION TESTS NEEDED**
+*   **Completion Notes:**
+    *   ✅ AI service architecture and provider abstraction implemented
+    *   ✅ OpenRouter API integration with OpenAI format complete
+    *   ✅ Comprehensive AI endpoints created (chat, streaming, file upload, conversation management)
+    *   ✅ Database persistence for conversations, messages, and usage tracking
+    *   ✅ Template system with Handlebars for prompt management
+    *   ✅ Token counting and cost estimation functionality
+    *   ✅ Error handling and authentication integration
+    *   ✅ All dead code eliminated and quality checks passing
+    *   🔄 **NEXT: Create comprehensive integration test suite**
 *   **Action:** Create flexible framework for integrating various AI providers using the OpenRouter API (which uses the OpenAI API format)
 *   **Architecture Decisions:**
     *   Models: Use models defined in `.envrc.example` (via environment variables)
@@ -493,10 +503,73 @@ This task implements GitHub OAuth as an additional authentication provider along
         *   Build chat interface component
         *   Implement streaming message display
         *   Add typing indicators and status updates
-    12. **Write E2E tests for chat functionality**
-        *   Test complete chat flow
-        *   Test streaming and interruption
-        *   Test rate limiting from client perspective
+    12. **Write comprehensive integration tests for AI chat functionality**
+        *   **Simple chat request/response test**
+            - Send basic chat message via `/api/ai/chat` endpoint
+            - Verify response structure and AI-generated content
+            - Test with different models (controlled by `AI_DEFAULT_MODEL` env var)
+            - Validate database persistence of conversation and messages
+            - Verify token counting and usage tracking
+        *   **Chat with uploaded document context test**
+            - Upload text file via `/api/ai/upload` endpoint
+            - Send chat request with file context via `/api/ai/chat/contextual`
+            - Verify AI response incorporates document context
+            - Test multiple file uploads and context merging
+            - Validate file content is properly parsed and included
+        *   **Chat archival and retrieval test**
+            - Create conversation with multiple messages
+            - Archive conversation via `/api/ai/conversations/:id/archive`
+            - Verify conversation marked as archived in database
+            - Test conversation retrieval with archived status
+            - Validate archived conversations don't appear in active list
+        *   **Chat history persistence and reuse test**
+            - Create conversation with initial context
+            - Send multiple messages to build conversation history
+            - Retrieve conversation via `/api/ai/conversations/:id`
+            - Send new message to existing conversation
+            - Verify AI response uses full conversation context
+            - Test context window management for long conversations
+        *   **Model switching via environment variable test**
+            - Test with `AI_DEFAULT_MODEL=gpt-4o-mini` (default)
+            - Change env var to `AI_DEFAULT_MODEL=claude-3-haiku-20240307`
+            - Restart service and verify new model is used
+            - Test model-specific response differences
+            - Verify usage tracking records correct model
+            - Test model override in request payload
+        *   **Error handling and edge cases test**
+            - Test invalid API keys and provider failures
+            - Test rate limiting enforcement
+            - Test malformed requests and validation
+            - Test conversation not found scenarios
+            - Test file upload size limits and invalid formats
+        *   **Streaming and real-time features test**
+            - Test SSE streaming via `/api/ai/chat/stream`
+            - Verify incremental response chunks
+            - Test stream interruption and cleanup
+            - Validate real-time typing indicators
+        *   **Authentication and authorization test**
+            - Test JWT token validation on all AI endpoints
+            - Test unauthorized access rejection
+            - Test user isolation (users can't access others' conversations)
+            - Test admin functionality (invite management, usage stats)
+*   **Integration Test Files to Create:**
+    *   `server/tests/integration/ai_chat_tests.rs` (comprehensive AI chat integration tests)
+    *   `server/tests/integration/ai_upload_tests.rs` (file upload and context tests)
+    *   `server/tests/integration/ai_conversation_tests.rs` (conversation persistence tests)
+    *   `server/tests/integration/ai_model_switching_tests.rs` (model configuration tests)
+    *   `server/tests/integration/ai_auth_tests.rs` (authentication and authorization tests)
+    *   `server/tests/integration/ai_streaming_tests.rs` (SSE streaming tests)
+    *   `client/tests/e2e/ai-chat-flow.test.ts` (end-to-end chat functionality)
+    *   `client/tests/e2e/ai-file-upload.test.ts` (file upload UI flow)
+    *   `client/tests/e2e/ai-conversation-management.test.ts` (conversation UI management)
+
+*   **Test Environment Configuration:**
+    *   Add `AI_DEFAULT_MODEL=gpt-4o-mini` to test environment
+    *   Set up test database with AI-related tables
+    *   Configure test API keys for OpenRouter (use test/mock endpoints)
+    *   Add test file uploads directory with sample documents
+    *   Configure JWT test tokens for authentication tests
+
 *   **Files to Create/Modify:**
     Align to the following sourcecode layout:
     ```

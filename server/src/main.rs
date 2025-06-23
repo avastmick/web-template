@@ -8,6 +8,7 @@ use tracing::info;
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt}; // Corrected import
 
 // Declare modules
+mod ai;
 mod config;
 mod core;
 mod errors;
@@ -106,7 +107,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     })?);
 
     // Create the main application router
-    let app = routes::create_router(user_service, auth_service, invite_service, oauth_service);
+    let app = routes::create_router(
+        user_service,
+        auth_service,
+        invite_service,
+        oauth_service,
+        db_pool.clone(),
+    )
+    .await?;
 
     // Server address
     let host_str = env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());

@@ -12,7 +12,6 @@ use crate::errors::AppError;
 
 /// OAuth provider configuration
 #[derive(Debug, Clone)]
-#[allow(dead_code)] // Will be used in OAuth endpoints
 pub struct OAuthConfig {
     pub google_client_id: String,
     pub google_client_secret: String,
@@ -22,7 +21,6 @@ pub struct OAuthConfig {
     pub client_url: String,
 }
 
-#[allow(dead_code)] // Methods will be used in OAuth endpoints
 impl OAuthConfig {
     /// Creates a new OAuth configuration
     ///

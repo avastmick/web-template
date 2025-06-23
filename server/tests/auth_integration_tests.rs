@@ -85,11 +85,11 @@ async fn create_test_db() -> Pool<Sqlite> {
 /// Helper function to create the test app with database pool
 async fn create_test_app() -> Router {
     let pool = create_test_db().await;
-    create_test_app_with_pool(pool)
+    create_test_app_with_pool(pool).await
 }
 
 /// Helper function to create the test app with a specific database pool
-fn create_test_app_with_pool(pool: Pool<Sqlite>) -> Router {
+async fn create_test_app_with_pool(pool: Pool<Sqlite>) -> Router {
     // Set up JWT secret for testing
     unsafe {
         std::env::set_var(
@@ -102,13 +102,23 @@ fn create_test_app_with_pool(pool: Pool<Sqlite>) -> Router {
         std::env::set_var("SERVER_URL", "http://localhost:8081");
         // Set static directory for testing (use /tmp as it always exists)
         std::env::set_var("STATIC_DIR", "/tmp");
+        // Set a test API key for OpenRouter (will be ignored in tests)
+        std::env::set_var("OPENROUTER_API_KEY", "test_api_key_not_real");
     }
 
     let user_service = Arc::new(UserServiceImpl::new(pool.clone()));
     let auth_service = Arc::new(AuthService::new().expect("Failed to create auth service"));
-    let invite_service = Arc::new(InviteService::new(pool));
+    let invite_service = Arc::new(InviteService::new(pool.clone()));
     let oauth_service = Arc::new(OAuthService::new().expect("Failed to create oauth service"));
-    create_router(user_service, auth_service, invite_service, oauth_service)
+    create_router(
+        user_service,
+        auth_service,
+        invite_service,
+        oauth_service,
+        pool,
+    )
+    .await
+    .expect("Failed to create router")
 }
 
 /// Helper function to send a JSON request to the test app
@@ -207,7 +217,7 @@ async fn register_and_login_user(app: Router, email: &str, password: &str) -> St
 async fn test_register_user_success() {
     // Create invite first
     let pool = create_test_invite(TEST_EMAIL).await;
-    let app = create_test_app_with_pool(pool);
+    let app = create_test_app_with_pool(pool).await;
 
     let test_email = TEST_EMAIL;
     let test_pass = TEST_SECURE_PASS;
@@ -300,7 +310,7 @@ async fn test_register_user_duplicate_email() {
 
     // Create an invite for the test
     let pool = create_test_invite(dup_email).await;
-    let app = create_test_app_with_pool(pool);
+    let app = create_test_app_with_pool(pool).await;
 
     let test_pass = TEST_SECURE_PASS;
     let payload = json!({
@@ -379,7 +389,7 @@ async fn test_login_user_success() {
     // Create invite for the test user
     let login_email = "login_test@example.com";
     let pool = create_test_invite(login_email).await;
-    let app = create_test_app_with_pool(pool);
+    let app = create_test_app_with_pool(pool).await;
 
     // First, register a user
     let test_pass = TEST_SECURE_PASS;
@@ -469,7 +479,7 @@ async fn test_login_user_wrong_password() {
     // Create invite for the test user
     let wrong_pass_email = "wrong_password_test@example.com";
     let pool = create_test_invite(wrong_pass_email).await;
-    let app = create_test_app_with_pool(pool);
+    let app = create_test_app_with_pool(pool).await;
 
     // First, register a user
     let correct_pass = TEST_CORRECT_PASS;
@@ -562,7 +572,7 @@ async fn test_get_current_user_success() {
     // Create invite for the test user
     let protected_email = "protected_test@example.com";
     let pool = create_test_invite(protected_email).await;
-    let app = create_test_app_with_pool(pool);
+    let app = create_test_app_with_pool(pool).await;
 
     // Register and login to get a valid token
     let test_pass = TEST_SECURE_PASS;

@@ -10,8 +10,17 @@ use std::{env, sync::Arc};
 use tower_http::cors::CorsLayer;
 use tower_http::services::{ServeDir, ServeFile};
 
+use crate::core::AppState;
 use crate::handlers::{
-    auth_handler::{AppState, login_user_handler, register_user_handler},
+    ai_handler::{
+        ai_info_handler, archive_conversation_handler, chat_handler, chat_stream_handler,
+        code_analysis_handler, contextual_chat_handler, create_invite_handler,
+        delete_invite_handler, demo_message_handler, error_demo_handler, get_conversation_handler,
+        get_conversations_handler, get_invite_handler, get_usage_stats_handler,
+        health_check_handler, list_invites_handler, moderate_content_handler, upload_file_handler,
+        verify_token_handler,
+    },
+    auth_handler::{login_user_handler, register_user_handler},
     health_handler::{health_check, readiness_check},
     oauth_handler::{
         OAuthAppState, github_login_init, github_oauth_callback, google_login_init,
@@ -19,10 +28,12 @@ use crate::handlers::{
     },
     user_handler::get_current_user_handler,
 };
-use crate::services::{AuthService, InviteService, OAuthService, UserServiceImpl};
+use crate::services::{
+    AiDataService, AiService, AuthService, InviteService, OAuthService, UserServiceImpl,
+};
 
 /// Creates and returns the main application router.
-/// It takes the shared application state (`UserServiceImpl`, `AuthService`, `InviteService`, and `OAuthService`) as an argument.
+/// It takes the shared application state (`UserServiceImpl`, `AuthService`, `InviteService`, `AiService`, and `OAuthService`) as an argument.
 ///
 /// # Environment Variables
 ///
@@ -31,18 +42,31 @@ use crate::services::{AuthService, InviteService, OAuthService, UserServiceImpl}
 ///
 /// # Panics
 ///
+/// # Errors
+///
+/// Returns an error if services cannot be initialized or routes cannot be configured.
+///
+/// # Panics
+///
 /// Panics if the `CLIENT_PORT` environment variable contains an invalid port number
 /// that cannot be formatted into a valid HTTP origin URL.
-pub fn create_router(
+pub async fn create_router(
     user_service: Arc<UserServiceImpl>,
     auth_service: Arc<AuthService>,
     invite_service: Arc<InviteService>,
     oauth_service: Arc<OAuthService>,
-) -> Router {
+    db_pool: sqlx::SqlitePool,
+) -> Result<Router, Box<dyn std::error::Error>> {
+    // Initialize AI services
+    let ai_service = AiService::new().await?;
+    let ai_data_service = AiDataService::new(db_pool);
+
     let app_state = Arc::new(AppState {
         user_service,
         auth_service,
         invite_service,
+        ai_service: Arc::new(tokio::sync::RwLock::new(ai_service)),
+        ai_data_service: Arc::new(ai_data_service),
     });
 
     let oauth_app_state = OAuthAppState {
@@ -68,15 +92,43 @@ pub fn create_router(
     let static_dir = env::var("STATIC_DIR").unwrap_or_else(|_| "./static".to_string());
 
     // Main router with standard auth routes
-    Router::new()
+    let router = Router::new()
         // Health check endpoints (no authentication needed)
         .route("/health", get(health_check))
         .route("/ready", get(readiness_check))
         // Authentication routes
         .route("/api/auth/register", post(register_user_handler))
         .route("/api/auth/login", post(login_user_handler))
+        .route("/api/auth/verify", get(verify_token_handler))
         // Protected user routes
         .route("/api/users/me", get(get_current_user_handler))
+        // Admin routes (invite management)
+        .route("/api/admin/invites", get(list_invites_handler))
+        .route("/api/admin/invites", post(create_invite_handler))
+        .route(
+            "/api/admin/invites/:id",
+            axum::routing::delete(delete_invite_handler),
+        )
+        .route("/api/invites/:email", get(get_invite_handler))
+        // Debug/development routes
+        .route("/api/debug/error/:error_type", get(error_demo_handler))
+        .route("/api/debug/message", get(demo_message_handler))
+        // AI routes
+        .route("/api/ai/chat", post(chat_handler))
+        .route("/api/ai/chat/stream", get(chat_stream_handler))
+        .route("/api/ai/chat/contextual", post(contextual_chat_handler))
+        .route("/api/ai/analyze/code", post(code_analysis_handler))
+        .route("/api/ai/upload", post(upload_file_handler))
+        .route("/api/ai/conversations", get(get_conversations_handler))
+        .route("/api/ai/conversations/:id", get(get_conversation_handler))
+        .route(
+            "/api/ai/conversations/:id/archive",
+            post(archive_conversation_handler),
+        )
+        .route("/api/ai/usage", get(get_usage_stats_handler))
+        .route("/api/ai/health", get(health_check_handler))
+        .route("/api/ai/moderate", post(moderate_content_handler))
+        .route("/api/ai/info", get(ai_info_handler))
         // Add other routes here (e.g., for other resources)
         .with_state(app_state)
         // Merge OAuth routes
@@ -118,7 +170,9 @@ pub fn create_router(
                     axum::http::header::CONTENT_TYPE,
                     axum::http::header::AUTHORIZATION,
                 ]),
-        )
+        );
+
+    Ok(router)
 }
 
 // Example of how you might structure nested routes if needed later:

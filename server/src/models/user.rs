@@ -13,7 +13,6 @@ pub struct User {
     pub id: Uuid,
     pub email: String,
     #[serde(skip_serializing)]
-    #[allow(dead_code)] // Will be used for password verification in login
     pub hashed_password: String,
     pub provider: String,
     pub provider_user_id: Option<String>,

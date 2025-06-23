@@ -37,7 +37,6 @@ impl InviteService {
     }
 
     /// Get a valid invite by email
-    #[allow(dead_code)]
     pub async fn get_valid_invite(&self, email: &str) -> Result<Option<UserInvite>, AppError> {
         let email_lower = email.to_lowercase();
 
@@ -92,7 +91,6 @@ impl InviteService {
     }
 
     /// Create a new invite
-    #[allow(dead_code)]
     pub async fn create_invite(
         &self,
         email: &str,
@@ -121,7 +119,6 @@ impl InviteService {
     }
 
     /// List all invites (for admin purposes)
-    #[allow(dead_code)]
     pub async fn list_invites(&self) -> Result<Vec<UserInvite>, AppError> {
         let invites = sqlx::query_as!(
             UserInvite,
@@ -146,7 +143,6 @@ impl InviteService {
     }
 
     /// Delete an invite
-    #[allow(dead_code)]
     pub async fn delete_invite(&self, id: &str) -> Result<(), AppError> {
         let result = sqlx::query!(
             r#"

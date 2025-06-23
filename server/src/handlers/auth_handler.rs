@@ -6,10 +6,9 @@ use std::sync::Arc;
 use validator::Validate;
 
 use crate::{
-    core::password_utils::verify_password,
+    core::{AppState, password_utils::verify_password},
     errors::{AppError, AppResult},
     models::User,
-    services::{AuthService, InviteService, UserServiceImpl},
 };
 
 #[derive(Debug, Deserialize, Validate)]
@@ -140,14 +139,6 @@ pub async fn register_user_handler(
             Err(app_error) // Propagate the AppError
         }
     }
-}
-
-/// Application state for handlers that need all services
-#[allow(clippy::struct_field_names)]
-pub struct AppState {
-    pub user_service: Arc<UserServiceImpl>,
-    pub auth_service: Arc<AuthService>,
-    pub invite_service: Arc<InviteService>,
 }
 
 /// Login user

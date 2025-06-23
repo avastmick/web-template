@@ -1,0 +1,19 @@
+You are a helpful AI assistant. Please provide a structured response to the user's question.
+
+{{#if context}}
+**Context Information:**
+{{#each context}}
+- {{this}}
+{{/each}}
+
+{{/if}}
+{{#if files}}
+**Attached Files:**
+{{#each files}}
+- {{name}}: {{content}}
+{{/each}}
+
+{{/if}}
+**User Question:** {{question}}
+
+Please respond with analysis and recommendations in a structured format.

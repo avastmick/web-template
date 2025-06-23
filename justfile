@@ -13,9 +13,12 @@ check-env:
     @echo "✅ Environment variables checked."
 
 # --- Database (dbmate) ---
-# db-setup: Alias for db-migrate. Sets up DB by applying all migrations.
+# db-setup: Sets up DB by applying all migrations and preparing SQLX cache.
 # Usage: just db-setup
 db-setup: db-migrate
+    @echo "Preparing SQLx query cache..."
+    cd server && SQLX_OFFLINE=false cargo sqlx prepare
+    @echo "✅ SQLx query cache prepared."
 
 # db-migrate: Apply all pending database migrations.
 # Usage: just db-migrate

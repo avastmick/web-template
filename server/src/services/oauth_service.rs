@@ -9,14 +9,11 @@ use crate::{
     models::oauth::{GitHubEmail, GitHubUserInfo, GoogleUserInfo, OAuthUserInfo},
 };
 
-#[allow(dead_code)] // Will be used in OAuth endpoints
 pub struct OAuthService {
     config: OAuthConfig,
-    #[allow(dead_code)] // Will be used in OAuth endpoints
     http_client: Client,
 }
 
-#[allow(dead_code)] // Methods will be used in OAuth endpoints
 impl OAuthService {
     /// Creates a new OAuth service
     ///

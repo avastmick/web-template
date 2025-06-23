@@ -11,7 +11,6 @@ use std::fmt;
 
 // Custom error type for password operations
 #[derive(Debug)]
-#[allow(dead_code)] // Will be used in login implementation
 pub enum PasswordError {
     HashingError(PasswordHashError),
     VerificationError(PasswordHashError),
@@ -62,7 +61,6 @@ pub fn hash_password(password: &str) -> Result<String, PasswordError> {
 ///
 /// # Errors
 /// Returns `PasswordError::VerificationError` if the hash string is invalid or password verification fails.
-#[allow(dead_code)] // Will be used in login implementation
 pub fn verify_password(password: &str, hashed_password_str: &str) -> Result<(), PasswordError> {
     let parsed_hash = match PasswordHash::new(hashed_password_str) {
         Ok(hash) => hash,

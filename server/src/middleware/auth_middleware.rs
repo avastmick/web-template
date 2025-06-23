@@ -18,7 +18,7 @@ use serde_json::json;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::{errors::AppError, handlers::auth_handler::AppState};
+use crate::{core::AppState, errors::AppError};
 
 /// Represents the authenticated user extracted from JWT
 #[derive(Debug, Clone)]

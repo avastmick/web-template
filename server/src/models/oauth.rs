@@ -52,7 +52,6 @@ impl From<GoogleUserInfo> for OAuthUserInfo {
 
 /// GitHub OAuth user information response
 #[derive(Debug, Deserialize)]
-#[allow(dead_code)] // Will be used in OAuth service implementation
 pub struct GitHubUserInfo {
     pub id: i64,
     pub login: String,
@@ -64,7 +63,6 @@ pub struct GitHubUserInfo {
 
 /// GitHub email information response
 #[derive(Debug, Deserialize)]
-#[allow(dead_code)] // Will be used in OAuth service implementation
 pub struct GitHubEmail {
     pub email: String,
     pub primary: bool,
@@ -75,7 +73,6 @@ impl GitHubUserInfo {
     /// Convert GitHub user info to OAuth user info
     /// Note: Email might need to be fetched separately if not public
     #[must_use]
-    #[allow(dead_code)] // Will be used in OAuth service implementation
     pub fn into_oauth_user_info(self, email: String) -> OAuthUserInfo {
         OAuthUserInfo {
             id: self.id.to_string(),

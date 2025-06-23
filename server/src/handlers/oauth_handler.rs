@@ -9,8 +9,8 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use crate::{
+    core::AppState,
     errors::AppError,
-    handlers::auth_handler::AppState,
     models::{
         User,
         oauth::{OAuthProvider, OAuthUserInfo},
@@ -31,7 +31,6 @@ pub struct OAuthCallbackQuery {
     /// Authorization code from OAuth provider
     pub code: String,
     /// State parameter for CSRF protection
-    #[allow(dead_code)] // Used for CSRF validation in production
     pub state: Option<String>,
     /// Error parameter if OAuth failed
     pub error: Option<String>,
@@ -139,6 +138,18 @@ async fn handle_oauth_callback(
     // Check for OAuth error
     if let Some(error) = params.error {
         return Ok(redirect_with_error(&state, &error));
+    }
+
+    // Validate state parameter for CSRF protection
+    if let Some(state_param) = &params.state {
+        // In a real implementation, you would validate this against a stored state value
+        // For now, just log that state validation would happen here
+        tracing::info!("OAuth state parameter received: {}", state_param);
+
+        // TODO: Implement proper state validation:
+        // 1. Store state in session/cache when redirecting to OAuth provider
+        // 2. Validate received state matches stored state
+        // 3. Reject if state doesn't match or is missing when expected
     }
 
     // Exchange authorization code for user info

@@ -12,7 +12,6 @@ use thiserror::Error;
 pub use crate::core::password_utils::PasswordError;
 
 #[derive(Error, Debug)]
-#[allow(dead_code)] // Many variants will be used in login and auth implementation
 pub enum AppError {
     #[error("Database error: {0}")]
     SqlxError(#[from] sqlx::Error),
@@ -61,6 +60,9 @@ pub enum AppError {
 
     #[error("Registration is by invitation only")]
     RegistrationRequiresInvite,
+
+    #[error("Bad request: {0}")]
+    BadRequest(String),
 }
 
 impl IntoResponse for AppError {
@@ -82,7 +84,9 @@ impl IntoResponse for AppError {
                     Some(e.to_string()),
                 )
             }
-            AppError::ValidationError(msg) => (StatusCode::BAD_REQUEST, msg, None),
+            AppError::ValidationError(msg) | AppError::BadRequest(msg) => {
+                (StatusCode::BAD_REQUEST, msg, None)
+            }
             AppError::UserAlreadyExists { email } => (
                 StatusCode::CONFLICT,
                 format!("User with email '{email}' already exists."),

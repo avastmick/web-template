@@ -12,6 +12,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { authStore, isAuthenticated } from '$lib/stores';
+	import { _ } from 'svelte-i18n';
 
 	let status: 'loading' | 'success' | 'error' = 'loading';
 	let errorMessage = '';
@@ -88,17 +89,17 @@
 	function getErrorMessage(error: string): string {
 		switch (error) {
 			case 'no_invite':
-				return 'Registration is by invitation only. Please contact an administrator.';
+				return $_('auth.errors.inviteOnly');
 			case 'oauth_exchange_failed':
-				return 'Failed to exchange authorization code. Please try again.';
+				return $_('auth.errors.exchangeCode');
 			case 'invite_check_failed':
-				return 'Unable to verify invitation status. Please try again.';
+				return $_('auth.errors.verifyInvite');
 			case 'user_creation_failed':
-				return 'Failed to create user account. Please try again.';
+				return $_('auth.errors.createAccount');
 			case 'user_lookup_failed':
-				return 'Unable to verify user account. Please try again.';
+				return $_('auth.errors.verifyAccount');
 			case 'token_generation_failed':
-				return 'Failed to generate authentication token. Please try again.';
+				return $_('auth.errors.generateToken');
 			default:
 				return `OAuth error: ${error}`;
 		}
@@ -113,8 +114,8 @@
 </script>
 
 <svelte:head>
-	<title>OAuth Authentication - Completing Sign In</title>
-	<meta name="description" content="Completing OAuth authentication process" />
+	<title>{$_('auth.oauth.pageTitle')}</title>
+	<meta name="description" content={$_('auth.oauth.pageDescription')} />
 </svelte:head>
 
 <div class="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
@@ -122,11 +123,11 @@
 		<div class="text-center">
 			<h2 class="mt-6 text-3xl font-extrabold text-gray-900">
 				{#if status === 'loading'}
-					Completing Sign In...
+					{$_('auth.oauth.completing')}
 				{:else if status === 'success'}
-					Sign In Successful!
+					{$_('auth.oauth.successful')}
 				{:else}
-					Sign In Failed
+					{$_('auth.oauth.failed')}
 				{/if}
 			</h2>
 		</div>
@@ -149,10 +150,10 @@
 							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 						></path>
 					</svg>
-					<span class="text-lg text-gray-600">Processing authentication...</span>
+					<span class="text-lg text-gray-600">{$_('auth.processing')}</span>
 				</div>
 				<p class="mt-4 text-sm text-gray-500">
-					Please wait while we complete your sign in with Google.
+					{$_('auth.pleaseWait')}
 				</p>
 			</div>
 		{:else if status === 'success'}
@@ -166,16 +167,16 @@
 				</div>
 				<h3 class="mt-4 text-lg font-medium text-gray-900">
 					{#if isNewUser}
-						Welcome! Your account has been created.
+						{$_('auth.welcomeNew')}
 					{:else}
-						Welcome back!
+						{$_('auth.welcomeBack')}
 					{/if}
 				</h3>
 				<p class="mt-2 text-sm text-gray-600">
 					{#if isNewUser}
-						You've successfully signed up with Google. Redirecting to your profile...
+						{$_('auth.signupSuccess')}
 					{:else}
-						You've successfully signed in with Google. Redirecting to your profile...
+						{$_('auth.signinSuccess')}
 					{/if}
 				</p>
 			</div>
@@ -192,7 +193,7 @@
 						></path>
 					</svg>
 				</div>
-				<h3 class="mt-4 text-lg font-medium text-gray-900">Authentication Failed</h3>
+				<h3 class="mt-4 text-lg font-medium text-gray-900">{$_('auth.failed.title')}</h3>
 				<p class="mt-2 text-sm text-gray-600">{errorMessage}</p>
 
 				<div class="mt-6">
@@ -201,7 +202,7 @@
 						on:click={goToLogin}
 						class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
 					>
-						Try Again
+						{$_('auth.failed.tryAgain')}
 					</button>
 				</div>
 			</div>

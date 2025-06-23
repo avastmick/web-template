@@ -12,6 +12,7 @@
 	import { goto } from '$app/navigation';
 	import { authStore, isAuthenticated, hasValidToken } from '$lib/stores';
 	import { validateToken } from '$lib/services/apiAuth';
+	import { _ } from 'svelte-i18n';
 
 	onMount(async () => {
 		// Initialize auth store from localStorage
@@ -56,7 +57,7 @@
 					></path>
 				</svg>
 			</div>
-			<p class="text-gray-600">Checking authentication...</p>
+			<p class="text-gray-600">{$_('auth.checkingAuthentication')}</p>
 		</div>
 	</div>
 {/if}

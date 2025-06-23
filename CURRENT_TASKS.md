@@ -17,6 +17,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 - Task 2.4: Responsive Layout System - **[✓] COMPLETED**
 - Task 2.5: Accessibility & WCAG Compliance - **[✓] COMPLETED**
 - Task 2.6: Internationalization (i18n) Framework - **[✓] COMPLETED**
+- Task 2.7: Complete i18n Implementation Across All Pages - **[✓] COMPLETED**
 
 **Phase 3: Advanced Features** - **[ ] TODO**
 - Task 3.1: Generative AI Integration Framework
@@ -309,6 +310,69 @@ This task implements GitHub OAuth as an additional authentication provider along
     *   Written comprehensive Playwright E2E test suite (12/12 tests passing)
     *   Fixed UI styling issues (input field shadows, language selector styling)
     *   All client checks, builds, and tests passing
+    *   **Note:** Framework is complete but some pages still need i18n implementation (see Task 2.7)
+
+### Task 2.7: Client - Complete i18n Implementation Across All Pages
+*   **Status:** **[✓] COMPLETED**
+*   **Completion Notes:**
+    *   Fixed profile page (`/profile/+page.svelte`) - converted 20+ hardcoded strings to translation keys
+    *   Fixed OAuth callback page (`/auth/oauth/callback/+page.svelte`) - converted 15+ hardcoded strings
+    *   Fixed profile layout (`/profile/+layout.svelte`) - converted authentication messages
+    *   Fixed main layout (`/+layout.svelte`) - converted loading and accessibility messages
+    *   All pages now properly use i18n translation keys throughout
+    *   Created comprehensive i18n validation E2E tests that detect hardcoded text
+    *   All translation keys exist in all 4 locale files (en-US, es-ES, zh-CN, ar-SA)
+    *   Tests confirm no hardcoded English text remains on any page
+    *   Full internationalization compliance achieved across the entire application
+*   **Action:** Complete internationalization implementation for all remaining pages and components
+*   **Priority:** High - Required for production readiness
+*   **Discovered Issues:**
+    *   Profile page (`/profile/+page.svelte`) has 20+ hardcoded English strings
+    *   OAuth callback page (`/auth/oauth/callback/+page.svelte`) has 15+ hardcoded strings
+    *   Profile layout (`/profile/+layout.svelte`) has authentication messages
+    *   Main layout (`/+layout.svelte`) has loading and accessibility messages
+*   **Detailed Sub-tasks:**
+    1.  **Fix Profile Page i18n Implementation**
+        *   Add `import { _ } from 'svelte-i18n';` to profile page
+        *   Replace hardcoded page title and meta description
+        *   Convert all user-facing text to translation keys
+        *   Update profile information section, status section, actions
+    2.  **Fix OAuth Callback Page i18n Implementation**
+        *   Add i18n import and page meta translations
+        *   Convert all authentication state messages
+        *   Translate error messages for all OAuth failure scenarios
+        *   Update success and loading messages
+    3.  **Fix Profile Layout i18n Implementation**
+        *   Add i18n import for authentication checking message
+        *   Ensure proper translation key usage
+    4.  **Fix Main Layout i18n Implementation**
+        *   Convert loading message and accessibility skip links
+        *   Ensure all user-facing text uses translation keys
+    5.  **Update Documentation and Process**
+        *   Created comprehensive i18n documentation (`client/src/lib/i18n/README.md`)
+        *   Created implementation process guide (`documentation/I18N_PROCESS.md`)
+        *   Created i18n validation E2E tests (`e2e/i18n-validation.test.ts`)
+    6.  **Run Comprehensive i18n Validation**
+        *   Execute automated i18n compliance tests
+        *   Manually test all pages in all 4 languages
+        *   Verify RTL layout for Arabic on all pages
+        *   Ensure page titles and meta descriptions are translated
+*   **Files to Modify:**
+    *   `client/src/routes/profile/+page.svelte` (convert 20+ hardcoded strings)
+    *   `client/src/routes/auth/oauth/callback/+page.svelte` (convert 15+ hardcoded strings)
+    *   `client/src/routes/profile/+layout.svelte` (convert auth messages)
+    *   `client/src/routes/+layout.svelte` (convert loading/accessibility messages)
+*   **Translation Keys Added:**
+    *   Added 40+ new translation keys to all 4 locale files
+    *   Profile page keys: `profile.pageTitle`, `profile.welcome`, `profile.userInfo.*`, etc.
+    *   Auth flow keys: `auth.processing`, `auth.oauth.*`, `auth.errors.*`, etc.
+    *   Accessibility keys: `accessibility.skipToMain`, `accessibility.skipToNav`
+*   **Quality Checks:**
+    *   All translation keys exist in all 4 locale files (en-US, es-ES, zh-CN, ar-SA)
+    *   i18n validation E2E tests pass
+    *   Manual testing in all languages
+    *   RTL layout verification for Arabic
+    *   Page title and meta description translation verification
 *   **Action:** Implement svelte-i18n with lazy loading and RTL support
 *   **Architecture Decisions:**
     *   Default locale: `en-US`

@@ -14,6 +14,7 @@
 	import { fetchCurrentUser, logout } from '$lib/services/apiAuth';
 	import { authStore, currentUser, isAuthenticated, isAuthLoading, authError } from '$lib/stores';
 	import { Container, Flex, Button } from '$lib/components/ui/index.js';
+	import { _ } from 'svelte-i18n';
 
 	// Component state
 	let isLoadingProfile = false;
@@ -90,8 +91,8 @@
 </script>
 
 <svelte:head>
-	<title>Profile - User Dashboard</title>
-	<meta name="description" content="View and manage your user profile" />
+	<title>{$_('profile.pageTitle')}</title>
+	<meta name="description" content={$_('profile.pageDescription')} />
 </svelte:head>
 
 <!-- Redirect if not authenticated -->
@@ -100,7 +101,7 @@
 		<Container class="py-16">
 			<Flex direction="col" align="center" justify="center" class="min-h-[80vh]">
 				<div class="text-center">
-					<p class="text-text-secondary">Redirecting to login...</p>
+					<p class="text-text-secondary">{$_('profile.redirecting')}</p>
 				</div>
 			</Flex>
 		</Container>
@@ -113,8 +114,8 @@
 				<div class="bg-bg-secondary border-border-default rounded-lg border p-6 shadow-sm">
 					<Flex align="center" justify="between" class="mb-4">
 						<div>
-							<h1 class="text-text-primary text-2xl font-bold">User Profile</h1>
-							<p class="text-text-secondary mt-1">Your account information and settings</p>
+							<h1 class="text-text-primary text-2xl font-bold">{$_('profile.title')}</h1>
+							<p class="text-text-secondary mt-1">{$_('profile.pageDescription')}</p>
 						</div>
 						<Flex gap="3">
 							<Button
@@ -123,7 +124,7 @@
 								onclick={handleRefresh}
 								disabled={isLoadingProfile || $isAuthLoading}
 								loading={isLoadingProfile}
-								loadingText="Refreshing..."
+								loadingText={$_('common.loading')}
 							>
 								<svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path
@@ -133,7 +134,7 @@
 										d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
 									></path>
 								</svg>
-								Refresh
+								{$_('profile.actions.refresh')}
 							</Button>
 							<Button variant="destructive" size="sm" onclick={handleLogout}>
 								<svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,7 +145,7 @@
 										d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
 									></path>
 								</svg>
-								Sign Out
+								{$_('nav.logout')}
 							</Button>
 						</Flex>
 					</Flex>
@@ -169,10 +170,9 @@
 								</svg>
 							</div>
 							<div>
-								<h3 class="text-color-success text-sm font-medium">Welcome to the application!</h3>
+								<h3 class="text-color-success text-sm font-medium">{$_('profile.welcome')}</h3>
 								<p class="text-color-success mt-1 text-sm">
-									Your account has been successfully created using Google OAuth. You can now access
-									all features of the application.
+									{$_('profile.accountCreated')}
 								</p>
 							</div>
 						</Flex>
@@ -198,7 +198,7 @@
 								</svg>
 							</div>
 							<div>
-								<h3 class="text-sm font-medium text-red-800">Error loading profile</h3>
+								<h3 class="text-sm font-medium text-red-800">{$_('profile.error')}</h3>
 								<p class="mt-1 text-sm text-red-700">{$authError}</p>
 							</div>
 						</Flex>
@@ -208,24 +208,34 @@
 				<!-- Profile Information -->
 				{#if $currentUser}
 					<div class="bg-bg-secondary border-border-default rounded-lg border p-6 shadow-sm">
-						<h2 class="text-text-primary mb-4 text-lg font-semibold">Profile Information</h2>
+						<h2 class="text-text-primary mb-4 text-lg font-semibold">
+							{$_('profile.userInfo.title')}
+						</h2>
 						<dl class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
 							<div>
-								<dt class="text-text-secondary text-sm font-medium">User ID</dt>
+								<dt class="text-text-secondary text-sm font-medium">
+									{$_('profile.userInfo.userId')}
+								</dt>
 								<dd class="text-text-primary mt-1 font-mono text-sm">{$currentUser.id}</dd>
 							</div>
 							<div>
-								<dt class="text-text-secondary text-sm font-medium">Email Address</dt>
+								<dt class="text-text-secondary text-sm font-medium">
+									{$_('profile.userInfo.email')}
+								</dt>
 								<dd class="text-text-primary mt-1 text-sm">{$currentUser.email}</dd>
 							</div>
 							<div>
-								<dt class="text-text-secondary text-sm font-medium">Account Created</dt>
+								<dt class="text-text-secondary text-sm font-medium">
+									{$_('profile.userInfo.accountCreated')}
+								</dt>
 								<dd class="text-text-primary mt-1 text-sm">
 									{formatDate($currentUser.created_at)}
 								</dd>
 							</div>
 							<div>
-								<dt class="text-text-secondary text-sm font-medium">Last Updated</dt>
+								<dt class="text-text-secondary text-sm font-medium">
+									{$_('profile.userInfo.lastUpdated')}
+								</dt>
 								<dd class="text-text-primary mt-1 text-sm">
 									{formatDate($currentUser.updated_at)}
 								</dd>
@@ -235,7 +245,9 @@
 
 					<!-- Account Status -->
 					<div class="bg-bg-secondary border-border-default rounded-lg border p-6 shadow-sm">
-						<h3 class="text-text-primary mb-4 text-lg font-semibold">Account Status</h3>
+						<h3 class="text-text-primary mb-4 text-lg font-semibold">
+							{$_('profile.status.title')}
+						</h3>
 						<Flex align="center" gap="3">
 							<div class="flex-shrink-0">
 								<svg
@@ -252,8 +264,8 @@
 								</svg>
 							</div>
 							<div>
-								<p class="text-text-primary text-sm font-medium">Active Account</p>
-								<p class="text-text-secondary text-sm">Your account is in good standing</p>
+								<p class="text-text-primary text-sm font-medium">{$_('profile.status.active')}</p>
+								<p class="text-text-secondary text-sm">{$_('profile.status.description')}</p>
 							</div>
 						</Flex>
 					</div>
@@ -281,7 +293,7 @@
 									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 								></path>
 							</svg>
-							<span class="text-text-secondary">Loading profile...</span>
+							<span class="text-text-secondary">{$_('profile.loading')}</span>
 						</Flex>
 					</div>
 				{/if}

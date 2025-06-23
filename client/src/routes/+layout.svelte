@@ -4,7 +4,7 @@
 	import { initTheme } from '$lib/stores/theme.js';
 	import { authStore } from '$lib/stores';
 	import { initializeI18n, dir } from '$lib/i18n';
-	import { waitLocale } from 'svelte-i18n';
+	import { waitLocale, _ } from 'svelte-i18n';
 	import { locale } from '$lib/stores/locale';
 	import Navigation from '$lib/components/Navigation.svelte';
 
@@ -35,14 +35,14 @@
 			<div
 				class="border-accent-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"
 			></div>
-			<p class="text-text-secondary">Loading...</p>
+			<p class="text-text-secondary">{$_('common.loading')}</p>
 		</div>
 	</div>
 {:then}
 	<!-- Skip links for keyboard navigation -->
 	<div class="skip-nav">
-		<a href="#main-content" class="skip-link">Skip to main content</a>
-		<a href="#primary-navigation" class="skip-link">Skip to navigation</a>
+		<a href="#main-content" class="skip-link">{$_('accessibility.skipToMain')}</a>
+		<a href="#primary-navigation" class="skip-link">{$_('accessibility.skipToNav')}</a>
 	</div>
 
 	<!-- Live regions for screen reader announcements -->

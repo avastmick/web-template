@@ -23,8 +23,9 @@
 		on:change={handleLocaleChange}
 		class="border-border-primary focus:ring-accent-primary hover:border-border-hover text-text-primary
 		       min-w-[120px] cursor-pointer rounded-md border bg-transparent px-3 py-2
-		       text-sm transition-colors duration-200
-		       focus:border-transparent focus:ring-2 focus:outline-none"
+		       text-sm shadow-none transition-colors
+		       duration-200 focus:border-transparent focus:ring-2
+		       focus:outline-none"
 		aria-label="Select language"
 	>
 		{#each locales as { code, name } (code)}

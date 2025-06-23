@@ -120,9 +120,9 @@ pub async fn create_router(
         .route("/api/ai/analyze/code", post(code_analysis_handler))
         .route("/api/ai/upload", post(upload_file_handler))
         .route("/api/ai/conversations", get(get_conversations_handler))
-        .route("/api/ai/conversations/:id", get(get_conversation_handler))
+        .route("/api/ai/conversations/{id}", get(get_conversation_handler))
         .route(
-            "/api/ai/conversations/:id/archive",
+            "/api/ai/conversations/{id}/archive",
             post(archive_conversation_handler),
         )
         .route("/api/ai/usage", get(get_usage_stats_handler))

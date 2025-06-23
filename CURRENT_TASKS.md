@@ -499,11 +499,7 @@ This task implements GitHub OAuth as an additional authentication provider along
         *   Test provider abstraction
         *   Test streaming functionality
         *   Test rate limiting and error scenarios
-    11. **Create client-side chat UI component**
-        *   Build chat interface component
-        *   Implement streaming message display
-        *   Add typing indicators and status updates
-    12. **Write comprehensive integration tests for AI chat functionality**
+    11. **Write comprehensive integration tests for AI chat functionality**
         *   **Simple chat request/response test**
             - Send basic chat message via `/api/ai/chat` endpoint
             - Verify response structure and AI-generated content
@@ -552,6 +548,10 @@ This task implements GitHub OAuth as an additional authentication provider along
             - Test unauthorized access rejection
             - Test user isolation (users can't access others' conversations)
             - Test admin functionality (invite management, usage stats)
+    12. **Create client-side chat UI component**
+        *   Build chat interface component
+        *   Implement streaming message display
+        *   Add typing indicators and status updates
 *   **Integration Test Files to Create:**
     *   `server/tests/integration/ai_chat_tests.rs` (comprehensive AI chat integration tests)
     *   `server/tests/integration/ai_upload_tests.rs` (file upload and context tests)
@@ -564,7 +564,7 @@ This task implements GitHub OAuth as an additional authentication provider along
     *   `client/tests/e2e/ai-conversation-management.test.ts` (conversation UI management)
 
 *   **Test Environment Configuration:**
-    *   Add `AI_DEFAULT_MODEL=gpt-4o-mini` to test environment
+    *   Add `AI_DEFAULT_MODEL=gpt-4o` to test environment
     *   Set up test database with AI-related tables
     *   Configure test API keys for OpenRouter (use test/mock endpoints)
     *   Add test file uploads directory with sample documents

@@ -204,14 +204,43 @@ test-e2e pattern="": # Corresponds to `just test-e2e` in CLAUDE.md
     @if [ -z "{{pattern}}" ]; then cd client && bun playwright test; else cd client && bun playwright test --grep "{{pattern}}"; fi
     @echo "✅ Client E2E tests complete."
 
-# test-integration [pattern]: Runs integration tests (server tests that require database).
+# test-integration [pattern] [--verbose] [--real-ai]: Runs integration tests (server tests that require database).
 # Usage: just test-integration
 #        just test-integration oauth_integration_tests
-test-integration pattern="":
-    @echo "Running integration tests..."
-    @if [ -z "{{pattern}}" ]; then echo "Running all integration tests..."; else echo "Running specific integration tests matching '{{pattern}}'..."; fi
-    @if [ -z "{{pattern}}" ]; then cd server && RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test --test "*integration*" -- --nocapture --test-threads=1; else cd server && RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test --test "{{pattern}}" -- --nocapture --test-threads=1; fi
-    @echo "✅ Integration tests complete."
+#        just test-integration ai_integration_tests --verbose           (enables AI test verbose mode)
+#        just test-integration ai_integration_tests --verbose --real-ai (uses real OpenRouter API key)
+test-integration pattern="" *flags="":
+    #!/usr/bin/env bash
+    echo "Running integration tests..."
+
+    # Check for flags
+    test_env=""
+    for flag in {{flags}}; do
+        case "$flag" in
+            "--verbose")
+                test_env="$test_env AI_TEST_VERBOSE=true"
+                echo "🔍 Verbose mode enabled for AI integration tests"
+                ;;
+            "--real-ai")
+                if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+                    test_env="$test_env OPENROUTER_API_KEY_REAL=${OPENROUTER_API_KEY}"
+                    echo "🤖 Using real OpenRouter API key for AI testing"
+                else
+                    echo "⚠️  --real-ai flag requires OPENROUTER_API_KEY environment variable"
+                    echo "💡 Export your OpenRouter API key: export OPENROUTER_API_KEY=your_key_here"
+                fi
+                ;;
+        esac
+    done
+
+    if [ -z "{{pattern}}" ]; then
+        echo "Running all integration tests..."
+        cd server && eval "$test_env RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test --test '*integration*' -- --nocapture --test-threads=1"
+    else
+        echo "Running specific integration tests matching '{{pattern}}'..."
+        cd server && eval "$test_env RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test --test '{{pattern}}' -- --nocapture --test-threads=1"
+    fi
+    echo "✅ Integration tests complete."
 
 # test [server_pattern] [client_pattern] [e2e_pattern]: Runs all tests.
 # Patterns are optional. If a pattern is not provided, all tests for that category run.

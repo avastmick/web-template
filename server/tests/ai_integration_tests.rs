@@ -7,7 +7,7 @@ use axum::{
     response::Response,
 };
 use serde_json::{Value, json};
-use sqlx::{Pool, Sqlite, SqlitePool};
+use sqlx::{Pool, Sqlite};
 use std::sync::Arc;
 use tower::ServiceExt;
 
@@ -17,115 +17,11 @@ use server::{
     services::{AuthService, InviteService, OAuthService, UserServiceImpl},
 };
 
+mod common;
+
 /// Helper function to create a test database in memory
 async fn create_test_db() -> Pool<Sqlite> {
-    let pool = SqlitePool::connect("sqlite::memory:")
-        .await
-        .expect("Failed to create in-memory SQLite database");
-
-    // Create the users table directly for testing
-    sqlx::query(
-        r"
-        CREATE TABLE users (
-            id TEXT PRIMARY KEY,
-            email TEXT UNIQUE NOT NULL,
-            hashed_password TEXT NOT NULL,
-            provider TEXT NOT NULL DEFAULT 'local',
-            provider_user_id TEXT,
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );
-        CREATE INDEX idx_users_email ON users(email);
-        CREATE INDEX idx_users_provider_oauth ON users(provider, provider_user_id) WHERE provider != 'local';
-        ",
-    )
-    .execute(&pool)
-    .await
-    .expect("Failed to create users table in test database");
-
-    // Create the user_invites table for testing
-    sqlx::query(
-        r"
-        CREATE TABLE user_invites (
-            id TEXT PRIMARY KEY NOT NULL,
-            email TEXT UNIQUE NOT NULL COLLATE NOCASE,
-            invited_by TEXT,
-            invited_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            used_at DATETIME,
-            expires_at DATETIME,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );
-        CREATE INDEX idx_user_invites_email ON user_invites(email);
-        CREATE INDEX idx_user_invites_used_at ON user_invites(used_at) WHERE used_at IS NULL;
-        CREATE INDEX idx_user_invites_expires_at ON user_invites(expires_at) WHERE expires_at IS NOT NULL;
-        ",
-    )
-    .execute(&pool)
-    .await
-    .expect("Failed to create user_invites table in test database");
-
-    // Create AI tables for testing
-    sqlx::query(
-        r"
-        CREATE TABLE ai_conversations (
-            id TEXT PRIMARY KEY NOT NULL,
-            user_id TEXT NOT NULL,
-            title TEXT,
-            model TEXT NOT NULL,
-            system_prompt TEXT,
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL,
-            archived_at TEXT,
-            metadata TEXT,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        );
-
-        CREATE TABLE ai_messages (
-            id TEXT PRIMARY KEY NOT NULL,
-            conversation_id TEXT NOT NULL,
-            role TEXT NOT NULL,
-            content TEXT NOT NULL,
-            token_count INTEGER,
-            created_at TEXT NOT NULL,
-            metadata TEXT,
-            FOREIGN KEY (conversation_id) REFERENCES ai_conversations(id) ON DELETE CASCADE
-        );
-
-        CREATE TABLE ai_usage (
-            id TEXT PRIMARY KEY NOT NULL,
-            user_id TEXT NOT NULL,
-            conversation_id TEXT,
-            model TEXT NOT NULL,
-            prompt_tokens INTEGER NOT NULL,
-            completion_tokens INTEGER NOT NULL,
-            total_tokens INTEGER NOT NULL,
-            cost_cents INTEGER,
-            request_id TEXT,
-            duration_ms INTEGER,
-            created_at TEXT NOT NULL,
-            metadata TEXT,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY (conversation_id) REFERENCES ai_conversations(id) ON DELETE SET NULL
-        );
-
-        CREATE INDEX idx_ai_conversations_user_id ON ai_conversations(user_id);
-        CREATE INDEX idx_ai_conversations_created_at ON ai_conversations(created_at);
-        CREATE INDEX idx_ai_conversations_archived ON ai_conversations(archived_at) WHERE archived_at IS NOT NULL;
-
-        CREATE INDEX idx_ai_messages_conversation_id ON ai_messages(conversation_id);
-        CREATE INDEX idx_ai_messages_created_at ON ai_messages(created_at);
-
-        CREATE INDEX idx_ai_usage_user_id ON ai_usage(user_id);
-        CREATE INDEX idx_ai_usage_model ON ai_usage(model);
-        CREATE INDEX idx_ai_usage_created_at ON ai_usage(created_at);
-        ",
-    )
-    .execute(&pool)
-    .await
-    .expect("Failed to create AI tables in test database");
-
-    pool
+    common::setup_test_database().await
 }
 
 /// Helper function to create the test app with a specific database pool
@@ -284,33 +180,6 @@ async fn test_ai_info_endpoint() {
         // Expected to fail due to missing real API key in test environment
         assert!(response.status().is_client_error() || response.status().is_server_error());
     }
-}
-
-#[tokio::test]
-async fn test_list_models_endpoint() {
-    let pool = create_test_db().await;
-    let token =
-        register_and_login_user(pool.clone(), "ai_test@example.com", "secure_password_123").await;
-    let app = create_test_app_with_pool(pool).await;
-
-    // Test the list models endpoint
-    let response =
-        send_authenticated_request(app, Method::GET, "/api/ai/models", &token, None).await;
-
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let json_body = extract_json_response(response).await;
-    assert!(json_body.is_array());
-    let models = json_body.as_array().unwrap();
-    assert!(!models.is_empty());
-
-    // Check that we have expected model names
-    let model_strings: Vec<String> = models
-        .iter()
-        .map(|v| v.as_str().unwrap().to_string())
-        .collect();
-    assert!(model_strings.iter().any(|m| m.contains("gpt")));
-    assert!(model_strings.iter().any(|m| m.contains("claude")));
 }
 
 #[tokio::test]

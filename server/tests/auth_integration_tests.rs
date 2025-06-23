@@ -12,7 +12,7 @@ use axum::{
     response::Response,
 };
 use serde_json::{Value, json};
-use sqlx::{Pool, Sqlite, SqlitePool};
+use sqlx::{Pool, Sqlite};
 use std::sync::Arc;
 use tower::ServiceExt; // for `oneshot` and `ready`
 use uuid::Uuid;
@@ -31,55 +31,11 @@ const TEST_WRONG_PASS: &str = "wrong_password_123";
 const TEST_CORRECT_PASS: &str = "correct_password_123";
 const TEST_EMPTY_PASS: &str = "";
 
+mod common;
+
 /// Helper function to create a test database in memory
 async fn create_test_db() -> Pool<Sqlite> {
-    let pool = SqlitePool::connect("sqlite::memory:")
-        .await
-        .expect("Failed to create in-memory SQLite database");
-
-    // Create the users table directly for testing (with OAuth support)
-    sqlx::query(
-        r"
-		CREATE TABLE users (
-			id TEXT PRIMARY KEY,
-			email TEXT UNIQUE NOT NULL,
-			hashed_password TEXT NOT NULL,
-			provider TEXT NOT NULL DEFAULT 'local',
-			provider_user_id TEXT,
-			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-		);
-		CREATE INDEX idx_users_email ON users(email);
-		CREATE INDEX idx_users_provider_oauth ON users(provider, provider_user_id) WHERE provider != 'local';
-		",
-    )
-    .execute(&pool)
-    .await
-    .expect("Failed to create users table in test database");
-
-    // Create the user_invites table for testing
-    sqlx::query(
-        r"
-        CREATE TABLE user_invites (
-            id TEXT PRIMARY KEY NOT NULL,
-            email TEXT UNIQUE NOT NULL COLLATE NOCASE,
-            invited_by TEXT,
-            invited_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            used_at DATETIME,
-            expires_at DATETIME,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );
-        CREATE INDEX idx_user_invites_email ON user_invites(email);
-        CREATE INDEX idx_user_invites_used_at ON user_invites(used_at) WHERE used_at IS NULL;
-        CREATE INDEX idx_user_invites_expires_at ON user_invites(expires_at) WHERE expires_at IS NOT NULL;
-        ",
-    )
-    .execute(&pool)
-    .await
-    .expect("Failed to create user_invites table in test database");
-
-    pool
+    common::setup_test_database().await
 }
 
 /// Helper function to create the test app with database pool

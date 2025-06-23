@@ -487,6 +487,7 @@ pub async fn ai_info_handler(
         "templates": ai_service.list_templates(),
         "schemas": ai_service.list_schemas(),
         "streaming_supported": true,
+        "websocket_supported": true,
     });
 
     Ok(Json(info))

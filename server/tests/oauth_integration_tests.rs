@@ -4,19 +4,10 @@ use std::env;
 use server::models::oauth::OAuthProvider;
 use server::services::OAuthService;
 
+mod common;
+
 async fn setup_test_db() -> SqlitePool {
-    // Create an in-memory SQLite database for testing
-    let pool = SqlitePool::connect(":memory:")
-        .await
-        .expect("Failed to create test database");
-
-    // Run migrations to create oauth_states table
-    sqlx::migrate!("./db/migrations")
-        .run(&pool)
-        .await
-        .expect("Failed to run migrations");
-
-    pool
+    common::setup_test_database().await
 }
 
 fn setup_test_env() {

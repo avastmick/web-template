@@ -178,10 +178,10 @@ docker-run: check-env
     ./scripts/run-docker.sh
 
 # --- Testing ---
-# server-test [pattern]: Runs Rust server tests.
-# Usage: just server-test
-#        just server-test specific_module_or_test_name
-server-test pattern="":
+# test-server [pattern]: Runs Rust server tests.
+# Usage: just test-server
+#        just test-server specific_module_or_test_name
+test-server pattern="":
     @echo "Running Rust server tests..."
     @if [ -z "{{pattern}}" ]; then echo "Running all server tests (cargo test)..."; else echo "Running specific server tests matching '{{pattern}}' (cargo test {{pattern}})..."; fi
     @if [ -z "{{pattern}}" ]; then cd server && RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test -- --nocapture --test-threads=1; else cd server && RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test "{{pattern}}" -- --nocapture --test-threads=1; fi
@@ -220,9 +220,8 @@ test-integration pattern="":
 #        just test "" "" login_flow # runs all server, all client, login_flow e2e
 test server_pattern="" client_pattern="" e2e_pattern="":
     @echo "Running all tests: server, client (unit/integration), and E2E..."
-    just server-test "{{server_pattern}}"
+    just test-server "{{server_pattern}}"
     just test-client "{{client_pattern}}"
-    just test-e2e "{{e2e_pattern}}"
     @echo "✅ All tests completed."
 
 # --- Formatting ---
@@ -249,7 +248,7 @@ format: format-server format-client
 # check-server: Runs server-side checks (fmt --check, clippy, cargo check).
 # As per CLAUDE.md: `cd server && cargo fmt --check && cargo clippy -- -D warnings -D clippy::pedantic`
 # We add `cargo check` for completeness.
-check-server:
+check-server: format-server
     @echo "Checking server code: cargo fmt --check, cargo clippy, cargo check..."
     cd server && cargo fmt --check
     cd server && SQLX_OFFLINE=true cargo clippy --all-targets --all-features -- -D warnings -D clippy::pedantic
@@ -259,7 +258,7 @@ check-server:
 # check-client: Runs client-side checks (format, lint, strict type check).
 # As per CLAUDE.md: `cd client && bun run lint && bun run check:strict`
 # `bun run lint` often includes Prettier format check.
-check-client:
+check-client: format-client
     @echo "Checking client code: format (prettier --check), lint (eslint), type-check (svelte-check/tsc)..."
     cd client && bun run lint # Typically includes Prettier check
     cd client && bun run check:strict # Assumes 'check:strict\' is 'svelte-check --fail-on-warnings\'

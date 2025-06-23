@@ -18,6 +18,7 @@ use uuid::Uuid;
 use crate::ai::{ChatMessage, ChatRole};
 use crate::core::AppState;
 use crate::errors::{AppError, AppResult};
+use crate::services::AuthService;
 
 /// Estimate token count for a text string (rough approximation)
 /// In production, use a proper tokenizer like tiktoken
@@ -108,7 +109,7 @@ pub async fn chat_handler(
     }
 
     // Extract user info from auth
-    let user_id = extract_user_id_from_auth(auth_header)?;
+    let user_id = extract_user_id_from_auth(auth_header, &state.auth_service)?;
 
     // Set up conversation
     let (conversation_id, model) = create_conversation(&state, &user_id, &request).await?;
@@ -129,17 +130,16 @@ pub async fn chat_handler(
 /// Extract user ID from authorization header
 fn extract_user_id_from_auth(
     auth_header: Option<TypedHeader<Authorization<Bearer>>>,
+    auth_service: &Arc<AuthService>,
 ) -> AppResult<String> {
     let auth = auth_header
         .ok_or_else(|| AppError::Unauthorized("Missing authorization header".to_string()))?;
 
     let token = auth.0.token();
 
-    // For now, return placeholder - in production this would use JWT verification
-    // When JWT service is properly set up, this would call:
-    // auth_service.get_user_id_from_token(token)?
-    tracing::info!("Would verify JWT token: {}", &token[..10.min(token.len())]);
-    Ok("user_123".to_string()) // TODO: Replace with actual JWT verification
+    // Verify JWT token and extract user ID
+    let user_id = auth_service.get_user_id_from_token(token)?;
+    Ok(user_id.to_string())
 }
 
 /// Create a new conversation in the database
@@ -383,8 +383,9 @@ pub async fn chat_stream_handler(
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Query(params): Query<ChatRequest>,
 ) -> AppResult<Sse<impl Stream<Item = Result<Event, Infallible>>>> {
-    // TODO: Verify JWT token and get user
-    let _token = auth.token();
+    // Verify JWT token and get user
+    let token = auth.token();
+    let _user_id = state.auth_service.get_user_id_from_token(token)?;
 
     let chat_id = Uuid::new_v4().to_string();
 
@@ -501,9 +502,9 @@ pub async fn contextual_chat_handler(
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(request): Json<ContextualChatRequest>,
 ) -> AppResult<Json<serde_json::Value>> {
-    // TODO: Verify JWT token and get user
-    let _token = auth.token();
-    let _ = "user_123"; // TODO: Extract from JWT
+    // Verify JWT token and get user
+    let token = auth.token();
+    let _user_id = state.auth_service.get_user_id_from_token(token)?;
 
     let ai_service = state.ai_service.read().await;
 
@@ -555,8 +556,12 @@ pub async fn code_analysis_handler(
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(request): Json<CodeAnalysisRequest>,
 ) -> AppResult<Json<serde_json::Value>> {
-    // TODO: Verify JWT token and get user
-    let _token = auth.token();
+    // Verify JWT token and get user
+    let token = auth.token();
+    let _user_id = state
+        .auth_service
+        .get_user_id_from_token(token)?
+        .to_string();
 
     let ai_service = state.ai_service.read().await;
 
@@ -583,12 +588,16 @@ pub async fn code_analysis_handler(
 ///
 /// Returns an error if file upload fails or authentication is invalid.
 pub async fn upload_file_handler(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     mut multipart: Multipart,
 ) -> AppResult<Json<serde_json::Value>> {
-    // TODO: Verify JWT token and get user
-    let _token = auth.token();
+    // Verify JWT token and get user
+    let token = auth.token();
+    let _user_id = state
+        .auth_service
+        .get_user_id_from_token(token)?
+        .to_string();
 
     let mut files = Vec::new();
 
@@ -624,13 +633,16 @@ pub async fn get_conversations_handler(
     State(state): State<Arc<AppState>>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
 ) -> AppResult<Json<serde_json::Value>> {
-    // TODO: Verify JWT token and get user
-    let _token = auth.token();
-    let user_id = "user_123"; // TODO: Extract from JWT
+    // Verify JWT token and get user
+    let token = auth.token();
+    let user_id = state
+        .auth_service
+        .get_user_id_from_token(token)?
+        .to_string();
 
     let conversations = state
         .ai_data_service
-        .get_user_conversations(user_id, Some(50), Some(0)) // limit 50, offset 0
+        .get_user_conversations(&user_id, Some(50), Some(0)) // limit 50, offset 0
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to get conversations: {e}")))?;
 
@@ -649,13 +661,15 @@ pub async fn get_conversation_handler(
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     axum::extract::Path(conversation_id): axum::extract::Path<String>,
 ) -> AppResult<Json<serde_json::Value>> {
-    // TODO: Verify JWT token and get user
-    let _token = auth.token();
-
-    let user_id = "user_123"; // TODO: Extract from JWT
+    // Verify JWT token and get user
+    let token = auth.token();
+    let user_id = state
+        .auth_service
+        .get_user_id_from_token(token)?
+        .to_string();
     let conversation_with_messages = state
         .ai_data_service
-        .get_conversation_with_messages(&conversation_id, user_id)
+        .get_conversation_with_messages(&conversation_id, &user_id)
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to get conversation: {e}")))?;
 
@@ -671,13 +685,16 @@ pub async fn get_usage_stats_handler(
     State(state): State<Arc<AppState>>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
 ) -> AppResult<Json<serde_json::Value>> {
-    // TODO: Verify JWT token and get user
-    let _token = auth.token();
-    let user_id = "user_123"; // TODO: Extract from JWT
+    // Verify JWT token and get user
+    let token = auth.token();
+    let user_id = state
+        .auth_service
+        .get_user_id_from_token(token)?
+        .to_string();
 
     let usage_stats = state
         .ai_data_service
-        .get_user_usage_stats(user_id)
+        .get_user_usage_stats(&user_id)
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to get usage stats: {e}")))?;
 
@@ -717,8 +734,12 @@ pub async fn moderate_content_handler(
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(request): Json<serde_json::Value>,
 ) -> AppResult<Json<serde_json::Value>> {
-    // TODO: Verify JWT token and get user
-    let _token = auth.token();
+    // Verify JWT token and get user
+    let token = auth.token();
+    let _user_id = state
+        .auth_service
+        .get_user_id_from_token(token)?
+        .to_string();
 
     let content = request
         .get("content")
@@ -745,9 +766,12 @@ pub async fn archive_conversation_handler(
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     axum::extract::Path(conversation_id): axum::extract::Path<String>,
 ) -> AppResult<Json<serde_json::Value>> {
-    // TODO: Verify JWT token and get user
-    let _token = auth.token();
-    let user_id = "user_123"; // TODO: Extract from JWT
+    // Verify JWT token and get user
+    let token = auth.token();
+    let user_id = state
+        .auth_service
+        .get_user_id_from_token(token)?
+        .to_string();
 
     // Demonstrate usage of archive and update_timestamp methods
     let mut conversation =
@@ -763,7 +787,7 @@ pub async fn archive_conversation_handler(
 
     state
         .ai_data_service
-        .archive_conversation(&conversation_id, user_id)
+        .archive_conversation(&conversation_id, &user_id)
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to archive conversation: {e}")))?;
 

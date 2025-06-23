@@ -8,40 +8,104 @@ default:
 # --- Environment & Config ---
 # Check that required ENV variables are present
 check-env:
-    @if [ -z "${DATABASE_URL}" ]; then echo "Error: DATABASE_URL is not set. Ensure .envrc is sourced or .env exists."; exit 1; fi
-    @if [ -z "${JWT_SECRET}" ]; then echo "Error: JWT_SECRET is not set. Ensure .envrc is sourced or .env exists."; exit 1; fi
-    @echo "✅ Environment variables checked."
+    #!/usr/bin/env bash
+    if [ -z "${DATABASE_URL:-}" ]; then
+        echo "Error: DATABASE_URL is not set. Ensure .envrc is sourced or .env exists.";
+        exit 1;
+    fi
+    if [ -z "${JWT_SECRET:-}" ]; then
+        echo "Error: JWT_SECRET is not set. Ensure .envrc is sourced or .env exists.";
+        exit 1;
+    fi
+    if [ -z "${DATABASE_PROVIDER:-}" ]; then
+        echo "Warning: DATABASE_PROVIDER not set, defaulting to sqlite";
+        export DATABASE_PROVIDER="sqlite";
+    fi
+    echo "✅ Environment variables checked. Using ${DATABASE_PROVIDER:-sqlite} database."
 
 # --- Database (dbmate) ---
+# db-clean: Completely cleans all database assets, cache, and state
+# Usage: just db-clean
+db-clean:
+    @echo "🧹 Cleaning all database assets and cache..."
+    @echo "Removing SQLite database files..."
+    @rm -f server/db/*.sqlite3* || true
+    @echo "Removing SQLX query cache..."
+    @rm -rf server/.sqlx || true
+    @rm -rf .sqlx || true
+    @echo "Removing schema.sql..."
+    @rm -f server/db/schema.sql || true
+    @echo "✅ Database cleaning complete."
+
 # db-setup: Sets up DB by applying all migrations and preparing SQLX cache.
 # Usage: just db-setup
-db-setup: db-migrate
-    @echo "Preparing SQLx query cache..."
-    cd server && SQLX_OFFLINE=false cargo sqlx prepare
-    @echo "✅ SQLx query cache prepared."
+db-setup: check-env
+    @echo "🏗️  Setting up database from scratch..."
+    @echo "Database provider: ${DATABASE_PROVIDER:-sqlite}"
+    @echo "Database URL: ${DATABASE_URL}"
+    @echo "Ensuring database directory exists..."
+    @mkdir -p server/db
+    @echo "Applying database migrations using dbmate..."
+    cd server && dbmate up
+    @echo "Generating schema.sql from current database state..."
+    cd server && dbmate dump
+    @echo "Preparing SQLx query cache with fresh database (including tests)..."
+    cd server && SQLX_OFFLINE=false cargo sqlx prepare --workspace -- --all-targets
+    @echo "✅ Database setup complete with dbmate migrations applied and cache prepared."
 
-# db-migrate: Apply all pending database migrations.
+# db-reset: Cleans everything and rebuilds from scratch
+# Usage: just db-reset
+db-reset: db-clean db-setup
+    @echo "✅ Database completely reset and rebuilt."
+
+# db-migrate: Apply all pending database migrations using dbmate.
 # Usage: just db-migrate
 db-migrate: check-env
     @echo "Ensuring database directory exists..."
     @mkdir -p server/db
-    @echo "Applying pending database migrations (dbmate up)..."
+    @echo "Applying pending database migrations using dbmate..."
     cd server && dbmate up
-    @echo "✅ Database migrations applied."
+    @echo "Updating schema.sql using dbmate..."
+    cd server && dbmate dump
+    @echo "✅ Database migrations applied using dbmate."
 
-# db-rollback: Rollback the last database migration.
+# db-rollback: Rollback the last database migration using dbmate.
 # Usage: just db-rollback
 db-rollback: check-env
-    @echo "Rolling back last database migration (dbmate down)..."
+    @echo "Rolling back last database migration using dbmate..."
     cd server && dbmate down
-    @echo "✅ Last migration rolled back."
+    @echo "Updating schema.sql after rollback using dbmate..."
+    cd server && dbmate dump
+    @echo "✅ Last migration rolled back using dbmate."
 
-# db-new-migration <name>: Create a new database migration file.
+# db-prepare-cache: Regenerate SQLX query cache only
+# Usage: just db-prepare-cache
+db-prepare-cache: check-env
+    @echo "Regenerating SQLX query cache..."
+    @echo "Database provider: ${DATABASE_PROVIDER:-sqlite}"
+    @echo "Removing existing SQLX cache..."
+    @rm -rf server/.sqlx || true
+    @rm -rf .sqlx || true
+    @echo "Ensuring database is up to date using dbmate..."
+    cd server && dbmate up
+    @echo "Preparing new SQLX query cache (including tests)..."
+    cd server && SQLX_OFFLINE=false cargo sqlx prepare --workspace -- --all-targets
+    @echo "✅ SQLX query cache regenerated."
+
+# db-new-migration <name>: Create a new database migration file using dbmate.
 # Usage: just db-new-migration my_new_migration
 db-new-migration name:
-    @echo "Creating new migration file: {{name}}..."
+    @echo "Creating new migration file using dbmate: {{name}}..."
     cd server && dbmate new {{name}}
-    @echo "✅ New migration file created: server/db/migrations/*_{{name}}.sql"
+    @echo "✅ New migration file created using dbmate: server/db/migrations/*_{{name}}.sql"
+
+# db-status: Show database migration status using dbmate
+# Usage: just db-status
+db-status: check-env
+    @echo "📊 Database migration status (using dbmate):"
+    cd server && dbmate status
+    @echo "📊 SQLX cache status:"
+    @if [ -d "server/.sqlx" ]; then echo "✅ SQLX cache exists ($(find server/.sqlx -name '*.json' | wc -l) cached queries)"; else echo "❌ SQLX cache missing"; fi
 
 # --- Development Servers (User Managed) ---
 # These commands are intended for the user to run directly.
@@ -118,17 +182,10 @@ docker-run: check-env
 # Usage: just server-test
 #        just server-test specific_module_or_test_name
 server-test pattern="":
-    #!/usr/bin/env bash
-    echo "Running Rust server tests..."
-    cd server
-    if [ -z "{{pattern}}" ]; then
-        echo "Running all server tests (cargo test)..."
-        RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test -- --nocapture --test-threads=1
-    else
-        echo "Running specific server tests matching '{{pattern}}' (cargo test {{pattern}})..."
-        RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test "{{pattern}}" -- --nocapture --test-threads=1
-    fi
-    echo "✅ Server tests complete."
+    @echo "Running Rust server tests..."
+    @if [ -z "{{pattern}}" ]; then echo "Running all server tests (cargo test)..."; else echo "Running specific server tests matching '{{pattern}}' (cargo test {{pattern}})..."; fi
+    @if [ -z "{{pattern}}" ]; then cd server && RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test -- --nocapture --test-threads=1; else cd server && RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test "{{pattern}}" -- --nocapture --test-threads=1; fi
+    @echo "✅ Server tests complete."
 
 # test-client [pattern]: Runs client-side unit and integration tests (e.g., Vitest).
 # Usage: just test-client
@@ -142,17 +199,19 @@ test-client pattern="": # Corresponds to `just test-client` in CLAUDE.md
 # Usage: just test-e2e
 #        just test-e2e specific_flow_or_test_name
 test-e2e pattern="": # Corresponds to `just test-e2e` in CLAUDE.md
-    #!/usr/bin/env bash
-    echo "Running client E2E tests (Playwright via 'cd client && bun playwright test')..."
-    cd client
-    if [ -z "{{pattern}}" ]; then
-        echo "Running all Playwright tests..."
-        bun playwright test
-    else
-        echo "Running specific Playwright tests matching '{{pattern}}'..."
-        bun playwright test --grep "{{pattern}}"
-    fi
-    echo "✅ Client E2E tests complete."
+    @echo "Running client E2E tests (Playwright via 'cd client && bun playwright test')..."
+    @if [ -z "{{pattern}}" ]; then echo "Running all Playwright tests..."; else echo "Running specific Playwright tests matching '{{pattern}}'..."; fi
+    @if [ -z "{{pattern}}" ]; then cd client && bun playwright test; else cd client && bun playwright test --grep "{{pattern}}"; fi
+    @echo "✅ Client E2E tests complete."
+
+# test-integration [pattern]: Runs integration tests (server tests that require database).
+# Usage: just test-integration
+#        just test-integration oauth_integration_tests
+test-integration pattern="":
+    @echo "Running integration tests..."
+    @if [ -z "{{pattern}}" ]; then echo "Running all integration tests..."; else echo "Running specific integration tests matching '{{pattern}}'..."; fi
+    @if [ -z "{{pattern}}" ]; then cd server && RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test --test "*integration*" -- --nocapture --test-threads=1; else cd server && RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test --test "{{pattern}}" -- --nocapture --test-threads=1; fi
+    @echo "✅ Integration tests complete."
 
 # test [server_pattern] [client_pattern] [e2e_pattern]: Runs all tests.
 # Patterns are optional. If a pattern is not provided, all tests for that category run.
@@ -228,12 +287,10 @@ clean-client:
 
 # clean: Removes all build artifacts, dependencies, temporary files, and database from project.
 # Usage: just clean
-clean: clean-server clean-client
+clean: clean-server clean-client db-clean
     @echo "Cleaning project-level temporary files (logs, .DS_Store)..."
     rm -rf logs
     find . -name ".DS_Store" -delete -print
-    @echo "Cleaning database file..."
-    @if [ -f "server/db/dev.sqlite3" ]; then rm -f "server/db/dev.sqlite3" && echo "Database file removed."; else echo "No database file found."; fi
     @echo "✅ All project artifacts, dependencies, temp files, and database cleaned."
 
 # --- Initial Project Setup ---
@@ -244,17 +301,24 @@ setup-client: clean-client
     cd client && bun install && bunx playwright install
     @echo "✅ Client dependencies installed."
 
-# setup-server: Prepares server (e.g., fetches dependencies and builds) AFTER cleaning.
+# setup-server-deps: Fetches server dependencies only
+# Usage: just setup-server-deps
+setup-server-deps: clean-server
+    @echo "Setting up server: fetching dependencies..."
+    cd server && cargo fetch
+    @echo "✅ Server dependencies fetched."
+
+# setup-server: Builds server (assumes dependencies and database are ready)
 # Usage: just setup-server
-setup-server: clean-server
-    @echo "Setting up server: fetching dependencies and initial build (cd server && cargo build)..."
+setup-server:
+    @echo "Building server with SQLX cache..."
     cd server && SQLX_OFFLINE=true cargo build
-    @echo "✅ Server dependencies fetched and built."
+    @echo "✅ Server built successfully."
 
 # setup: Installs all client and server dependencies after cleaning. Sets up database.
 # This is the main setup command a user should run first for a fresh environment.
 # Usage: just setup
-setup: check-env setup-client setup-server db-setup
+setup: check-env setup-client setup-server-deps db-reset setup-server
     @echo "✅ Project setup complete. Dependencies installed and database initialized."
 
 # --- Log Tailing Aliases (from original file, if direct log access needed) ---

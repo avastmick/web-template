@@ -66,6 +66,16 @@ pub async fn google_login_init(
     // Generate a random state for CSRF protection if not provided
     let csrf_state = params.state.unwrap_or_else(|| Uuid::new_v4().to_string());
 
+    // Store the state for later validation
+    state
+        .oauth_service
+        .store_oauth_state(
+            &csrf_state,
+            crate::models::oauth::OAuthProvider::Google,
+            None,
+        )
+        .await?;
+
     // Get Google OAuth authorization URL
     let auth_url = state.oauth_service.get_google_auth_url(&csrf_state);
 
@@ -88,6 +98,16 @@ pub async fn github_login_init(
 ) -> Result<Redirect, AppError> {
     // Generate a random state for CSRF protection if not provided
     let csrf_state = params.state.unwrap_or_else(|| Uuid::new_v4().to_string());
+
+    // Store the state for later validation
+    state
+        .oauth_service
+        .store_oauth_state(
+            &csrf_state,
+            crate::models::oauth::OAuthProvider::GitHub,
+            None,
+        )
+        .await?;
 
     // Get GitHub OAuth authorization URL
     let auth_url = state.oauth_service.get_github_auth_url(&csrf_state);
@@ -142,14 +162,18 @@ async fn handle_oauth_callback(
 
     // Validate state parameter for CSRF protection
     if let Some(state_param) = &params.state {
-        // In a real implementation, you would validate this against a stored state value
-        // For now, just log that state validation would happen here
-        tracing::info!("OAuth state parameter received: {}", state_param);
+        state
+            .oauth_service
+            .validate_oauth_state(state_param, provider.clone())
+            .await
+            .map_err(|_| AppError::Unauthorized("Invalid or expired OAuth state".to_string()))?;
 
-        // TODO: Implement proper state validation:
-        // 1. Store state in session/cache when redirecting to OAuth provider
-        // 2. Validate received state matches stored state
-        // 3. Reject if state doesn't match or is missing when expected
+        tracing::info!("OAuth state validated successfully");
+    } else {
+        // State is required for security
+        return Err(AppError::Unauthorized(
+            "Missing OAuth state parameter".to_string(),
+        ));
     }
 
     // Exchange authorization code for user info

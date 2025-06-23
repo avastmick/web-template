@@ -147,7 +147,8 @@ async fn create_test_app_with_pool(pool: Pool<Sqlite>) -> Router {
     let user_service = Arc::new(UserServiceImpl::new(pool.clone()));
     let auth_service = Arc::new(AuthService::new().expect("Failed to create auth service"));
     let invite_service = Arc::new(InviteService::new(pool.clone()));
-    let oauth_service = Arc::new(OAuthService::new().expect("Failed to create oauth service"));
+    let oauth_service =
+        Arc::new(OAuthService::new(pool.clone()).expect("Failed to create oauth service"));
 
     create_router(
         user_service,
@@ -208,15 +209,20 @@ async fn send_authenticated_request(
 /// Helper function to register a user and get a valid JWT token
 async fn register_and_login_user(pool: Pool<Sqlite>, email: &str, password: &str) -> String {
     // First create an invite
+    use chrono::Utc;
+    let now = Utc::now();
     sqlx::query(
         r"
         INSERT INTO user_invites (id, email, invited_by, invited_at, created_at, updated_at)
-        VALUES (?1, ?2, ?3, datetime('now'), datetime('now'), datetime('now'))
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6)
         ",
     )
     .bind(format!("test-invite-{}", uuid::Uuid::new_v4()))
     .bind(email.to_lowercase())
     .bind("test-admin")
+    .bind(now)
+    .bind(now)
+    .bind(now)
     .execute(&pool)
     .await
     .expect("Failed to create test invite");

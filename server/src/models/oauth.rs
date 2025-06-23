@@ -1,4 +1,6 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 /// OAuth provider enumeration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -12,6 +14,18 @@ impl std::fmt::Display for OAuthProvider {
         match self {
             Self::Google => write!(f, "google"),
             Self::GitHub => write!(f, "github"),
+        }
+    }
+}
+
+impl std::str::FromStr for OAuthProvider {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "google" => Ok(Self::Google),
+            "github" => Ok(Self::GitHub),
+            _ => Err(format!("Unknown OAuth provider: {s}")),
         }
     }
 }
@@ -82,4 +96,14 @@ impl GitHubUserInfo {
             provider: OAuthProvider::GitHub,
         }
     }
+}
+
+/// OAuth state for CSRF protection
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct OAuthState {
+    pub state: String,
+    pub provider: String,
+    pub redirect_uri: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
 }

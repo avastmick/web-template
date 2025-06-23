@@ -1,17 +1,20 @@
 #![allow(clippy::missing_errors_doc)]
 
+use chrono::{DateTime, Duration, Utc};
 use oauth2::{AuthorizationCode, TokenResponse, basic::BasicTokenResponse, reqwest};
 use reqwest::Client;
+use sqlx::SqlitePool;
 
 use crate::{
     config::OAuthConfig,
     errors::AppError,
-    models::oauth::{GitHubEmail, GitHubUserInfo, GoogleUserInfo, OAuthUserInfo},
+    models::oauth::{GitHubEmail, GitHubUserInfo, GoogleUserInfo, OAuthProvider, OAuthUserInfo},
 };
 
 pub struct OAuthService {
     config: OAuthConfig,
     http_client: Client,
+    db_pool: SqlitePool,
 }
 
 impl OAuthService {
@@ -20,13 +23,14 @@ impl OAuthService {
     /// # Errors
     ///
     /// Returns an error if OAuth configuration fails
-    pub fn new() -> Result<Self, AppError> {
+    pub fn new(db_pool: SqlitePool) -> Result<Self, AppError> {
         let config = OAuthConfig::new()?;
         let http_client = Client::new();
 
         Ok(Self {
             config,
             http_client,
+            db_pool,
         })
     }
 
@@ -235,63 +239,130 @@ impl OAuthService {
 
         Ok(user_info.into_oauth_user_info(email))
     }
+
+    /// Store OAuth state for CSRF protection
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if database operation fails
+    pub async fn store_oauth_state(
+        &self,
+        state: &str,
+        provider: OAuthProvider,
+        redirect_uri: Option<&str>,
+    ) -> Result<(), AppError> {
+        // OAuth state expires after 10 minutes
+        let expires_at = Utc::now() + Duration::minutes(10);
+        let provider_str = provider.to_string();
+
+        sqlx::query!(
+            r#"
+            INSERT INTO oauth_states (state, provider, redirect_uri, expires_at)
+            VALUES (?1, ?2, ?3, ?4)
+            "#,
+            state,
+            provider_str,
+            redirect_uri,
+            expires_at
+        )
+        .execute(&self.db_pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to store OAuth state: {:?}", e);
+            AppError::InternalServerError("Failed to store OAuth state".to_string())
+        })?;
+
+        Ok(())
+    }
+
+    /// Validate and consume OAuth state
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if state is invalid, expired, or database operation fails
+    pub async fn validate_oauth_state(
+        &self,
+        state: &str,
+        provider: OAuthProvider,
+    ) -> Result<(), AppError> {
+        // First, check if the state exists and is valid
+        let provider_str = provider.to_string();
+
+        let oauth_state = sqlx::query!(
+            r#"
+            SELECT state, provider, redirect_uri, created_at as "created_at: DateTime<Utc>", expires_at as "expires_at: DateTime<Utc>"
+            FROM oauth_states
+            WHERE state = ?1 AND provider = ?2
+            "#,
+            state,
+            provider_str
+        )
+        .fetch_optional(&self.db_pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to fetch OAuth state: {:?}", e);
+            AppError::InternalServerError("Failed to validate OAuth state".to_string())
+        })?;
+
+        let oauth_state =
+            oauth_state.ok_or_else(|| AppError::Unauthorized("Invalid OAuth state".to_string()))?;
+
+        // Check if state has expired
+        if oauth_state.expires_at < Utc::now() {
+            // Delete expired state
+            self.delete_oauth_state(state).await?;
+            return Err(AppError::Unauthorized(
+                "OAuth state has expired".to_string(),
+            ));
+        }
+
+        // Delete the state after successful validation (one-time use)
+        self.delete_oauth_state(state).await?;
+
+        Ok(())
+    }
+
+    /// Delete OAuth state
+    async fn delete_oauth_state(&self, state: &str) -> Result<(), AppError> {
+        sqlx::query!(
+            r#"
+            DELETE FROM oauth_states
+            WHERE state = ?1
+            "#,
+            state
+        )
+        .execute(&self.db_pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete OAuth state: {:?}", e);
+            AppError::InternalServerError("Failed to delete OAuth state".to_string())
+        })?;
+
+        Ok(())
+    }
+
+    /// Clean up expired OAuth states
+    ///
+    /// This should be called periodically to remove expired states
+    pub async fn cleanup_expired_states(&self) -> Result<u64, AppError> {
+        let now = Utc::now();
+        let result = sqlx::query!(
+            r#"
+            DELETE FROM oauth_states
+            WHERE expires_at < ?1
+            "#,
+            now
+        )
+        .execute(&self.db_pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to cleanup expired OAuth states: {:?}", e);
+            AppError::InternalServerError("Failed to cleanup expired states".to_string())
+        })?;
+
+        Ok(result.rows_affected())
+    }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::env;
-
-    fn setup_test_env() {
-        unsafe {
-            env::set_var("GOOGLE_CLIENT_ID", "test_client_id");
-            env::set_var("GOOGLE_CLIENT_SECRET", "test_client_secret");
-            env::set_var("SERVER_URL", "http://localhost:8081");
-        }
-    }
-
-    #[test]
-    fn test_oauth_service_creation() {
-        setup_test_env();
-        let service = OAuthService::new();
-        assert!(service.is_ok());
-    }
-
-    #[test]
-    fn test_get_google_auth_url() {
-        setup_test_env();
-        let service = OAuthService::new().unwrap();
-        let auth_url = service.get_google_auth_url("test_state");
-
-        assert!(auth_url.contains("accounts.google.com"));
-        assert!(auth_url.contains("test_state"));
-    }
-
-    #[test]
-    fn test_oauth_service_creation_missing_google_config() {
-        // Clear all OAuth env vars first
-        unsafe {
-            env::remove_var("GOOGLE_CLIENT_ID");
-            env::remove_var("GOOGLE_CLIENT_SECRET");
-            env::remove_var("GITHUB_CLIENT_ID");
-            env::remove_var("GITHUB_CLIENT_SECRET");
-        }
-
-        let service = OAuthService::new();
-        assert!(service.is_err());
-    }
-
-    #[test]
-    fn test_get_github_auth_url() {
-        setup_test_env();
-        unsafe {
-            env::set_var("GITHUB_CLIENT_ID", "test_github_client_id");
-            env::set_var("GITHUB_CLIENT_SECRET", "test_github_client_secret");
-        }
-        let service = OAuthService::new().unwrap();
-        let auth_url = service.get_github_auth_url("test_state");
-
-        assert!(auth_url.contains("github.com"));
-        assert!(auth_url.contains("test_state"));
-    }
-}
+// Unit tests have been moved to integration tests since OAuthService now requires database access
+// See tests/oauth_integration_tests.rs for comprehensive testing

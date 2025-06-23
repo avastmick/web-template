@@ -106,12 +106,12 @@ pub async fn create_router(
         .route("/api/admin/invites", get(list_invites_handler))
         .route("/api/admin/invites", post(create_invite_handler))
         .route(
-            "/api/admin/invites/:id",
+            "/api/admin/invites/{id}",
             axum::routing::delete(delete_invite_handler),
         )
-        .route("/api/invites/:email", get(get_invite_handler))
+        .route("/api/invites/{email}", get(get_invite_handler))
         // Debug/development routes
-        .route("/api/debug/error/:error_type", get(error_demo_handler))
+        .route("/api/debug/error/{error_type}", get(error_demo_handler))
         .route("/api/debug/message", get(demo_message_handler))
         // AI routes
         .route("/api/ai/chat", post(chat_handler))

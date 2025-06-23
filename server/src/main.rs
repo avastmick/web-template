@@ -4,6 +4,7 @@ use axum::serve;
 use sqlx::sqlite::SqlitePoolOptions;
 use std::{env, net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
+use tokio_cron_scheduler::{Job, JobScheduler};
 use tracing::info;
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt}; // Corrected import
 
@@ -19,6 +20,67 @@ mod routes;
 mod services;
 
 use services::{AuthService, InviteService, OAuthService, UserServiceImpl};
+
+/// Initialize tracing/logging
+fn initialize_tracing() {
+    let rust_log_env =
+        env::var("RUST_LOG").unwrap_or_else(|_| "info,server=debug,sqlx=warn".to_string());
+    let env_filter = EnvFilter::try_new(&rust_log_env).unwrap_or_else(|_| EnvFilter::new("info")); // Fallback if RUST_LOG is invalid
+
+    tracing_subscriber::registry()
+        .with(fmt::layer().with_ansi(true)) // Correctly use fmt::layer()
+        .with(env_filter)
+        .init();
+
+    info!("Tracing initialized. Server starting...");
+}
+
+/// Set up the OAuth state cleanup scheduler
+async fn setup_oauth_cleanup_scheduler(
+    oauth_service: &Arc<OAuthService>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let scheduler = JobScheduler::new().await.map_err(|e| {
+        tracing::error!("Failed to create job scheduler: {:?}", e);
+        Box::new(e) as Box<dyn std::error::Error>
+    })?;
+
+    let oauth_service_for_cleanup = oauth_service.clone();
+    scheduler
+        .add(
+            Job::new_async("0 */10 * * * *", move |_uuid, _l| {
+                let oauth_service = oauth_service_for_cleanup.clone();
+                Box::pin(async move {
+                    match oauth_service.cleanup_expired_states().await {
+                        Ok(deleted_count) => {
+                            if deleted_count > 0 {
+                                tracing::info!("Cleaned up {} expired OAuth states", deleted_count);
+                            }
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to cleanup expired OAuth states: {:?}", e);
+                        }
+                    }
+                })
+            })
+            .map_err(|e| {
+                tracing::error!("Failed to create cleanup job: {:?}", e);
+                Box::new(e) as Box<dyn std::error::Error>
+            })?,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to add cleanup job to scheduler: {:?}", e);
+            Box::new(e) as Box<dyn std::error::Error>
+        })?;
+
+    scheduler.start().await.map_err(|e| {
+        tracing::error!("Failed to start job scheduler: {:?}", e);
+        Box::new(e) as Box<dyn std::error::Error>
+    })?;
+
+    info!("OAuth state cleanup job scheduled to run every 10 minutes");
+    Ok(())
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -41,16 +103,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Initialize tracing (logging)
-    let rust_log_env =
-        env::var("RUST_LOG").unwrap_or_else(|_| "info,server=debug,sqlx=warn".to_string());
-    let env_filter = EnvFilter::try_new(&rust_log_env).unwrap_or_else(|_| EnvFilter::new("info")); // Fallback if RUST_LOG is invalid
-
-    tracing_subscriber::registry()
-        .with(fmt::layer().with_ansi(true)) // Correctly use fmt::layer()
-        .with(env_filter)
-        .init();
-
-    info!("Tracing initialized. Server starting...");
+    initialize_tracing();
 
     // Database setup
     let database_url = env::var("DATABASE_URL").map_err(|e| {
@@ -101,10 +154,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Box::new(e) as Box<dyn std::error::Error>
     })?);
     let invite_service = Arc::new(InviteService::new(db_pool.clone()));
-    let oauth_service = Arc::new(OAuthService::new().map_err(|e| {
+    let oauth_service = Arc::new(OAuthService::new(db_pool.clone()).map_err(|e| {
         tracing::error!("Failed to initialize OAuthService: {:?}", e);
         Box::new(e) as Box<dyn std::error::Error>
     })?);
+
+    // Set up scheduled cleanup task for OAuth states
+    setup_oauth_cleanup_scheduler(&oauth_service).await?;
 
     // Create the main application router
     let app = routes::create_router(

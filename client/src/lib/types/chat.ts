@@ -105,7 +105,7 @@ export interface StreamEvent {
 export interface FileUploadResponse {
 	name: string;
 	content: string;
-	content_type: string;
+	mime_type?: string;
 	size: number;
 }
 

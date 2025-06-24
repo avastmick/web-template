@@ -35,7 +35,7 @@ The database is SQLite for local development, with `dbmate` for migrations. `jus
 -   Primary project documentation: `README.md`, `documentation/PRD.md`, `documentation/ARCHITECTURE.md`.
 -   Current development tasks: `CURRENT_TASKS.md`.
 -   Additional context (e.g., SDKs, specific library docs) may be in `context/`.
--   If you need external documentation (SDKs, API docs), please ask the user to provide a link or download it into the `context/` directory. Do not attempt to fetch external resources yourself without explicit instruction.
+-   If you need external documentation (SDKs, API docs), use `context7` mcp.
 
 ## Package Management
 
@@ -52,6 +52,10 @@ This project uses Bun (client) and Cargo (server) exclusively.
 -   List dependencies: `bun pm ls`
 -   Check for unused dependencies: `bun pm ls --prod=false` (More accurately: `bun run depcheck` or similar if configured)
 -   Clean unused packages: `bun pm prune` (Be cautious with this, verify before running)
+-   Build: `just build-client`
+-   Test: `just test-client`
+-   Format: `just format-client`
+-   Check: `just check-client` includes lints, file size and other checks
 
 ### Server - Cargo (`web-template/server/`)
 
@@ -60,12 +64,10 @@ This project uses Bun (client) and Cargo (server) exclusively.
 -   Add dev dependency: `cargo add <crate-name> --dev`
 -   Remove dependency: `cargo remove <crate-name>` (User runs this, check `Cargo.toml` afterwards)
 -   Update dependencies: `cargo update`
--   Build: `cargo build`
--   Run: `cargo run`
--   Test: `cargo test`
--   Check: `cargo check`
--   Lint (Clippy): `cargo clippy` or `cargo clippy -- -D warnings -D clippy::pedantic` (for stricter checks)
--   Format: `cargo fmt`
+-   Build: `just build-server`
+-   Test: `just test-server`
+-   Format: `just format-server`
+-   Check: `just check-server` includes lints, filesize and other checks
 
 ## Project Commands (using `just` from `web-template/`)
 
@@ -213,11 +215,6 @@ After installation, these checks will run automatically when you attempt to `git
 -   `.envrc.example`: Template for `.envrc`.
 -   `.pre-commit-config.yaml`: Pre-commit hook definitions.
 
-## Presentation Guidelines (`slides.md`)
-
--   Keep `slides.md` as plain Markdown.
--   Styling via CSS in `index.html` (if applicable for the presentation tool).
--   No inline HTML/CSS in Markdown. Maintain separation of content and presentation.
 
 ## Important Claude-Specific Workflow Notes
 

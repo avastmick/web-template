@@ -220,7 +220,12 @@ export async function uploadFiles(files: File[]): Promise<FileUploadResponse[]> 
 		body: formData
 	});
 
-	return handleResponse<FileUploadResponse[]>(response);
+	const result = await handleResponse<{
+		files_uploaded: number;
+		files: FileUploadResponse[];
+	}>(response);
+
+	return result.files;
 }
 
 /**

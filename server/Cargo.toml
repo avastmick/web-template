@@ -9,10 +9,12 @@ async-trait = "0.1.88"
 axum = { version = "0.8.4", features = ["ws", "multipart"] }
 axum-extra = { version = "0.10.1", features = ["typed-header"] }
 chrono = { version = "0.4.41", features = ["serde"] }
+docx-rs = "0.4.17"
 dotenvy = "0.15.7"
 futures = "0.3.31"
 handlebars = "6.3.2"
 jsonwebtoken = "9.3.1"
+lopdf = "0.36.0"
 oauth2 = { version = "5.0.0", features = ["rustls-tls", "reqwest"], default-features = false }
 openai-api-rs = "6.0.6"
 rand_core = { version = "0.9.3", features = ["std"] }

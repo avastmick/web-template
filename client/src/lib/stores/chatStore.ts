@@ -103,7 +103,7 @@ function createChatStore() {
 						// For binary files (base64), include a reference
 						const isBase64 = file.content.match(/^[A-Za-z0-9+/]+=*$/);
 						if (isBase64) {
-							return `[Attached file: ${file.name} (${file.content_type}, ${file.size} bytes) - Binary content]`;
+							return `[Attached file: ${file.name} (${file.mime_type || 'unknown type'}, ${file.size} bytes) - Binary content]`;
 						} else {
 							return `--- File: ${file.name} ---\n${file.content}\n--- End of ${file.name} ---`;
 						}

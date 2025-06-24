@@ -412,6 +412,8 @@ check-server: format-server
     cd server && cargo fmt --check
     cd server && SQLX_OFFLINE=true cargo clippy --all-targets --all-features -- -D warnings -D clippy::pedantic
     cd server && SQLX_OFFLINE=true cargo check # Final compilation check
+    @echo "Checking for overlong files (>600 lines)..."
+    @find server/src -name "*.rs" -exec bash -c 'lines=$(wc -l < "{}"); if [ "$lines" -gt 600 ]; then echo "❌ ERROR: {} has $lines lines (max: 600)"; exit 1; fi' \; || (echo "❌ Some server files exceed 600 lines. Please refactor them into smaller modules." && exit 1)
     @echo "✅ All server checks complete."
 
 # check-client: Runs client-side checks (format, lint, strict type check).

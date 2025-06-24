@@ -29,6 +29,9 @@ export interface ChatRequest {
 	temperature?: number;
 	max_tokens?: number;
 	stream?: boolean;
+	context?: string[];
+	use_schema?: string;
+	template?: string;
 }
 
 export interface ChatResponse {
@@ -77,6 +80,7 @@ export interface ChatState {
 
 	// File upload state
 	uploadedFiles: File[];
+	uploadedFileResponses: FileUploadResponse[];
 	isUploading: boolean;
 
 	// Sidebar state
@@ -99,12 +103,10 @@ export interface StreamEvent {
 }
 
 export interface FileUploadResponse {
-	file_id: string;
-	filename: string;
+	name: string;
+	content: string;
 	content_type: string;
 	size: number;
-	processed: boolean;
-	content_preview?: string;
 }
 
 export interface UsageStats {

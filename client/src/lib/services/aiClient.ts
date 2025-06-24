@@ -208,7 +208,7 @@ export async function uploadFiles(files: File[]): Promise<FileUploadResponse[]> 
 		formData.append('files', file);
 	}
 
-	const token = localStorage.getItem('authToken');
+	const token = localStorage.getItem('auth_token');
 	const headers: HeadersInit = {};
 	if (token) {
 		headers.Authorization = `Bearer ${token}`;

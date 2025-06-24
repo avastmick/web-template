@@ -20,6 +20,7 @@ const initialState: ChatState = {
 	error: null,
 	inputText: '',
 	uploadedFiles: [],
+	uploadedFileResponses: [],
 	isUploading: false,
 	sidebarOpen: true
 };
@@ -92,12 +93,38 @@ function createChatStore() {
 			const state = get({ subscribe });
 			if (!content.trim() || state.isStreaming) return;
 
-			// Create user message
+			// Build message content with file context
+			let fullContent = content.trim();
+
+			if (state.uploadedFileResponses.length > 0) {
+				const fileContext = state.uploadedFileResponses
+					.map((file) => {
+						// For text files, include the content directly
+						// For binary files (base64), include a reference
+						const isBase64 = file.content.match(/^[A-Za-z0-9+/]+=*$/);
+						if (isBase64) {
+							return `[Attached file: ${file.name} (${file.content_type}, ${file.size} bytes) - Binary content]`;
+						} else {
+							return `--- File: ${file.name} ---\n${file.content}\n--- End of ${file.name} ---`;
+						}
+					})
+					.join('\n\n');
+
+				fullContent = `${fileContext}\n\nUser message: ${content.trim()}`;
+			}
+
+			// Create user message - show original message in UI, but send full content to API
 			const userMessage: ChatMessage = {
 				id: crypto.randomUUID(),
 				role: 'user',
-				content: content.trim(),
-				timestamp: new Date().toISOString()
+				content: content.trim(), // Show only the user's message in UI
+				timestamp: new Date().toISOString(),
+				metadata:
+					state.uploadedFileResponses.length > 0
+						? {
+								attachedFiles: state.uploadedFiles.map((f) => f.name)
+							}
+						: undefined
 			};
 
 			// Add user message to current conversation
@@ -134,10 +161,14 @@ function createChatStore() {
 			// Prepare chat request - only send the message, not the full history for new conversations
 			const currentState = get({ subscribe });
 			const messages = currentState.currentConversation?.id.startsWith('temp-')
-				? [{ role: userMessage.role, content: userMessage.content }]
-				: currentState.currentConversation?.messages.map((msg) => ({
+				? [{ role: userMessage.role, content: fullContent }] // Use full content with files
+				: currentState.currentConversation?.messages.map((msg, index) => ({
 						role: msg.role,
-						content: msg.content
+						// Use full content for the last message (current one), original for others
+						content:
+							index === currentState.currentConversation!.messages.length - 1
+								? fullContent
+								: msg.content
 					})) || [];
 
 			const request: ChatRequest = {
@@ -317,6 +348,7 @@ function createChatStore() {
 				update((s) => ({
 					...s,
 					uploadedFiles: [...s.uploadedFiles, ...files],
+					uploadedFileResponses: [...s.uploadedFileResponses, ...response],
 					isUploading: false
 				}));
 				return response;
@@ -333,12 +365,13 @@ function createChatStore() {
 		removeUploadedFile(index: number) {
 			update((s) => ({
 				...s,
-				uploadedFiles: s.uploadedFiles.filter((_, i) => i !== index)
+				uploadedFiles: s.uploadedFiles.filter((_, i) => i !== index),
+				uploadedFileResponses: s.uploadedFileResponses.filter((_, i) => i !== index)
 			}));
 		},
 
 		clearUploadedFiles() {
-			update((s) => ({ ...s, uploadedFiles: [] }));
+			update((s) => ({ ...s, uploadedFiles: [], uploadedFileResponses: [] }));
 		},
 
 		toggleSidebar() {
@@ -351,6 +384,10 @@ function createChatStore() {
 
 		clearError() {
 			update((s) => ({ ...s, error: null }));
+		},
+
+		setError(error: string) {
+			update((s) => ({ ...s, error }));
 		},
 
 		reset() {
@@ -375,5 +412,6 @@ export const isStreaming = derived(chatStore, ($state) => $state.isStreaming);
 export const error = derived(chatStore, ($state) => $state.error);
 export const inputText = derived(chatStore, ($state) => $state.inputText);
 export const uploadedFiles = derived(chatStore, ($state) => $state.uploadedFiles);
+export const uploadedFileResponses = derived(chatStore, ($state) => $state.uploadedFileResponses);
 export const isUploading = derived(chatStore, ($state) => $state.isUploading);
 export const sidebarOpen = derived(chatStore, ($state) => $state.sidebarOpen);

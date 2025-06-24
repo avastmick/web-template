@@ -133,7 +133,7 @@ The `justfile` in the project root (`web-template/`) provides a unified interfac
 -   **Simplicity:** Avoid deep nesting, complex recursion. Refactor for clarity.
 -   **Testing:** Include tests for algorithms, complex calculations, business logic, API endpoints.
 -   **Single Responsibility:** Functions should be concise, handle a single task. Files should group related functionality.
--   **File Size:** Aim for files under 500 lines.
+-   **File Size:** Files MUST be under 600 lines. The `just check-server` and `just check-client` commands enforce this limit. Refactor larger files into smaller, logically grouped modules.
 -   **Commenting:** Add clear, concise comments for complex logic. Rust functions, structs, enums, and modules should have doc comments (`///` or `//!`). Files should have a header comment summarizing contents and usage if not obvious from structure.
 -   **TypeScript - No Non-Null Assertions (`!`)**:
     -   Handle potential absence of data explicitly using checks, optional chaining (`?.`), or type guards.

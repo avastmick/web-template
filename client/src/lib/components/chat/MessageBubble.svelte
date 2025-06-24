@@ -121,6 +121,27 @@
 	{:else}
 		<!-- User message -->
 		<div class="flex max-w-[70%] flex-col items-end">
+			<!-- Attached files indicator -->
+			{#if message.metadata?.attachedFiles && Array.isArray(message.metadata.attachedFiles) && message.metadata.attachedFiles.length > 0}
+				<div class="mb-2 flex flex-wrap gap-1">
+					{#each message.metadata.attachedFiles as fileName (fileName)}
+						<div
+							class="flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+						>
+							<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+								/>
+							</svg>
+							<span>{fileName}</span>
+						</div>
+					{/each}
+				</div>
+			{/if}
+
 			<div class="rounded-2xl bg-blue-600 px-4 py-2 text-white">
 				<div class="text-sm leading-relaxed whitespace-pre-wrap">
 					{message.content}

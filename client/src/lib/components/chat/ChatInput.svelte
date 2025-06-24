@@ -68,6 +68,9 @@
 			dispatch('fileUpload', { files });
 		} catch (error) {
 			console.error('File upload failed:', error);
+			chatStore.setError(
+				error instanceof Error ? error.message : 'Failed to upload files. Please try again.'
+			);
 		}
 	}
 
@@ -164,7 +167,7 @@
 			bind:this={fileInput}
 			type="file"
 			multiple
-			accept=".txt,.md,.pdf,.doc,.docx"
+			accept=".txt,.md,.csv,.json,.xml,.yaml,.yml,.log,.conf,.ini,.toml,.js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.h,.hpp,.rs,.go,.rb,.php,.css,.html,.vue,.svelte,.pdf,.doc,.docx"
 			class="hidden"
 			onchange={handleFileChange}
 		/>

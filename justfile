@@ -421,6 +421,8 @@ check-client: format-client
     @echo "Checking client code: format (prettier --check), lint (eslint), type-check (svelte-check/tsc)..."
     cd client && bun run lint # Typically includes Prettier check
     cd client && bun run check:strict # Assumes 'check:strict\' is 'svelte-check --fail-on-warnings\'
+    @echo "Checking for overlong files (>600 lines)..."
+    @find client/src -name "*.ts" -o -name "*.js" -o -name "*.svelte" -o -name "*.vue" -exec bash -c 'lines=$(wc -l < "{}"); if [ "$lines" -gt 600 ]; then echo "❌ ERROR: {} has $lines lines (max: 600)"; exit 1; fi' \; || (echo "❌ Some client files exceed 600 lines. Please refactor them into smaller modules." && exit 1)
     @echo "✅ All client checks complete."
 
 # check: Runs all checks for both client and server.

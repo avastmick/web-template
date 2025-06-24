@@ -20,7 +20,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 - Task 2.7: Complete i18n Implementation Across All Pages - **[✓] COMPLETED**
 
 **Phase 3: Advanced Features** - **[🔄] IN PROGRESS**
-- Task 3.1: Generative AI Integration Framework - **[✅] IMPLEMENTATION COMPLETE - TESTS NEEDED**
+- Task 3.1: Generative AI Integration Framework - **[🔄] INTEGRATION TESTS COMPLETE - CLIENT UI NEEDED**
 - Task 3.2: Stripe Payment Integration - **[ ] TODO**
 - Task 3.3: Deployment Guides & DevOps - **[ ] TODO**
 - Task 3.4: Template Scaffolding Tools - **[ ] TODO**
@@ -440,7 +440,7 @@ This task implements GitHub OAuth as an additional authentication provider along
     *   E2E tests: `just test-e2e language`
 
 ### Task 3.1: Server - Generative AI Integration Framework
-*   **Status:** **[✅] IMPLEMENTATION COMPLETE - INTEGRATION TESTS NEEDED**
+*   **Status:** **[🔄] INTEGRATION TESTS COMPLETE - CLIENT UI NEEDED**
 *   **Completion Notes:**
     *   ✅ AI service architecture and provider abstraction implemented
     *   ✅ OpenRouter API integration with OpenAI format complete
@@ -450,7 +450,8 @@ This task implements GitHub OAuth as an additional authentication provider along
     *   ✅ Token counting and cost estimation functionality
     *   ✅ Error handling and authentication integration
     *   ✅ All dead code eliminated and quality checks passing
-    *   🔄 **NEXT: Create comprehensive integration test suite**
+    *   ✅ **COMPLETED: Comprehensive integration test suite with verbose logging and real AI testing support**
+    *   🔄 **NEXT: Implement client-side chat interface (Task 3.1.12)**
 *   **Action:** Create flexible framework for integrating various AI providers using the OpenRouter API (which uses the OpenAI API format)
 *   **Architecture Decisions:**
     *   Models: Use models defined in `.envrc.example` (via environment variables)
@@ -548,10 +549,14 @@ This task implements GitHub OAuth as an additional authentication provider along
             - Test unauthorized access rejection
             - Test user isolation (users can't access others' conversations)
             - Test admin functionality (invite management, usage stats)
-    12. **Create client-side chat UI component**
-        *   Build chat interface component
-        *   Implement streaming message display
-        *   Add typing indicators and status updates
+    12. **✅ COMPLETED: Create comprehensive integration test suite for AI chat functionality**
+        *   ✅ Implemented 17 comprehensive integration tests covering all AI endpoints and functionality
+        *   ✅ Added verbose logging mode with detailed AI interaction visibility (`--verbose` flag)
+        *   ✅ Added real API key testing support for live AI provider testing (`--real-ai` flag)
+        *   ✅ Enhanced `justfile` with `just test-integration ai_integration_tests --verbose --real-ai`
+        *   ✅ Tests cover: chat flow, file upload, conversation management, error handling, streaming, auth
+        *   ✅ Database validation for conversation/message persistence and usage tracking
+        *   ✅ All 17 tests passing with comprehensive error handling and edge case coverage
 *   **Integration Test Files to Create:**
     *   `server/tests/integration/ai_chat_tests.rs` (comprehensive AI chat integration tests)
     *   `server/tests/integration/ai_upload_tests.rs` (file upload and context tests)
@@ -650,6 +655,63 @@ let req = ChatCompletionRequest::new(
 );
 ```
 
+### Task 3.1.12: Client - Chat Interface Integration and Main Page Redesign
+*   **Status:** **[ ] TODO**
+*   **Priority:** **HIGH** - Next immediate task per INSTRUCTIONS.md
+*   **Action:** Replace current home page with elegant chat interface using ChatGPT.com as UI/UX benchmark
+*   **Details:**
+    *   Remove current home page content and replace with chat interface
+    *   Create elegant chat panel with conversation history sidebar (left panel)
+    *   Implement file upload functionality for document context
+    *   Support real-time streaming chat responses
+    *   Add conversation management (new, archive, delete)
+    *   Integrate with existing AI service endpoints
+    *   Ensure responsive design for mobile/tablet/desktop
+    *   Add typing indicators and message states
+    *   Implement proper authentication flow integration
+*   **UI/UX Requirements:**
+    *   Use ChatGPT.com as benchmark for layout and user experience
+    *   Left sidebar: Conversation history with search and organization
+    *   Main area: Chat messages with clean bubble design
+    *   Input area: Text input with file upload and send button
+    *   Support for markdown rendering in AI responses
+    *   Dark/light mode integration with existing theme system
+    *   Mobile-responsive with collapsible sidebar
+*   **Technical Requirements:**
+    *   Integrate with existing AI service endpoints (`/api/ai/chat`, `/api/ai/conversations`, etc.)
+    *   Implement streaming responses using SSE (`/api/ai/chat/stream`)
+    *   Add file upload using `/api/ai/upload` endpoint
+    *   Use existing i18n system for all user-facing text
+    *   Follow accessibility guidelines (WCAG 2.1 AA)
+    *   Implement proper error handling and loading states
+*   **Files to Create/Modify:**
+    *   `client/src/routes/+page.svelte` (main chat interface - replace existing content)
+    *   `client/src/lib/components/chat/ChatInterface.svelte` (main chat component)
+    *   `client/src/lib/components/chat/ConversationSidebar.svelte` (conversation history)
+    *   `client/src/lib/components/chat/MessageBubble.svelte` (individual message display)
+    *   `client/src/lib/components/chat/ChatInput.svelte` (message input with file upload)
+    *   `client/src/lib/components/chat/FileUpload.svelte` (drag-drop file upload)
+    *   `client/src/lib/services/aiClient.ts` (AI API client service)
+    *   `client/src/lib/stores/chatStore.ts` (chat state management)
+    *   `client/src/lib/types/chat.ts` (TypeScript types for chat)
+*   **Playwright Research Task:**
+    *   Use Playwright to capture ChatGPT.com layout and interaction patterns
+    *   Document key UI/UX elements and behaviors
+    *   Create design specification based on captured patterns
+*   **Implementation Notes:**
+    *   Only show chat interface when user is authenticated (redirect to login if not)
+    *   Use SvelteKit's `+layout.svelte` for authentication guard
+    *   Implement real-time updates using Server-Sent Events (SSE)
+    *   Support file drag-and-drop with visual feedback
+    *   Add message copying, regeneration, and export features
+    *   Implement conversation search and filtering
+*   **Quality Checks:**
+    *   All existing quality checks must pass (`just check`)
+    *   E2E tests for complete chat flow
+    *   Accessibility testing with screen readers
+    *   Performance testing for large conversation histories
+    *   Mobile responsiveness testing
+    *   File upload testing with various file types
 
 ### Task 3.2: Server & Client - Stripe Payment Integration
 *   **Status:** **[ ] TODO**
@@ -684,10 +746,9 @@ let req = ChatCompletionRequest::new(
 *   **Status:** **[ ] TODO**
 *   **Action:** Create comprehensive deployment guides for major cloud platforms
 *   **Details:**
+    *   Create a PostgreSQL database provider option
     *   Create GCP Cloud Run deployment guide with Docker
-    *   Create Vercel deployment guide for client-side
-    *   Create Railway/Render deployment guide for full-stack
-    *   Add database deployment options (Supabase, PlanetScale, Neon)
+    *   Create fly.io deployment guide with Docker
     *   Create CI/CD pipeline examples (GitHub Actions)
     *   Add monitoring and logging setup guides
     *   Create environment variable management guides

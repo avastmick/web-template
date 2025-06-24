@@ -163,5 +163,62 @@
 	"auth.errors.generateToken": "Failed to generate authentication token. Please try again.",
 
 	"accessibility.skipToMain": "Skip to main content",
-	"accessibility.skipToNav": "Skip to navigation"
+	"accessibility.skipToNav": "Skip to navigation",
+
+	"chat.title": "AI Chat Assistant",
+	"chat.description": "Intelligent conversations with AI assistant",
+	"chat.loading": "Loading...",
+	"chat.error.title": "Error",
+	"chat.error.dismiss": "Dismiss",
+	"chat.scrollToBottom": "Scroll to bottom",
+
+	"chat.header.newChat": "New Chat",
+	"chat.header.conversation": "Conversation",
+	"chat.header.openSidebar": "Open sidebar",
+	"chat.header.closeSidebar": "Close sidebar",
+	"chat.header.streaming": "AI is typing...",
+
+	"chat.sidebar.title": "Conversations",
+	"chat.sidebar.label": "Conversation history",
+	"chat.sidebar.close": "Close sidebar",
+	"chat.sidebar.newChat": "New Chat",
+	"chat.sidebar.loading": "Loading conversations...",
+	"chat.sidebar.empty.title": "No conversations yet",
+	"chat.sidebar.empty.description": "Start a new chat to get started",
+	"chat.sidebar.untitledConversation": "New Conversation",
+	"chat.sidebar.archive": "Archive conversation",
+	"chat.sidebar.delete": "Delete conversation",
+	"chat.sidebar.confirmDelete": "Are you sure you want to delete this conversation? This action cannot be undone.",
+	"chat.sidebar.messageCount": "{count} messages",
+	"chat.sidebar.footer": "{count} total conversations",
+	"chat.sidebar.time.now": "Just now",
+	"chat.sidebar.time.minutes": "{count}m ago",
+	"chat.sidebar.time.hours": "{count}h ago",
+	"chat.sidebar.time.days": "{count}d ago",
+
+	"chat.message.user": "User",
+	"chat.message.assistant": "Assistant",
+	"chat.message.copy": "Copy message",
+	"chat.message.regenerate": "Regenerate response",
+
+	"chat.input.region": "Chat input area",
+	"chat.input.placeholder": "Type your message here...",
+	"chat.input.message": "Message input",
+	"chat.input.send": "Send message",
+	"chat.input.stop": "Stop generation",
+	"chat.input.uploadFile": "Upload file",
+	"chat.input.removeFile": "Remove {filename}",
+	"chat.input.dropFiles": "Drop files here to upload",
+	"chat.input.filesUploaded": "{count} files uploaded",
+	"chat.input.hint.enter": "Enter to send",
+	"chat.input.hint.shiftEnter": "Shift+Enter for new line",
+
+	"chat.welcome.title": "Welcome to AI Chat",
+	"chat.welcome.description": "Ask me anything or start a conversation. I'm here to help!",
+	"chat.welcome.suggestions.title": "Try asking me to:",
+	"chat.welcome.suggestions.explain": "Explain a concept",
+	"chat.welcome.suggestions.help": "Help with a task",
+	"chat.welcome.suggestions.create": "Create something",
+
+	"chat.messages.region": "Chat messages"
 }

@@ -163,5 +163,62 @@
 	"auth.errors.generateToken": "Error al generar token de autenticación. Por favor intenta de nuevo.",
 
 	"accessibility.skipToMain": "Saltar al contenido principal",
-	"accessibility.skipToNav": "Saltar a la navegación"
+	"accessibility.skipToNav": "Saltar a la navegación",
+
+	"chat.title": "Asistente de Chat IA",
+	"chat.description": "Conversaciones inteligentes con asistente IA",
+	"chat.loading": "Cargando...",
+	"chat.error.title": "Error",
+	"chat.error.dismiss": "Descartar",
+	"chat.scrollToBottom": "Desplazar al final",
+
+	"chat.header.newChat": "Nuevo Chat",
+	"chat.header.conversation": "Conversación",
+	"chat.header.openSidebar": "Abrir barra lateral",
+	"chat.header.closeSidebar": "Cerrar barra lateral",
+	"chat.header.streaming": "IA está escribiendo...",
+
+	"chat.sidebar.title": "Conversaciones",
+	"chat.sidebar.label": "Historial de conversaciones",
+	"chat.sidebar.close": "Cerrar barra lateral",
+	"chat.sidebar.newChat": "Nuevo Chat",
+	"chat.sidebar.loading": "Cargando conversaciones...",
+	"chat.sidebar.empty.title": "Aún no hay conversaciones",
+	"chat.sidebar.empty.description": "Inicia un nuevo chat para comenzar",
+	"chat.sidebar.untitledConversation": "Nueva Conversación",
+	"chat.sidebar.archive": "Archivar conversación",
+	"chat.sidebar.delete": "Eliminar conversación",
+	"chat.sidebar.confirmDelete": "¿Estás seguro de que quieres eliminar esta conversación? Esta acción no se puede deshacer.",
+	"chat.sidebar.messageCount": "{count} mensajes",
+	"chat.sidebar.footer": "{count} conversaciones totales",
+	"chat.sidebar.time.now": "Ahora mismo",
+	"chat.sidebar.time.minutes": "hace {count}m",
+	"chat.sidebar.time.hours": "hace {count}h",
+	"chat.sidebar.time.days": "hace {count}d",
+
+	"chat.message.user": "Usuario",
+	"chat.message.assistant": "Asistente",
+	"chat.message.copy": "Copiar mensaje",
+	"chat.message.regenerate": "Regenerar respuesta",
+
+	"chat.input.region": "Área de entrada de chat",
+	"chat.input.placeholder": "Escribe tu mensaje aquí...",
+	"chat.input.message": "Entrada de mensaje",
+	"chat.input.send": "Enviar mensaje",
+	"chat.input.stop": "Detener generación",
+	"chat.input.uploadFile": "Subir archivo",
+	"chat.input.removeFile": "Eliminar {filename}",
+	"chat.input.dropFiles": "Suelta archivos aquí para subir",
+	"chat.input.filesUploaded": "{count} archivos subidos",
+	"chat.input.hint.enter": "Enter para enviar",
+	"chat.input.hint.shiftEnter": "Shift+Enter para nueva línea",
+
+	"chat.welcome.title": "Bienvenido al Chat IA",
+	"chat.welcome.description": "Pregúntame cualquier cosa o inicia una conversación. ¡Estoy aquí para ayudar!",
+	"chat.welcome.suggestions.title": "Prueba pedirme que:",
+	"chat.welcome.suggestions.explain": "Explique un concepto",
+	"chat.welcome.suggestions.help": "Ayude con una tarea",
+	"chat.welcome.suggestions.create": "Cree algo",
+
+	"chat.messages.region": "Mensajes de chat"
 }

@@ -22,6 +22,9 @@
 		loading?: boolean;
 		loadingText?: string;
 
+		// Event handlers
+		onclick?: (event: MouseEvent) => void;
+
 		// ARIA props that aren't in HTMLButtonAttributes
 		'aria-describedby'?: string;
 		'aria-expanded'?: boolean;

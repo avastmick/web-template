@@ -163,5 +163,62 @@
 	"auth.errors.generateToken": "فشل في إنشاء رمز المصادقة. يرجى المحاولة مرة أخرى.",
 
 	"accessibility.skipToMain": "انتقل إلى المحتوى الرئيسي",
-	"accessibility.skipToNav": "انتقل إلى التنقل"
+	"accessibility.skipToNav": "انتقل إلى التنقل",
+
+	"chat.title": "مساعد الدردشة الذكي",
+	"chat.description": "محادثات ذكية مع المساعد الذكي",
+	"chat.loading": "جارٍ التحميل...",
+	"chat.error.title": "خطأ",
+	"chat.error.dismiss": "إغلاق",
+	"chat.scrollToBottom": "التمرير إلى الأسفل",
+
+	"chat.header.newChat": "دردشة جديدة",
+	"chat.header.conversation": "المحادثة",
+	"chat.header.openSidebar": "فتح الشريط الجانبي",
+	"chat.header.closeSidebar": "إغلاق الشريط الجانبي",
+	"chat.header.streaming": "الذكي الاصطناعي يكتب...",
+
+	"chat.sidebar.title": "المحادثات",
+	"chat.sidebar.label": "تاريخ المحادثات",
+	"chat.sidebar.close": "إغلاق الشريط الجانبي",
+	"chat.sidebar.newChat": "دردشة جديدة",
+	"chat.sidebar.loading": "جارٍ تحميل المحادثات...",
+	"chat.sidebar.empty.title": "لا توجد محادثات بعد",
+	"chat.sidebar.empty.description": "ابدأ دردشة جديدة للبدء",
+	"chat.sidebar.untitledConversation": "محادثة جديدة",
+	"chat.sidebar.archive": "أرشفة المحادثة",
+	"chat.sidebar.delete": "حذف المحادثة",
+	"chat.sidebar.confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه المحادثة؟ لا يمكن التراجع عن هذا الإجراء.",
+	"chat.sidebar.messageCount": "{count} رسائل",
+	"chat.sidebar.footer": "{count} محادثات إجمالية",
+	"chat.sidebar.time.now": "الآن",
+	"chat.sidebar.time.minutes": "منذ {count} دقيقة",
+	"chat.sidebar.time.hours": "منذ {count} ساعة",
+	"chat.sidebar.time.days": "منذ {count} يوم",
+
+	"chat.message.user": "المستخدم",
+	"chat.message.assistant": "المساعد",
+	"chat.message.copy": "نسخ الرسالة",
+	"chat.message.regenerate": "إعادة توليد الرد",
+
+	"chat.input.region": "منطقة إدخال الدردشة",
+	"chat.input.placeholder": "اكتب رسالتك هنا...",
+	"chat.input.message": "إدخال الرسالة",
+	"chat.input.send": "إرسال الرسالة",
+	"chat.input.stop": "إيقاف التوليد",
+	"chat.input.uploadFile": "رفع ملف",
+	"chat.input.removeFile": "إزالة {filename}",
+	"chat.input.dropFiles": "اسحب الملفات هنا للرفع",
+	"chat.input.filesUploaded": "تم رفع {count} ملفات",
+	"chat.input.hint.enter": "Enter للإرسال",
+	"chat.input.hint.shiftEnter": "Shift+Enter لسطر جديد",
+
+	"chat.welcome.title": "مرحباً بك في الدردشة الذكية",
+	"chat.welcome.description": "اسألني أي شيء أو ابدأ محادثة. أنا هنا لمساعدتك!",
+	"chat.welcome.suggestions.title": "جرب أن تطلب مني:",
+	"chat.welcome.suggestions.explain": "شرح مفهوم",
+	"chat.welcome.suggestions.help": "المساعدة في مهمة",
+	"chat.welcome.suggestions.create": "إنشاء شيء ما",
+
+	"chat.messages.region": "رسائل الدردشة"
 }

@@ -30,10 +30,10 @@ test.describe('Language Switching', () => {
 		await expect(page.locator('nav').getByText('Sign In')).toBeVisible();
 		await expect(page.locator('nav').getByText('Create Account')).toBeVisible();
 
-		// Check if main content is in English
-		await expect(page.getByText('Web Application Template')).toBeVisible();
+		// Check if chat interface content is in English
+		await expect(page.getByText('Welcome to AI Chat')).toBeVisible();
 		await expect(
-			page.getByText('A modern, secure web application built with SvelteKit and Rust')
+			page.getByText("Ask me anything or start a conversation. I'm here to help!")
 		).toBeVisible();
 	});
 

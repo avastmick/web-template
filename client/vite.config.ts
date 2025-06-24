@@ -6,6 +6,13 @@ export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 	server: {
 		port: parseInt(process.env.CLIENT_PORT || '8080'),
-		host: '0.0.0.0'
+		host: '0.0.0.0',
+		proxy: {
+			'/api': {
+				target: process.env.SERVER_URL || 'http://localhost:8081',
+				changeOrigin: true,
+				secure: false
+			}
+		}
 	}
 });

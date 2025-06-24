@@ -14,6 +14,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 - Task 2.1: Foundation UI System Setup (design tokens, Tailwind CSS 4.0) - **[✓] COMPLETED**
 - Task 2.2: Component Library Integration (shadcn-svelte) - **[✓] COMPLETED**
 - Task 2.3: Dark/Light Mode & Advanced Theming - **[✓] COMPLETED**
+  - See `documentation/UI_UX_THEME.md` for theming guidelines and implementation details
 - Task 2.4: Responsive Layout System - **[✓] COMPLETED**
 - Task 2.5: Accessibility & WCAG Compliance - **[✓] COMPLETED**
 - Task 2.6: Internationalization (i18n) Framework - **[✓] COMPLETED**

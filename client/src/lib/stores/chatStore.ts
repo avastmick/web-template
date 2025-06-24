@@ -88,7 +88,7 @@ function createChatStore() {
 			update((state) => ({ ...state, inputText: text }));
 		},
 
-		async sendMessage(content: string, useStreaming = true) {
+		async sendMessage(content: string, useStreaming = false) {
 			const state = get({ subscribe });
 			if (!content.trim() || state.isStreaming) return;
 
@@ -102,35 +102,46 @@ function createChatStore() {
 
 			// Add user message to current conversation
 			update((s) => {
-				const updatedConversation = s.currentConversation
-					? { ...s.currentConversation, messages: [...s.currentConversation.messages, userMessage] }
-					: ({
-							id: '',
+				if (s.currentConversation) {
+					// Add to existing conversation
+					return {
+						...s,
+						currentConversation: {
+							...s.currentConversation,
+							messages: [...s.currentConversation.messages, userMessage]
+						},
+						inputText: '',
+						error: null,
+						isStreaming: useStreaming
+					};
+				} else {
+					// Create temporary conversation to show the user message
+					return {
+						...s,
+						currentConversation: {
+							id: 'temp-' + Date.now(), // Temporary ID
 							messages: [userMessage],
 							created_at: new Date().toISOString(),
 							updated_at: new Date().toISOString()
-						} as Conversation);
-
-				return {
-					...s,
-					currentConversation: updatedConversation,
-					inputText: '',
-					error: null,
-					isStreaming: useStreaming
-				};
+						} as Conversation,
+						inputText: '',
+						error: null,
+						isStreaming: useStreaming
+					};
+				}
 			});
 
-			// Prepare chat request
+			// Prepare chat request - only send the message, not the full history for new conversations
 			const currentState = get({ subscribe });
-			const messages =
-				currentState.currentConversation?.messages.map((msg) => ({
-					role: msg.role,
-					content: msg.content
-				})) || [];
+			const messages = currentState.currentConversation?.id.startsWith('temp-')
+				? [{ role: userMessage.role, content: userMessage.content }]
+				: currentState.currentConversation?.messages.map((msg) => ({
+						role: msg.role,
+						content: msg.content
+					})) || [];
 
-			const request = {
-				messages,
-				conversation_id: currentState.currentConversation?.id || undefined
+			const request: ChatRequest = {
+				messages
 			};
 
 			try {
@@ -217,18 +228,29 @@ function createChatStore() {
 
 		handleChatResponse(response: ChatResponse) {
 			update((s) => {
-				const updatedConversation: Conversation = s.currentConversation
-					? {
-							...s.currentConversation,
-							id: response.conversation_id,
-							messages: [...s.currentConversation.messages, response.message]
-						}
-					: {
+				if (!s.currentConversation) {
+					// This shouldn't happen, but handle it gracefully
+					return {
+						...s,
+						currentConversation: {
 							id: response.conversation_id,
 							messages: [response.message],
 							created_at: new Date().toISOString(),
 							updated_at: new Date().toISOString()
-						};
+						},
+						isStreaming: false
+					};
+				}
+
+				// Replace temporary ID with real conversation ID from server
+				const isNewConversation = s.currentConversation.id.startsWith('temp-');
+				const updatedConversation: Conversation = {
+					...s.currentConversation,
+					id: response.conversation_id,
+					messages: isNewConversation
+						? [...s.currentConversation.messages, response.message] // Keep user message and add response
+						: [...s.currentConversation.messages, response.message]
+				};
 
 				return {
 					...s,

@@ -148,7 +148,6 @@ async fn create_conversation(
     user_id: &str,
     request: &ChatRequest,
 ) -> AppResult<(String, String)> {
-    let conversation_id = uuid::Uuid::new_v4().to_string();
     let model = request.model.as_deref().unwrap_or("gpt-4").to_string();
 
     let create_request = crate::models::ai_models::CreateConversationRequest {
@@ -157,13 +156,13 @@ async fn create_conversation(
         system_prompt: None,
     };
 
-    state
+    let conversation_response = state
         .ai_data_service
         .create_conversation(user_id, create_request)
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to create conversation: {e}")))?;
 
-    Ok((conversation_id, model))
+    Ok((conversation_response.id, model))
 }
 
 /// Process request messages and save user messages to database

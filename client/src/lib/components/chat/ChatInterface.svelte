@@ -77,7 +77,7 @@
 <svelte:window bind:innerWidth={windowWidth} />
 
 <!-- Modern ChatGPT-style layout -->
-<div class="flex h-screen overflow-hidden bg-white dark:bg-gray-800">
+<div class="flex h-[calc(100vh-4rem)] overflow-hidden bg-white dark:bg-gray-800">
 	<!-- Conversation Sidebar -->
 	<ConversationSidebar />
 

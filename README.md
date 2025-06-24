@@ -61,7 +61,13 @@ The project is structured into two main components:
     -   `direnv` (for managing environment variables via `.envrc` - which is gitignored)
     -   Git pre-commit hooks (for automated quality checks)
 
-A more detailed description of the architecture, including data flow, authentication mechanisms, and component interactions, can be found in `documentation/ARCHITECTURE.md`.
+## Documentation
+
+For detailed information about the project:
+- **Architecture**: See `documentation/ARCHITECTURE.md` for system design, data flow, authentication mechanisms, and component interactions.
+- **UI/UX & Theming**: See `documentation/UI_UX_THEME.md` for theming guidelines, CSS variables, dark/light mode implementation, and component styling standards.
+- **Product Requirements**: See `documentation/PRD.md` for detailed feature specifications.
+- **Development Guidelines**: See `CLAUDE.md` for coding standards and development workflow.
 
 ## Getting Started
 

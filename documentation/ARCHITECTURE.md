@@ -27,10 +27,11 @@ The system is designed as a modern web application with a decoupled frontend and
     -   Routing.
 -   **Structure (High-Level):**
     -   `src/routes/`: Defines application pages and API routes (for SvelteKit endpoints, if any).
-    -   `src/lib/components/`: Reusable Svelte components.
-    -   `src/lib/stores/`: Svelte stores for global state management.
+    -   `src/lib/components/`: Reusable Svelte components. All components must follow theming guidelines in [UI/UX and Theme Documentation](./UI_UX_THEME.md).
+    -   `src/lib/stores/`: Svelte stores for global state management (including theme store).
     -   `src/lib/services/`: Modules for interacting with the backend API.
     -   `src/lib/utils/`: Common utility functions.
+    -   `src/lib/styles/`: Global styles, design tokens, and theme definitions.
     -   `static/`: Static assets.
     -   `tests/`: Playwright (E2E) and Vitest (unit/integration) tests.
 
@@ -100,7 +101,7 @@ The system is designed as a modern web application with a decoupled frontend and
 
 -   **Payment Integration (Stripe):** Will involve client-side components for collecting payment information (Stripe Elements) and server-side handlers for processing payments and managing subscriptions.
 -   **Generative AI Integration:** Server-side services to interact with AI provider APIs (OpenAI, Gemini, Mistral). API keys managed via environment variables.
--   **Theming (Dark/Light Modes):** Client-side implementation using CSS variables and Svelte stores to manage theme state.
+-   **Theming (Dark/Light Modes):** Client-side implementation using CSS variables and Svelte stores to manage theme state. See [UI/UX and Theme Documentation](./UI_UX_THEME.md) for detailed guidelines.
 -   **Deployment:**
     -   GCP Cloud Run: Containerize server and client (or serve client from server).
     -   Vercel: Optimal for SvelteKit client. Server might be deployed as serverless functions or a separate service.

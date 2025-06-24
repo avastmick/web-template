@@ -11,13 +11,16 @@ import type {
 	AIInfo
 } from '$lib/types/chat.js';
 
-const API_BASE = '/api/ai';
+// Configuration - same pattern as apiAuth.ts
+const SERVER_PORT = import.meta.env.SERVER_PORT || '8081';
+const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:${SERVER_PORT}`;
+const API_BASE = `${API_BASE_URL}/api/ai`;
 
 /**
  * Get authentication headers with JWT token
  */
 function getAuthHeaders(): HeadersInit {
-	const token = localStorage.getItem('authToken');
+	const token = localStorage.getItem('auth_token');
 	return {
 		'Content-Type': 'application/json',
 		...(token && { Authorization: `Bearer ${token}` })
@@ -30,7 +33,10 @@ function getAuthHeaders(): HeadersInit {
 async function handleResponse<T>(response: Response): Promise<T> {
 	if (!response.ok) {
 		const errorData = await response.json().catch(() => ({}));
-		throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+		console.error('API Error:', errorData);
+		throw new Error(
+			errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`
+		);
 	}
 	return response.json();
 }
@@ -60,7 +66,7 @@ export function sendChatMessageStream(
 	const controller = new AbortController();
 
 	// Create URL with query parameters for streaming
-	const url = new URL(`${API_BASE}/chat/stream`, window.location.origin);
+	const url = new URL(`${API_BASE}/chat/stream`);
 
 	fetch(url, {
 		method: 'POST',
@@ -133,7 +139,7 @@ export async function getConversations(params?: {
 	limit?: number;
 	archived?: boolean;
 }): Promise<ConversationListResponse> {
-	const url = new URL(`${API_BASE}/conversations`, window.location.origin);
+	const url = new URL(`${API_BASE}/conversations`);
 
 	if (params?.page) url.searchParams.set('page', params.page.toString());
 	if (params?.limit) url.searchParams.set('limit', params.limit.toString());

@@ -112,31 +112,125 @@ db-status: check-env
 # Claude should not run `just dev` or related long-running server commands.
 
 # client-dev-server: Starts the SvelteKit client development server.
-# Usage: just client-dev-server
-client-dev: check-env
-    @echo "Starting client development server (SvelteKit)..."
-    echo "Client will run on port ${CLIENT_PORT:-8080} and connect to server at ${SERVER_URL:-http://localhost:8081}"
-    cd client && bun run dev
-
-# server-dev-server: Starts the Rust/Axum server development server.
-# Usage: just server-dev-server
-#        just server-dev-server --hotreload  (enables cargo watch for hot-reloading)
-server-dev +hotreload: check-env
+# Usage: just client-dev
+#        just client-dev --log  (enables logging to file)
+client-dev *args: check-env
     #!/usr/bin/env bash
-    echo "Starting server development server (Rust/Axum)..."
-    if [[ "{{hotreload}}" == "true" ]]; then
-        echo "Hot reloading ENABLED. Using 'cargo watch'."
-        cd server && SQLX_OFFLINE=true RUST_LOG=${RUST_LOG:-info} cargo watch -q -c -w src -x run
-    else
-        echo "Hot reloading DISABLED. Using 'cargo run'."
-        cd server && SQLX_OFFLINE=true RUST_LOG=${RUST_LOG:-info} cargo run
+    echo "Starting client development server (SvelteKit)..."
+    echo "Client will run on port ${CLIENT_PORT:-8080} and connect to server at ${SERVER_URL:-http://localhost:8081}"
+
+    # Parse arguments
+    log=false
+    for arg in {{args}}; do
+        case "$arg" in
+            "--log") log=true ;;
+        esac
+    done
+
+    # Setup logging if requested
+    if [ "$log" = true ]; then
+        mkdir -p logs
+        current_date=$(date +"%Y-%m-%d_%H-%M-%S")
+        log_file="logs/client_${current_date}.log"
+        echo "📝 Client logs will be written to: ${log_file}"
+        ln -sf "client_${current_date}.log" logs/client_latest.log
     fi
 
-# dev: Starts all development servers using Overmind (requires Procfile.dev).
-# Usage: just dev
+    # Execute with or without logging
+    if [ "$log" = true ]; then
+        (cd client && bun run dev) 2>&1 | tee -a "${log_file}"
+    else
+        cd client && bun run dev
+    fi
+
+# server-dev-server: Starts the Rust/Axum server development server.
+# Usage: just server-dev
+#        just server-dev --hotreload  (enables cargo watch for hot-reloading)
+#        just server-dev --log        (enables logging to file)
+#        just server-dev --hotreload --log
+server-dev *args: check-env
+    #!/usr/bin/env bash
+    echo "Starting server development server (Rust/Axum)..."
+
+    # Parse arguments
+    hotreload=false
+    log=false
+    for arg in {{args}}; do
+        case "$arg" in
+            "--hotreload") hotreload=true ;;
+            "--log") log=true ;;
+        esac
+    done
+
+    # Setup logging if requested
+    if [ "$log" = true ]; then
+        mkdir -p logs
+        current_date=$(date +"%Y-%m-%d_%H-%M-%S")
+        log_file="logs/server_${current_date}.log"
+        echo "📝 Server logs will be written to: ${log_file}"
+        ln -sf "server_${current_date}.log" logs/server_latest.log
+    fi
+
+    # Check cargo-watch installation if hotreload is requested
+    if [ "$hotreload" = true ]; then
+        if ! command -v cargo-watch &> /dev/null; then
+            echo "⚠️  cargo-watch not found. Installing..."
+            cargo install cargo-watch
+        fi
+    fi
+
+    # Build command
+    cmd="cd server && SQLX_OFFLINE=true RUST_LOG=${RUST_LOG:-info}"
+    if [ "$hotreload" = true ]; then
+        echo "🔥 Hot reloading ENABLED. Using 'cargo watch'."
+        cmd="$cmd cargo watch -q -c -w src -x run"
+    else
+        echo "⚡ Hot reloading DISABLED. Using 'cargo run'."
+        cmd="$cmd cargo run"
+    fi
+
+    # Execute with or without logging
+    if [ "$log" = true ]; then
+        eval "$cmd" 2>&1 | tee -a "${log_file}"
+    else
+        eval "$cmd"
+    fi
+
+# dev: Starts all development servers using Overmind (requires Procfile).
+# Usage: just dev                          (default: hotreload and logging enabled)
+#        OVERMIND_HOTRELOAD=false just dev (disable hot-reloading)
+#        OVERMIND_LOGGING=false just dev   (disable logging)
+#        OVERMIND_HOTRELOAD=false OVERMIND_LOGGING=false just dev (disable both)
 dev: check-env
-    @echo "Starting all development servers via Overmind..."
-    @echo "Hot reloading should be configured within the Procfile commands (e.g., using 'cargo watch' for server)."
+    #!/usr/bin/env bash
+    echo "Starting all development servers via Overmind..."
+
+    # Default to true if not explicitly set to false
+    hotreload="${OVERMIND_HOTRELOAD:-true}"
+    logging="${OVERMIND_LOGGING:-true}"
+
+    # Check if cargo-watch is installed when hotreload is enabled
+    if [ "$hotreload" != "false" ]; then
+        echo "🔥 Hot reloading ENABLED for server (cargo watch)"
+        if ! command -v cargo-watch &> /dev/null; then
+            echo "⚠️  cargo-watch not found. Installing..."
+            cargo install cargo-watch
+        fi
+        export OVERMIND_HOTRELOAD=true
+    else
+        echo "⚡ Hot reloading DISABLED"
+        unset OVERMIND_HOTRELOAD
+    fi
+
+    if [ "$logging" != "false" ]; then
+        echo "📝 Logging ENABLED (check logs/ directory)"
+        mkdir -p logs
+        export OVERMIND_LOGGING=true
+    else
+        echo "📵 Logging DISABLED"
+        unset OVERMIND_LOGGING
+    fi
+
     overmind s
 
 # refresh: Completely refreshes the workspace - cleans everything, sets up fresh, and starts dev servers
@@ -176,6 +270,42 @@ docker-build:
 docker-run: check-env
     @echo "Running Docker container with local environment variables..."
     ./scripts/run-docker.sh
+
+# logs: View the latest server and client logs
+# Usage: just logs          (shows both)
+#        just logs server   (shows server logs)
+#        just logs client   (shows client logs)
+logs type="":
+    #!/usr/bin/env bash
+    if [ ! -d "logs" ]; then
+        echo "No logs directory found. Run servers with --log flag or OVERMIND_LOGGING=true"
+        exit 1
+    fi
+
+    case "{{type}}" in
+        "server")
+            if [ -f "logs/server_latest.log" ]; then
+                echo "📄 Viewing latest server logs (logs/server_latest.log):"
+                tail -f logs/server_latest.log
+            else
+                echo "No server logs found"
+            fi
+            ;;
+        "client")
+            if [ -f "logs/client_latest.log" ]; then
+                echo "📄 Viewing latest client logs (logs/client_latest.log):"
+                tail -f logs/client_latest.log
+            else
+                echo "No client logs found"
+            fi
+            ;;
+        *)
+            echo "📄 Available log files:"
+            ls -la logs/
+            echo ""
+            echo "Use 'just logs server' or 'just logs client' to tail specific logs"
+            ;;
+    esac
 
 # --- Testing ---
 # test-server [pattern]: Runs Rust server tests.
@@ -348,31 +478,3 @@ setup-server:
 # Usage: just setup
 setup: check-env setup-client setup-server-deps db-reset setup-server
     @echo "✅ Project setup complete. Dependencies installed and database initialized."
-
-# --- Log Tailing Aliases (from original file, if direct log access needed) ---
-# These are for convenience if not using Overmind\'s aggregated logs.
-client-dev-logs: check-env
-    #!/usr/bin/env bash
-    echo "Starting client development server with direct log tailing..."
-    current_date=$(date +"%Y-%m-%d")
-    log_file="logs/client_dev_server_${current_date}.log"
-    echo "Client logs will be written to ${log_file}"
-    echo "Client will run on port ${CLIENT_PORT:-8080}, connecting to server at ${SERVER_URL:-http://localhost:8081}"
-    mkdir -p logs
-    ln -sf "${log_file}" client_dev_server.log # Symlink for easy access
-    (cd client && bun run dev) 2>&1 | tee -a "${log_file}"
-
-server-dev-logs hotreload: check-env
-    #!/usr/bin/env bash
-    echo "Starting server development server with direct log tailing..."
-    current_date=$(date +"%Y-%m-%d")
-    log_file="logs/server_dev_${current_date}.log"
-    echo "Server logs will be written to ${log_file}"
-    mkdir -p logs
-    ln -sf "${log_file}" server_dev.log # Symlink for easy access
-    if [ "{{hotreload}}" = "true" ]; then
-        echo "Running server using cargo watch for hot reloading"
-        (cd server && RUST_LOG=${RUST_LOG:-info} cargo watch -q -c -w src -x run) 2>&1 | tee -a "../${log_file}"
-    else
-        (cd server && RUST_LOG=${RUST_LOG:-info} cargo run) 2>&1 | tee -a "../${log_file}"
-    fi

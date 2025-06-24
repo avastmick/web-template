@@ -120,6 +120,7 @@ The `justfile` in the project root (`web-template/`) provides a unified interfac
 -   **Svelte (Client):**
     -   Component filenames: `PascalCase.svelte`.
     -   Variables/functions: `camelCase`.
+    -   **UI/UX:** All components MUST follow theming guidelines. See `documentation/UI_UX_THEME.md` for detailed requirements.
 -   **Rust (Server):**
     -   Modules, crates, functions, variables: `snake_case`.
     -   Types (structs, enums, traits): `PascalCase`.

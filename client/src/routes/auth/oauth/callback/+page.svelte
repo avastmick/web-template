@@ -118,10 +118,10 @@
 	<meta name="description" content={$_('auth.oauth.pageDescription')} />
 </svelte:head>
 
-<div class="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+<div class="bg-bg-primary flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
 	<div class="w-full max-w-md space-y-8">
 		<div class="text-center">
-			<h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+			<h2 class="text-text-primary mt-6 text-3xl font-extrabold">
 				{#if status === 'loading'}
 					{$_('auth.oauth.completing')}
 				{:else if status === 'success'}
@@ -137,7 +137,7 @@
 			<div class="text-center">
 				<div class="inline-flex items-center space-x-3">
 					<svg
-						class="h-8 w-8 animate-spin text-indigo-600"
+						class="text-color-primary h-8 w-8 animate-spin"
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
 						viewBox="0 0 24 24"
@@ -150,29 +150,36 @@
 							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 						></path>
 					</svg>
-					<span class="text-lg text-gray-600">{$_('auth.processing')}</span>
+					<span class="text-text-secondary text-lg">{$_('auth.processing')}</span>
 				</div>
-				<p class="mt-4 text-sm text-gray-500">
+				<p class="text-text-tertiary mt-4 text-sm">
 					{$_('auth.pleaseWait')}
 				</p>
 			</div>
 		{:else if status === 'success'}
 			<!-- Success State -->
 			<div class="text-center">
-				<div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-					<svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<div
+					class="bg-color-success-background mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+				>
+					<svg
+						class="text-color-success h-8 w-8"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
 						></path>
 					</svg>
 				</div>
-				<h3 class="mt-4 text-lg font-medium text-gray-900">
+				<h3 class="text-text-primary mt-4 text-lg font-medium">
 					{#if isNewUser}
 						{$_('auth.welcomeNew')}
 					{:else}
 						{$_('auth.welcomeBack')}
 					{/if}
 				</h3>
-				<p class="mt-2 text-sm text-gray-600">
+				<p class="text-text-secondary mt-2 text-sm">
 					{#if isNewUser}
 						{$_('auth.signupSuccess')}
 					{:else}
@@ -183,8 +190,15 @@
 		{:else}
 			<!-- Error State -->
 			<div class="text-center">
-				<div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-					<svg class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<div
+					class="bg-color-error-background mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+				>
+					<svg
+						class="text-color-error h-8 w-8"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
@@ -193,14 +207,14 @@
 						></path>
 					</svg>
 				</div>
-				<h3 class="mt-4 text-lg font-medium text-gray-900">{$_('auth.failed.title')}</h3>
-				<p class="mt-2 text-sm text-gray-600">{errorMessage}</p>
+				<h3 class="text-text-primary mt-4 text-lg font-medium">{$_('auth.failed.title')}</h3>
+				<p class="text-text-secondary mt-2 text-sm">{errorMessage}</p>
 
 				<div class="mt-6">
 					<button
 						type="button"
 						on:click={goToLogin}
-						class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+						class="bg-color-primary text-text-on-primary hover:bg-color-primary-hover focus:ring-color-primary inline-flex items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium shadow-sm transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
 					>
 						{$_('auth.failed.tryAgain')}
 					</button>

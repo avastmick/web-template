@@ -33,7 +33,11 @@
 	<ChatInterface />
 {:else}
 	<!-- Loading state or redirect for non-authenticated users -->
-	<main id="main-content" tabindex="-1" class="flex h-screen items-center justify-center">
+	<main
+		id="main-content"
+		tabindex="-1"
+		class="flex h-[calc(100vh-4rem)] items-center justify-center"
+	>
 		<Container class="text-center">
 			<Flex direction="col" align="center" gap="6">
 				<!-- Loading spinner -->

@@ -18,15 +18,40 @@ export default {
 				'text-primary': 'var(--color-text-primary)',
 				'text-secondary': 'var(--color-text-secondary)',
 				'text-muted': 'var(--color-text-muted)',
+				'text-tertiary': 'var(--color-text-muted)',
+				'text-on-primary': 'var(--color-text-inverse)',
 
 				// Background colors
 				'bg-primary': 'var(--color-background-primary)',
 				'bg-secondary': 'var(--color-background-secondary)',
+				'bg-tertiary': 'var(--color-background-tertiary)',
+				'bg-elevated': 'var(--color-surface-raised)',
+				'background-primary': 'var(--color-background-primary)',
+				'background-secondary': 'var(--color-background-secondary)',
+				'background-tertiary': 'var(--color-background-tertiary)',
+				'background-elevated': 'var(--color-surface-raised)',
 
 				// Border colors
 				'border-default': 'var(--color-border-default)',
 				'border-light': 'var(--color-border-light)',
 				'border-dark': 'var(--color-border-dark)',
+				'border-subtle': 'var(--color-border-light)',
+				'border-strong': 'var(--color-border-dark)',
+
+				// Primary/Action colors
+				'color-primary': 'var(--color-action-primary)',
+				'color-primary-hover': 'var(--color-action-primary-hover)',
+				'color-primary-active': 'var(--color-action-primary-active)',
+
+				// Status colors
+				'color-success': 'var(--color-success)',
+				'color-success-background': 'var(--color-success-background)',
+				'color-warning': 'var(--color-warning)',
+				'color-warning-background': 'var(--color-warning-background)',
+				'color-error': 'var(--color-error)',
+				'color-error-background': 'var(--color-error-background)',
+				'color-info': 'var(--color-info)',
+				'color-info-background': 'var(--color-info-background)',
 
 				// Neutral palette
 				neutral: {

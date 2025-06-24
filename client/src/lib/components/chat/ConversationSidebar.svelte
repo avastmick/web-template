@@ -96,7 +96,7 @@
 
 <!-- Modern sidebar -->
 <aside
-	class="fixed top-0 left-0 z-50 flex h-full w-80 flex-col bg-gray-900 text-white transition-transform lg:relative lg:z-auto lg:translate-x-0 {$sidebarOpen
+	class="fixed top-16 left-0 z-50 flex h-[calc(100vh-4rem)] w-80 flex-col bg-gray-900 text-white transition-transform lg:relative lg:top-0 lg:z-auto lg:h-full lg:translate-x-0 {$sidebarOpen
 		? 'translate-x-0'
 		: '-translate-x-full'}"
 	aria-label={$_('chat.sidebar.label')}

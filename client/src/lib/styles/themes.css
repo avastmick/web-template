@@ -13,29 +13,29 @@
 :root,
 .light {
 	/* Background colors */
-	--color-background-primary: #bae6fd; /* sky-200 */
-	--color-background-secondary: #dbeafe; /* sky-100 */
-	--color-background-tertiary: #e0f2fe; /* sky-100 variant */
-	--color-background-accent: var(--color-blue-50);
+	--color-background-primary: #ffffff; /* Pure white */
+	--color-background-secondary: #fafafa; /* Off-white */
+	--color-background-tertiary: #f5f5f5; /* Light gray */
+	--color-background-accent: #f0f0f0;
 
 	/* Text colors */
-	--color-text-primary: var(--color-neutral-900);
-	--color-text-secondary: var(--color-neutral-600);
-	--color-text-muted: var(--color-neutral-500);
-	--color-text-accent: var(--color-blue-700);
-	--color-text-inverse: var(--color-neutral-50);
+	--color-text-primary: #171717; /* Nearly black */
+	--color-text-secondary: #525252; /* Dark gray */
+	--color-text-muted: #737373; /* Muted gray */
+	--color-text-accent: #171717;
+	--color-text-inverse: #ffffff;
 
 	/* Border colors */
-	--color-border-default: var(--color-neutral-300);
-	--color-border-light: var(--color-neutral-200);
-	--color-border-dark: var(--color-neutral-400);
-	--color-border-accent: var(--color-blue-300);
+	--color-border-default: #e5e5e5;
+	--color-border-light: #f0f0f0;
+	--color-border-dark: #d4d4d4;
+	--color-border-accent: #d4d4d4;
 
 	/* Action colors */
-	--color-action-primary: var(--color-blue-500);
-	--color-action-primary-hover: var(--color-blue-600);
-	--color-action-primary-active: var(--color-blue-700);
-	--color-action-primary-disabled: var(--color-neutral-300);
+	--color-action-primary: #171717;
+	--color-action-primary-hover: #404040;
+	--color-action-primary-active: #525252;
+	--color-action-primary-disabled: #e5e5e5;
 
 	/* Status colors */
 	--color-success: #10b981;
@@ -44,46 +44,46 @@
 	--color-warning-background: #fef3c7;
 	--color-error: #ef4444;
 	--color-error-background: #fee2e2;
-	--color-info: var(--color-blue-500);
-	--color-info-background: var(--color-blue-50);
+	--color-info: #3b82f6;
+	--color-info-background: #dbeafe;
 
 	/* Surface colors for cards, modals, etc. */
-	--color-surface-primary: #f0f9ff; /* sky-50 */
-	--color-surface-secondary: #e0f2fe; /* sky-100 */
-	--color-surface-raised: #ffffff; /* white for elevation */
-	--color-surface-overlay: rgba(0, 0, 0, 0.1);
+	--color-surface-primary: #ffffff;
+	--color-surface-secondary: #fafafa;
+	--color-surface-raised: #ffffff;
+	--color-surface-overlay: rgba(0, 0, 0, 0.05);
 
 	/* Shadows */
-	--shadow-color: rgba(0, 0, 0, 0.1);
-	--shadow-color-strong: rgba(0, 0, 0, 0.25);
+	--shadow-color: rgba(0, 0, 0, 0.08);
+	--shadow-color-strong: rgba(0, 0, 0, 0.16);
 }
 
 /* === DARK THEME === */
 .dark {
-	/* Background colors */
-	--color-background-primary: #312e81; /* indigo-900 */
-	--color-background-secondary: #3730a3; /* indigo-800 */
-	--color-background-tertiary: #4338ca; /* indigo-700 */
-	--color-background-accent: #1e3a8a;
+	/* Background colors - ChatGPT.com style */
+	--color-background-primary: #212121; /* Very dark gray */
+	--color-background-secondary: #171717; /* Darker for sidebars */
+	--color-background-tertiary: #0a0a0a; /* Nearly black */
+	--color-background-accent: #2a2a2a;
 
 	/* Text colors */
-	--color-text-primary: var(--color-neutral-50);
-	--color-text-secondary: var(--color-neutral-400);
-	--color-text-muted: var(--color-neutral-500);
-	--color-text-accent: #60a5fa;
-	--color-text-inverse: var(--color-neutral-900);
+	--color-text-primary: #e5e5e5; /* Light gray */
+	--color-text-secondary: #a3a3a3; /* Muted gray */
+	--color-text-muted: #737373; /* Dimmed gray */
+	--color-text-accent: #e5e5e5;
+	--color-text-inverse: #171717;
 
 	/* Border colors */
-	--color-border-default: var(--color-neutral-700);
-	--color-border-light: var(--color-neutral-800);
-	--color-border-dark: var(--color-neutral-600);
-	--color-border-accent: #3b82f6;
+	--color-border-default: #404040;
+	--color-border-light: #2a2a2a;
+	--color-border-dark: #525252;
+	--color-border-accent: #525252;
 
 	/* Action colors */
-	--color-action-primary: #3b82f6;
-	--color-action-primary-hover: #2563eb;
-	--color-action-primary-active: #1d4ed8;
-	--color-action-primary-disabled: var(--color-neutral-700);
+	--color-action-primary: #e5e5e5;
+	--color-action-primary-hover: #ffffff;
+	--color-action-primary-active: #d4d4d4;
+	--color-action-primary-disabled: #404040;
 
 	/* Status colors */
 	--color-success: #34d399;
@@ -96,14 +96,14 @@
 	--color-info-background: #1e3a8a;
 
 	/* Surface colors */
-	--color-surface-primary: #1e1b4b; /* indigo-950 */
-	--color-surface-secondary: #312e81; /* indigo-900 */
-	--color-surface-raised: #3730a3; /* indigo-800 for elevation */
-	--color-surface-overlay: rgba(255, 255, 255, 0.1);
+	--color-surface-primary: #2a2a2a;
+	--color-surface-secondary: #212121;
+	--color-surface-raised: #303030;
+	--color-surface-overlay: rgba(255, 255, 255, 0.05);
 
 	/* Shadows */
-	--shadow-color: rgba(0, 0, 0, 0.3);
-	--shadow-color-strong: rgba(0, 0, 0, 0.6);
+	--shadow-color: rgba(0, 0, 0, 0.4);
+	--shadow-color-strong: rgba(0, 0, 0, 0.7);
 }
 
 /* === HIGH CONTRAST THEMES === */

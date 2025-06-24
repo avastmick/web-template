@@ -202,8 +202,11 @@
 		<!-- Text input -->
 		<textarea
 			bind:this={inputElement}
-			bind:value={$inputText}
-			oninput={autoResize}
+			value={$inputText}
+			oninput={(e) => {
+				chatStore.setInputText(e.currentTarget.value);
+				autoResize();
+			}}
 			onkeydown={handleKeydown}
 			placeholder={$_('chat.input.placeholder')}
 			class="flex-1 resize-none border-none bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none dark:text-white dark:placeholder-gray-400"

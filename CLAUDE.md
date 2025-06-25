@@ -18,13 +18,20 @@ This project aims to create a high-performance, secure, and high-quality web app
 -   `client/`: A SvelteKit application (TypeScript) serving the web interface.
 -   `server/`: A Rust/Axum application providing REST API endpoints and interacting with a database (`sqlx`).
 
-The database is SQLite for local development, with `dbmate` for migrations. `just` is used for command running, and `direnv` manages environment variables through `.envrc`.
+The database is SQLite for local development, with `dbmate` for migrations. `just` is used for ALL command running, and `direnv` manages environment variables through `.envrc`.
 
 ## Development
 
-Work in small increments on a minimum set of files, in one area at a time - i.e. either `server` OR `client` NOT both. Run `just check-server` or `just check-client` regularly after each increment; resolve ALL issues before proceeding. DO NOT make many changes without running the checks as it will waste time.
+**IMPORTANT RULES - ALWAYS STRICTLY FOLLOW**
 
-DO NOT add linter exclusions (such as `#[allow(clippy::too_many_arguments)]` or `eslint-disable`) to code without explicit reason. DO NOT add `#[allow(dead_code)]`; all code MUST be used.
+- ALWAYS work in small increments on a minimum set of files, in one area at a time - i.e. either `server` OR `client` NOT both.
+- ALWAYS run `just check-server` or `just check-client` after each increment; resolve ALL issues before proceeding.
+- DO NOT make many changes without running the checks as it will waste time.
+- DO NOT add linter exclusions (such as `#[allow(clippy::SOME_EXCLUSION)]` or `eslint-disable`) to any code without explicit reason. Add agreement comment if overridden and date of agreement.
+- DO NOT add `#[allow(dead_code)]` or equivalent exclusions; all code MUST be used.
+- ALWAYS check local logs; If a `.overmind.sock` is present then the server is running. Check the logs in the `logs` dir to check issues; there are `logs/client_latest.log` and `logs/server_latest.log` for client and server
+- ALWAYS use `playwright` mcp to review browser console log
+- ALWAYS explicitly follow code organisation conventions listed in `documentation/ARCHITECTURE.md`. Update `ARCHITECTURE.md` if any additional code directories are added.
 
 ## Key Project Goals (from PRD.md and README.md)
 
@@ -36,18 +43,11 @@ DO NOT add linter exclusions (such as `#[allow(clippy::too_many_arguments)]` or 
 -   **Beautiful & Functional UI:** Engaging, easily extensible UI with dark/light modes and themes.
 -   **Modular Backend:** Fast, extensible Rust server for database, AI, payments, etc.
 
-## Documentation and Additional Context
-
--   Primary project documentation: `README.md`, `documentation/PRD.md`, `documentation/ARCHITECTURE.md`.
--   Current development tasks: `CURRENT_TASKS.md`.
--   Additional context (e.g., SDKs, specific library docs) may be in `context/`.
--   If you need external documentation (SDKs, API docs), use `context7` mcp.
-
 ## Package Management
 
-This project uses Bun (client) and Cargo (server) exclusively.
+This project uses Bun (client) and Cargo (server) *exclusively*.
 
-**IMPORTANT:** Always use the appropriate package manager commands (`cargo add`, `bun add`) rather than manually editing `Cargo.toml` or `package.json`. Manual edits often result in outdated versions and can cause dependency conflicts.
+**IMPORTANT:** Always use the appropriate package manager commands (`cargo add`, `bun add`) rather than manually editing `Cargo.toml` or `package.json`. Manual edits result in outdated versions and can cause dependency conflicts.
 
 ### Client - Bun (`web-template/client/`)
 
@@ -59,9 +59,9 @@ This project uses Bun (client) and Cargo (server) exclusively.
 -   Check for unused dependencies: `bun pm ls --prod=false` (More accurately: `bun run depcheck` or similar if configured)
 -   Clean unused packages: `bun pm prune` (Be cautious with this, verify before running)
 -   Build: `just build-client`
+-   Check: `just check-client` includes lints, file size and other checks
 -   Test: `just test-client`
 -   Format: `just format-client`
--   Check: `just check-client` includes lints, file size and other checks
 
 ### Server - Cargo (`web-template/server/`)
 
@@ -71,9 +71,9 @@ This project uses Bun (client) and Cargo (server) exclusively.
 -   Remove dependency: `cargo remove <crate-name>` (User runs this, check `Cargo.toml` afterwards)
 -   Update dependencies: `cargo update`
 -   Build: `just build-server`
--   Test: `just test-server`
 -   Format: `just format-server`
 -   Check: `just check-server` includes lints, filesize and other checks
+-   Test: `just test-server`
 
 ## Project Commands (using `just` from `web-template/`)
 

@@ -35,6 +35,30 @@ The system is designed as a modern web application with a decoupled frontend and
     -   `static/`: Static assets.
     -   `tests/`: Playwright (E2E) and Vitest (unit/integration) tests.
 
+```
+        src
+        ├── lib
+        │   ├── components
+        │   │   ├── auth
+        │   │   ├── chat
+        │   │   └── ui
+        │   ├── i18n
+        │   │   └── locales
+        │   ├── services
+        │   ├── stores
+        │   ├── styles
+        │   ├── types
+        │   └── utils
+        │       └── accessibility
+        └── routes
+            ├── auth
+            │   └── oauth
+            │       └── callback
+            ├── login
+            ├── profile
+            └── register
+```
+
 ### 2.2. Server (Rust/Axum) - `web-template/server/`
 
 -   **Framework:** Axum (built on Tokio)
@@ -52,11 +76,22 @@ The system is designed as a modern web application with a decoupled frontend and
     -   `src/handlers/`: Request handlers for different API resources.
     -   `src/models/` (or `src/domain/`): Data structures representing business entities.
     -   `src/services/`: Modules containing business logic.
-    -   `src/db/` (or `src/repository/`): Database interaction logic, queries using `sqlx`.
     -   `src/middleware/`: Custom Axum middleware (e.g., for authentication, logging).
     -   `src/config.rs`: Application configuration loading.
     -   `src/errors.rs`: Custom error types and error handling.
     -   `tests/`: Integration tests for API endpoints and services.
+
+```
+        ai
+        config
+        core
+        handlers
+        └── ai_handler
+        middleware
+        models
+        services
+        └── payment
+```
 
 ### 2.3. Database - `web-template/db/`
 

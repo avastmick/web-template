@@ -56,6 +56,11 @@
 	/* Shadows */
 	--shadow-color: rgba(0, 0, 0, 0.08);
 	--shadow-color-strong: rgba(0, 0, 0, 0.16);
+
+	/* Focus colors */
+	--color-focus-ring: #fbbf24; /* amber-400 */
+	--focus-ring-width: 1px;
+	--focus-ring-offset: 1px;
 }
 
 /* === DARK THEME === */
@@ -104,6 +109,11 @@
 	/* Shadows */
 	--shadow-color: rgba(0, 0, 0, 0.4);
 	--shadow-color-strong: rgba(0, 0, 0, 0.7);
+
+	/* Focus colors */
+	--color-focus-ring: #f59e0b; /* amber-500 */
+	--focus-ring-width: 1px;
+	--focus-ring-offset: 1px;
 }
 
 /* === HIGH CONTRAST THEMES === */

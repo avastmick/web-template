@@ -9,8 +9,8 @@ pub mod streaming;
 // Re-export all public handlers
 pub use chat::chat_handler;
 pub use conversations::{
-    archive_conversation_handler, get_conversation_handler, get_conversations_handler,
-    get_usage_stats_handler,
+    archive_conversation_handler, delete_conversation_handler, get_conversation_handler,
+    get_conversations_handler, get_usage_stats_handler,
 };
 pub use file_upload::upload_file_handler;
 pub use misc::{

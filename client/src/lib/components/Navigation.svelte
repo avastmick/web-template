@@ -69,9 +69,7 @@
 	};
 </script>
 
-<header
-	class="bg-bg-primary border-border-default sticky top-0 z-50 w-full border-b backdrop-blur-sm"
->
+<header class="bg-bg-primary sticky top-0 z-50 w-full backdrop-blur-sm">
 	<Container>
 		<nav aria-label="Main navigation" class="relative">
 			<Flex justify="between" align="center" class="h-16">

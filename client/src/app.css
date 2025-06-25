@@ -116,13 +116,13 @@ small {
 /* === FOCUS MANAGEMENT === */
 
 /* Remove default focus outline */
-:focus {
+:focus:not(.focus-visible-ring) {
 	outline: none;
 }
 
 /* Custom focus ring for better accessibility */
-:focus-visible {
-	outline: var(--focus-ring);
+:focus-visible:not(.focus-visible-ring) {
+	outline: var(--focus-ring-width) solid var(--color-focus-ring);
 	outline-offset: var(--focus-ring-offset);
 	border-radius: var(--radius-sm);
 }
@@ -165,11 +165,11 @@ select {
 		box-shadow var(--transition-duration-normal) var(--transition-easing-smooth);
 }
 
+/* Remove default focus styles - will use Tailwind utilities instead */
 input:focus,
 textarea:focus,
 select:focus {
-	border-color: var(--color-action-primary);
-	box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+	outline: none;
 }
 
 /* === LINK STYLES === */

@@ -46,10 +46,8 @@
 
 /* Enhanced focus styles using design tokens */
 .focus-visible-ring:focus-visible {
-	outline: none;
-	box-shadow:
-		0 0 0 2px var(--color-action-primary),
-		0 0 0 4px rgba(255, 255, 255, 1);
+	outline: var(--focus-ring-width) solid var(--color-focus-ring);
+	outline-offset: var(--focus-ring-offset);
 }
 
 /* High contrast focus for better visibility */
@@ -67,9 +65,8 @@
 
 /* Focus within styling for containers */
 .focus-within-ring:focus-within {
-	box-shadow:
-		0 0 0 2px var(--color-action-primary),
-		0 0 0 4px rgba(255, 255, 255, 1);
+	outline: var(--focus-ring-width) solid var(--color-focus-ring);
+	outline-offset: var(--focus-ring-offset);
 }
 
 /* === SKIP LINKS === */
@@ -471,7 +468,8 @@
 
 /* Enhanced focus visibility in dark mode */
 .dark .focus-visible-ring:focus-visible {
-	--tw-ring-color: #60a5fa;
+	outline: var(--focus-ring-width) solid var(--color-focus-ring) !important;
+	outline-offset: var(--focus-ring-offset) !important;
 }
 
 /* === ANIMATION ACCESSIBILITY === */

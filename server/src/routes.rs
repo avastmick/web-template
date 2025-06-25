@@ -15,10 +15,10 @@ use crate::handlers::{
     ai_handler::{
         ai_info_handler, archive_conversation_handler, chat_handler, chat_stream_handler,
         code_analysis_handler, contextual_chat_handler, create_invite_handler,
-        delete_invite_handler, demo_message_handler, error_demo_handler, get_conversation_handler,
-        get_conversations_handler, get_invite_handler, get_usage_stats_handler,
-        health_check_handler, list_invites_handler, moderate_content_handler, upload_file_handler,
-        verify_token_handler,
+        delete_conversation_handler, delete_invite_handler, demo_message_handler,
+        error_demo_handler, get_conversation_handler, get_conversations_handler,
+        get_invite_handler, get_usage_stats_handler, health_check_handler, list_invites_handler,
+        moderate_content_handler, upload_file_handler, verify_token_handler,
     },
     auth_handler::{login_user_handler, register_user_handler},
     health_handler::{health_check, readiness_check},
@@ -122,6 +122,10 @@ pub async fn create_router(
         .route("/api/ai/conversations", get(get_conversations_handler))
         .route("/api/ai/conversations/{id}", get(get_conversation_handler))
         .route(
+            "/api/ai/conversations/{id}",
+            axum::routing::delete(delete_conversation_handler),
+        )
+        .route(
             "/api/ai/conversations/{id}/archive",
             post(archive_conversation_handler),
         )
@@ -165,7 +169,7 @@ pub async fn create_router(
 
                     first_origin.parse::<HeaderValue>().unwrap()
                 })
-                .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+                .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::OPTIONS])
                 .allow_headers([
                     axum::http::header::CONTENT_TYPE,
                     axum::http::header::AUTHORIZATION,

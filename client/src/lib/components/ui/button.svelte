@@ -46,15 +46,14 @@
 
 	// Variant styles using our design tokens
 	const variants = {
-		default: 'bg-primary text-white shadow hover:bg-primary-hover focus:ring-2 focus:ring-offset-2',
-		destructive:
-			'bg-red-500 text-white shadow hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2',
+		default: 'bg-primary text-white shadow hover:bg-primary-hover focus-visible:ring-amber-300',
+		destructive: 'bg-red-500 text-white shadow hover:bg-red-600 focus-visible:ring-amber-300',
 		outline:
-			'border border-border-default bg-transparent shadow-sm hover:bg-bg-secondary hover:text-text-primary focus:ring-2 focus:ring-offset-2',
+			'border border-border-default bg-transparent shadow-sm hover:bg-bg-secondary hover:text-text-primary focus-visible:ring-amber-300',
 		secondary:
-			'bg-bg-secondary text-text-primary shadow-sm hover:bg-neutral-200 focus:ring-2 focus:ring-offset-2',
-		ghost: 'hover:bg-bg-secondary hover:text-text-primary focus:ring-2 focus:ring-offset-1',
-		link: 'text-primary underline-offset-4 hover:underline focus:ring-2 focus:ring-offset-1'
+			'bg-bg-secondary text-text-primary shadow-sm hover:bg-neutral-200 focus-visible:ring-amber-300',
+		ghost: 'hover:bg-bg-secondary hover:text-text-primary focus-visible:ring-amber-300',
+		link: 'text-primary underline-offset-4 hover:underline focus-visible:ring-amber-300'
 	};
 
 	// Size styles using our design tokens
@@ -67,7 +66,7 @@
 
 	// Combine base styles with variants and sizes
 	const baseClasses =
-		'inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors duration-normal ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 touch-target';
+		'inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors duration-normal ease-smooth focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 touch-target';
 
 	// Loading and disabled state
 	const isDisabled = disabled || loading;

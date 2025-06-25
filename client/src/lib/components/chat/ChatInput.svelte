@@ -212,7 +212,7 @@
 			}}
 			onkeydown={handleKeydown}
 			placeholder={$_('chat.input.placeholder')}
-			class="flex-1 resize-none border-none bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none dark:text-white dark:placeholder-gray-400"
+			class="flex-1 resize-none border-none bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none focus-visible:ring-amber-300 dark:text-white dark:placeholder-gray-400"
 			rows="1"
 			disabled={$isStreaming}
 			aria-label={$_('chat.input.message')}

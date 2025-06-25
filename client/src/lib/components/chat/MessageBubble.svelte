@@ -4,6 +4,7 @@
 	import type { ChatMessage } from '$lib/types/chat.js';
 	import { _ } from 'svelte-i18n';
 	import { Button } from '$lib/components/ui/index.js';
+	import MarkdownContent from './MarkdownContent.svelte';
 
 	export let message: ChatMessage;
 	export let isStreaming = false;
@@ -13,10 +14,20 @@
 	$: isAssistant = message.role === 'assistant';
 
 	// Format timestamp
-	$: formattedTime = new Date(message.timestamp).toLocaleTimeString([], {
-		hour: '2-digit',
-		minute: '2-digit'
-	});
+	$: formattedTime = (() => {
+		try {
+			const date = new Date(message.timestamp);
+			if (isNaN(date.getTime())) {
+				return '';
+			}
+			return date.toLocaleTimeString([], {
+				hour: '2-digit',
+				minute: '2-digit'
+			});
+		} catch {
+			return '';
+		}
+	})();
 
 	// Copy message content to clipboard
 	async function copyMessage() {
@@ -41,8 +52,15 @@
 		<!-- Assistant message -->
 		<div class="flex w-full max-w-none gap-3">
 			<!-- Avatar -->
-			<div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-600">
-				<svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<div
+				class="bg-color-action-primary flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+			>
+				<svg
+					class="text-text-inverse h-4 w-4"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+				>
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
@@ -54,17 +72,17 @@
 
 			<!-- Message content -->
 			<div class="min-w-0 flex-1">
-				<div class="prose prose-sm max-w-none text-gray-900 dark:text-white">
+				<div class="text-text-primary border-border-default bg-bg-secondary rounded-lg border p-4">
 					{#if isStreaming}
-						<!-- Streaming content with cursor -->
-						<span class="whitespace-pre-wrap">{message.content}</span>
-						<span class="ml-1 inline-block h-4 w-0.5 animate-pulse bg-gray-600" aria-hidden="true"
+						<!-- Streaming content with cursor (no markdown parsing while streaming) -->
+						<div class="whitespace-pre-wrap">{message.content}</div>
+						<span
+							class="bg-text-secondary ml-1 inline-block h-4 w-0.5 animate-pulse"
+							aria-hidden="true"
 						></span>
 					{:else}
-						<!-- Static content -->
-						<div class="leading-relaxed whitespace-pre-wrap">
-							{message.content}
-						</div>
+						<!-- Static content with markdown rendering -->
+						<MarkdownContent content={message.content} />
 					{/if}
 				</div>
 
@@ -76,7 +94,7 @@
 						<Button
 							variant="ghost"
 							size="sm"
-							class="h-6 w-6 p-0 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+							class="text-text-secondary hover:bg-background-secondary hover:text-text-primary h-6 w-6 p-0"
 							onclick={copyMessage}
 							aria-label={$_('chat.message.copy')}
 						>
@@ -93,7 +111,7 @@
 						<Button
 							variant="ghost"
 							size="sm"
-							class="h-6 w-6 p-0 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+							class="text-text-secondary hover:bg-background-secondary hover:text-text-primary h-6 w-6 p-0"
 							onclick={regenerateResponse}
 							aria-label={$_('chat.message.regenerate')}
 						>
@@ -110,12 +128,14 @@
 				{/if}
 
 				<!-- Timestamp -->
-				<time
-					class="mt-1 block text-xs text-gray-500 opacity-0 transition-opacity group-hover:opacity-100"
-					datetime={message.timestamp}
-				>
-					{formattedTime}
-				</time>
+				{#if formattedTime}
+					<time
+						class="text-text-muted mt-1 block text-xs opacity-0 transition-opacity group-hover:opacity-100"
+						datetime={message.timestamp}
+					>
+						{formattedTime}
+					</time>
+				{/if}
 			</div>
 		</div>
 	{:else}
@@ -126,7 +146,7 @@
 				<div class="mb-2 flex flex-wrap gap-1">
 					{#each message.metadata.attachedFiles as fileName (fileName)}
 						<div
-							class="flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+							class="bg-background-secondary text-text-secondary flex items-center gap-1 rounded-md px-2 py-1 text-xs"
 						>
 							<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path
@@ -142,19 +162,23 @@
 				</div>
 			{/if}
 
-			<div class="rounded-2xl bg-blue-600 px-4 py-2 text-white">
+			<div
+				class="bg-color-action-primary text-text-inverse border-border-light rounded-2xl border px-4 py-2"
+			>
 				<div class="text-sm leading-relaxed whitespace-pre-wrap">
 					{message.content}
 				</div>
 			</div>
 
 			<!-- Timestamp -->
-			<time
-				class="mt-1 text-xs text-gray-500 opacity-0 transition-opacity group-hover:opacity-100"
-				datetime={message.timestamp}
-			>
-				{formattedTime}
-			</time>
+			{#if formattedTime}
+				<time
+					class="text-text-muted mt-1 text-xs opacity-0 transition-opacity group-hover:opacity-100"
+					datetime={message.timestamp}
+				>
+					{formattedTime}
+				</time>
+			{/if}
 		</div>
 	{/if}
 </div>

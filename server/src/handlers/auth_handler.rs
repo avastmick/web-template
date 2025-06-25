@@ -51,6 +51,7 @@ pub struct RegisterResponse {
 pub struct LoginResponse {
     pub token: String,
     pub user: UserResponse,
+    pub payment_required: bool,
 }
 
 impl From<User> for UserResponse {
@@ -209,7 +210,27 @@ pub async fn login_user_handler(
         return Err(AppError::InvalidCredentials);
     }
 
-    // 4. Generate JWT token
+    // 4. Check if user has valid invite or active payment
+    let has_invite = state
+        .invite_service
+        .check_invite_exists(&user.email)
+        .await?;
+
+    let payment_status = state
+        .payment_service
+        .get_user_payment_status(user.id)
+        .await?;
+
+    let payment_required = !has_invite && !payment_status.has_active_payment;
+
+    if payment_required {
+        tracing::info!(
+            "User {} requires payment (no invite and no active payment)",
+            user.email
+        );
+    }
+
+    // 5. Generate JWT token
     let token = state
         .auth_service
         .generate_token(user.id, &user.email)
@@ -223,6 +244,7 @@ pub async fn login_user_handler(
     let response = LoginResponse {
         token,
         user: UserResponse::from(user),
+        payment_required,
     };
 
     Ok((StatusCode::OK, Json(response)))

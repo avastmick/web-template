@@ -20,6 +20,7 @@ import type {
 	User,
 	AuthError
 } from '$lib/types';
+import type { RegisterResponse } from '$lib/types/auth';
 
 // Configuration
 // In production/Docker, client and server run on the same port
@@ -121,18 +122,18 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 /**
  * Register a new user
  */
-export async function register(data: RegisterRequest): Promise<User> {
+export async function register(data: RegisterRequest): Promise<RegisterResponse> {
 	authStore.setLoading(true);
 	authStore.clearError();
 
 	try {
-		const user = await apiRequest<User>('/api/auth/register', {
+		const response = await apiRequest<RegisterResponse>('/api/auth/register', {
 			method: 'POST',
 			body: JSON.stringify(data)
 		});
 
 		authStore.setLoading(false);
-		return user;
+		return response;
 	} catch (error) {
 		authStore.setLoading(false);
 		const errorMessage = error instanceof ApiError ? error.message : 'Registration failed';
@@ -156,6 +157,11 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
 
 		// Update auth store with login success
 		authStore.loginSuccess(response.user, response.token);
+
+		// Store payment required status for use by login page
+		if (response.payment_required) {
+			authStore.setPaymentRequired(true);
+		}
 
 		return response;
 	} catch (error) {

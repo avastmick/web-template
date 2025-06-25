@@ -18,6 +18,7 @@ import type { AuthState, User } from '$lib/types/auth';
 // Storage keys for localStorage
 const TOKEN_STORAGE_KEY = 'auth_token';
 const USER_STORAGE_KEY = 'auth_user';
+const PAYMENT_REQUIRED_KEY = 'payment_required';
 
 // Initial state
 const initialState: AuthState = {
@@ -25,7 +26,8 @@ const initialState: AuthState = {
 	token: null,
 	isAuthenticated: false,
 	isLoading: false,
-	error: null
+	error: null,
+	paymentRequired: false
 };
 
 // Create the writable store
@@ -42,6 +44,7 @@ function createAuthStore() {
 			try {
 				const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
 				const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+				const paymentRequired = localStorage.getItem(PAYMENT_REQUIRED_KEY) === 'true';
 
 				if (storedToken && storedUser) {
 					const user: User = JSON.parse(storedUser);
@@ -50,7 +53,8 @@ function createAuthStore() {
 						user,
 						token: storedToken,
 						isAuthenticated: true,
-						error: null
+						error: null,
+						paymentRequired
 					}));
 				}
 			} catch (error) {
@@ -58,6 +62,7 @@ function createAuthStore() {
 				// Clear potentially corrupted data
 				localStorage.removeItem(TOKEN_STORAGE_KEY);
 				localStorage.removeItem(USER_STORAGE_KEY);
+				localStorage.removeItem(PAYMENT_REQUIRED_KEY);
 			}
 		},
 
@@ -74,6 +79,18 @@ function createAuthStore() {
 		// Clear error message
 		clearError: () => {
 			update((state) => ({ ...state, error: null }));
+		},
+
+		// Set payment required status
+		setPaymentRequired: (required: boolean) => {
+			if (browser) {
+				if (required) {
+					localStorage.setItem(PAYMENT_REQUIRED_KEY, 'true');
+				} else {
+					localStorage.removeItem(PAYMENT_REQUIRED_KEY);
+				}
+			}
+			update((state) => ({ ...state, paymentRequired: required }));
 		},
 
 		// Login success - store user and token
@@ -110,6 +127,7 @@ function createAuthStore() {
 			if (browser) {
 				localStorage.removeItem(TOKEN_STORAGE_KEY);
 				localStorage.removeItem(USER_STORAGE_KEY);
+				localStorage.removeItem(PAYMENT_REQUIRED_KEY);
 			}
 
 			set(initialState);
@@ -136,3 +154,6 @@ export const authError = derived(authStore, ($authStore) => $authStore.error);
 export const hasValidToken = derived(authStore, ($authStore) => {
 	return $authStore.token !== null && $authStore.user !== null;
 });
+
+// Derived store for payment required status
+export const paymentRequired = derived(authStore, ($authStore) => $authStore.paymentRequired);

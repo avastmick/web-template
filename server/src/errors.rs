@@ -64,6 +64,9 @@ pub enum AppError {
 
     #[error("Bad request: {0}")]
     BadRequest(String),
+
+    #[error("Payment required")]
+    PaymentRequired,
 }
 
 impl IntoResponse for AppError {
@@ -146,6 +149,11 @@ impl IntoResponse for AppError {
             AppError::InviteAlreadyUsed => (
                 StatusCode::FORBIDDEN,
                 "Your invitation has already been used.".to_string(),
+                None,
+            ),
+            AppError::PaymentRequired => (
+                StatusCode::PAYMENT_REQUIRED,
+                "Payment required to access this resource.".to_string(),
                 None,
             ),
         };

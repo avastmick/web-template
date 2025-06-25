@@ -105,10 +105,16 @@
 				password
 			};
 
-			await login(loginData);
+			const response = await login(loginData);
 
-			// Login successful - redirect to profile page
-			await goto('/profile');
+			// Check if payment is required
+			if (response.payment_required) {
+				// Redirect to payment page
+				await goto('/payment');
+			} else {
+				// Login successful - redirect to profile page
+				await goto('/profile');
+			}
 		} catch (error) {
 			// Error is already handled by the auth service and stored in authStore
 			console.error('Login failed:', error);

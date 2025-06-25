@@ -19,6 +19,7 @@ export interface AuthState {
 	isAuthenticated: boolean;
 	isLoading: boolean;
 	error: string | null;
+	paymentRequired: boolean;
 }
 
 export interface LoginRequest {
@@ -31,15 +32,22 @@ export interface RegisterRequest {
 	password: string;
 }
 
+export interface RegisterResponse {
+	user: User;
+	payment_required: boolean;
+}
+
 export interface LoginResponse {
 	token: string;
 	user: User;
+	payment_required: boolean;
 }
 
 export interface OAuthLoginResponse {
 	token: string;
 	user: User;
 	is_new_user: boolean;
+	payment_required?: boolean;
 }
 
 export interface AuthError {

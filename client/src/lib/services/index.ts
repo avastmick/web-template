@@ -5,3 +5,4 @@
  */
 
 export * from './apiAuth';
+export * from './paymentService';

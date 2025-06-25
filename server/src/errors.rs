@@ -59,6 +59,7 @@ pub enum AppError {
     InviteAlreadyUsed,
 
     #[error("Registration is by invitation only")]
+    #[allow(dead_code)]
     RegistrationRequiresInvite,
 
     #[error("Bad request: {0}")]

@@ -20,6 +20,12 @@ This project aims to create a high-performance, secure, and high-quality web app
 
 The database is SQLite for local development, with `dbmate` for migrations. `just` is used for command running, and `direnv` manages environment variables through `.envrc`.
 
+## Development
+
+Work in small increments on a minimum set of files, in one area at a time - i.e. either `server` OR `client` NOT both. Run `just check-server` or `just check-client` regularly after each increment; resolve ALL issues before proceeding. DO NOT make many changes without running the checks as it will waste time.
+
+DO NOT add linter exclusions (such as `#[allow(clippy::too_many_arguments)]` or `eslint-disable`) to code without explicit reason. DO NOT add `#[allow(dead_code)]`; all code MUST be used.
+
 ## Key Project Goals (from PRD.md and README.md)
 
 -   **Performance:** Exceed highest performance expectations.

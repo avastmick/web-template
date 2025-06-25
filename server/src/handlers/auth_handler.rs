@@ -42,6 +42,12 @@ pub struct UserResponse {
 }
 
 #[derive(Debug, Serialize)]
+pub struct RegisterResponse {
+    pub user: UserResponse,
+    pub payment_required: bool,
+}
+
+#[derive(Debug, Serialize)]
 pub struct LoginResponse {
     pub token: String,
     pub user: UserResponse,
@@ -102,15 +108,19 @@ pub async fn register_user_handler(
         .invite_service
         .check_invite_exists(&payload.email)
         .await?;
-    if !has_invite {
-        tracing::warn!(
-            "Registration attempt without invite for email: {}",
+
+    // Payment is required if user doesn't have an invite
+    let payment_required = !has_invite;
+
+    // For MVP, we allow registration without invite but flag that payment is required
+    if has_invite {
+        tracing::info!("Valid invite found for email: {}", payload.email);
+    } else {
+        tracing::info!(
+            "Registration without invite for email: {} - payment will be required",
             payload.email
         );
-        return Err(AppError::RegistrationRequiresInvite);
     }
-
-    tracing::info!("Valid invite found for email: {}", payload.email);
 
     // 3. Call the user service to attempt user creation
     match state.user_service.create_user(&payload).await {
@@ -130,7 +140,11 @@ pub async fn register_user_handler(
                 created_user.email
             );
             let user_response = UserResponse::from(created_user);
-            Ok((StatusCode::CREATED, Json(user_response)))
+            let register_response = RegisterResponse {
+                user: user_response,
+                payment_required,
+            };
+            Ok((StatusCode::CREATED, Json(register_response)))
         }
         Err(app_error) => {
             // Log the AppError variant, but not necessarily the full detail if it's sensitive

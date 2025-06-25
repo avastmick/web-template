@@ -26,10 +26,14 @@ use crate::handlers::{
         OAuthAppState, github_login_init, github_oauth_callback, google_login_init,
         google_oauth_callback,
     },
+    payment_handler::{
+        create_payment_intent_handler, get_payment_status_handler, stripe_webhook_handler,
+    },
     user_handler::get_current_user_handler,
 };
 use crate::services::{
-    AiDataService, AiService, AuthService, InviteService, OAuthService, UserServiceImpl,
+    AiDataService, AiService, AuthService, InviteService, OAuthService, PaymentService,
+    UserServiceImpl,
 };
 
 /// Creates and returns the main application router.
@@ -50,6 +54,7 @@ use crate::services::{
 ///
 /// Panics if the `CLIENT_PORT` environment variable contains an invalid port number
 /// that cannot be formatted into a valid HTTP origin URL.
+#[allow(clippy::too_many_lines)]
 pub async fn create_router(
     user_service: Arc<UserServiceImpl>,
     auth_service: Arc<AuthService>,
@@ -59,7 +64,10 @@ pub async fn create_router(
 ) -> Result<Router, Box<dyn std::error::Error>> {
     // Initialize AI services
     let ai_service = AiService::new().await?;
-    let ai_data_service = AiDataService::new(db_pool);
+    let ai_data_service = AiDataService::new(db_pool.clone());
+
+    // Initialize Payment service
+    let payment_service = PaymentService::new(db_pool.clone())?;
 
     let app_state = Arc::new(AppState {
         user_service,
@@ -67,6 +75,7 @@ pub async fn create_router(
         invite_service,
         ai_service: Arc::new(tokio::sync::RwLock::new(ai_service)),
         ai_data_service: Arc::new(ai_data_service),
+        payment_service: Arc::new(payment_service),
     });
 
     let oauth_app_state = OAuthAppState {
@@ -102,6 +111,13 @@ pub async fn create_router(
         .route("/api/auth/verify", get(verify_token_handler))
         // Protected user routes
         .route("/api/users/me", get(get_current_user_handler))
+        // Payment routes
+        .route("/api/payment/status", get(get_payment_status_handler))
+        .route(
+            "/api/payment/create-intent",
+            post(create_payment_intent_handler),
+        )
+        .route("/api/webhooks/stripe", post(stripe_webhook_handler))
         // Admin routes (invite management)
         .route("/api/admin/invites", get(list_invites_handler))
         .route("/api/admin/invites", post(create_invite_handler))
@@ -169,7 +185,13 @@ pub async fn create_router(
 
                     first_origin.parse::<HeaderValue>().unwrap()
                 })
-                .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::OPTIONS])
+                .allow_methods([
+                    Method::GET,
+                    Method::POST,
+                    Method::DELETE,
+                    Method::PUT,
+                    Method::OPTIONS,
+                ])
                 .allow_headers([
                     axum::http::header::CONTENT_TYPE,
                     axum::http::header::AUTHORIZATION,

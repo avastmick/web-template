@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 argon2 = { version = "0.5.3", features = ["std"] }
+async-stripe = { version = "0.41.0", features = ["runtime-tokio-hyper-rustls", "checkout", "webhook-events", "webhook-endpoints"] }
 async-trait = "0.1.88"
 axum = { version = "0.8.4", features = ["ws", "multipart"] }
 axum-extra = { version = "0.10.1", features = ["typed-header"] }

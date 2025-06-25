@@ -194,10 +194,11 @@ async fn test_register_user_success() {
     assert_eq!(response.status(), StatusCode::CREATED);
 
     let json_body = extract_json_response(response).await;
-    assert!(json_body["id"].is_string());
-    assert_eq!(json_body["email"], "test@example.com");
-    assert!(json_body["created_at"].is_string());
-    assert!(json_body["updated_at"].is_string());
+    assert!(json_body["user"]["id"].is_string());
+    assert_eq!(json_body["user"]["email"], "test@example.com");
+    assert!(json_body["user"]["created_at"].is_string());
+    assert!(json_body["user"]["updated_at"].is_string());
+    assert!(json_body["payment_required"].is_boolean());
 }
 
 #[tokio::test]
@@ -213,10 +214,15 @@ async fn test_register_user_without_invite() {
 
     let response = send_json_request(app, Method::POST, "/api/auth/register", payload).await;
 
-    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert_eq!(response.status(), StatusCode::CREATED);
 
     let json_body = extract_json_response(response).await;
-    assert_eq!(json_body["error"], "Registration is by invitation only.");
+    assert!(json_body["user"]["id"].is_string());
+    assert_eq!(json_body["user"]["email"], "noinvite@example.com");
+    assert!(json_body["user"]["created_at"].is_string());
+    assert!(json_body["user"]["updated_at"].is_string());
+    // Without invite, payment should be required
+    assert_eq!(json_body["payment_required"], true);
 }
 
 #[tokio::test]
@@ -293,16 +299,19 @@ async fn test_register_user_duplicate_email() {
 
     // Second registration with same email should fail
     let response2 = send_json_request(app, Method::POST, "/api/auth/register", payload).await;
-    // With invite-only registration, this will fail due to missing invite (403) rather than duplicate user (409)
-    assert_eq!(response2.status(), StatusCode::FORBIDDEN);
+    // Should fail because user already exists (409 Conflict)
+    assert_eq!(response2.status(), StatusCode::CONFLICT);
 
     let json_body = extract_json_response(response2).await;
     assert!(
         json_body["error"]
             .as_str()
             .unwrap()
-            .contains("invitation only")
-            || json_body["error"].as_str().unwrap().contains("invite")
+            .contains("already exists")
+            || json_body["error"]
+                .as_str()
+                .unwrap()
+                .contains("User already exists")
     );
 }
 

@@ -13,3 +13,11 @@ export type {
 	OAuthLoginResponse,
 	AuthError
 } from './auth';
+
+export type {
+	CreatePaymentIntentRequest,
+	CreatePaymentIntentResponse,
+	PaymentStatusResponse,
+	PaymentFormData,
+	PaymentResult
+} from './payment';

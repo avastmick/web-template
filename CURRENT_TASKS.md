@@ -21,7 +21,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 - Task 2.7: Complete i18n Implementation Across All Pages - **[✓] COMPLETED**
 
 **Phase 3: Advanced Features** - **[🔄] IN PROGRESS**
-- Task 3.1: Generative AI Integration Framework - **[🔄] INTEGRATION TESTS COMPLETE - CLIENT UI NEEDED**
+- Task 3.1: Generative AI Integration Framework - **[✓] COMPLETED**
 - Task 3.2: Stripe Payment Integration - **[ ] TODO**
 - Task 3.3: Deployment Guides & DevOps - **[ ] TODO**
 - Task 3.4: Template Scaffolding Tools - **[ ] TODO**
@@ -657,7 +657,17 @@ let req = ChatCompletionRequest::new(
 ```
 
 ### Task 3.1.12: Client - Chat Interface Integration and Main Page Redesign
-*   **Status:** **[ ] TODO**
+*   **Status:** **[✓] COMPLETED**
+*   **Completion Notes:**
+    *   ✅ Implemented ChatGPT-style interface with conversation sidebar and main chat area
+    *   ✅ Added markdown rendering support for AI responses using marked and DOMPurify
+    *   ✅ Fixed CORS issue by adding DELETE method to allowed methods in server
+    *   ✅ Implemented consistent amber-300 focus styles across all interactive elements
+    *   ✅ Fixed chat bubble colors to use theme-aware tokens instead of hardcoded colors
+    *   ✅ Added subtle borders to chat messages for better visual separation
+    *   ✅ Fixed "Invalid Date" warnings by adding proper error handling for timestamps
+    *   ✅ Resolved ESLint error for {@html} directive with proper disable comment
+    *   ✅ All UI elements now properly themed and accessibility-compliant
 *   **Priority:** **HIGH** - Next immediate task per INSTRUCTIONS.md
 *   **Action:** Replace current home page with elegant chat interface using ChatGPT.com as UI/UX benchmark
 *   **Details:**
@@ -716,15 +726,11 @@ let req = ChatCompletionRequest::new(
 
 ### Task 3.2: Server & Client - Stripe Payment Integration
 *   **Status:** **[ ] TODO**
-*   **Action:** Integrate Stripe for subscription and one-time payment processing
+*   **Action:** Integrate Stripe for subscription and one-time payment processing for users that do not have an 'invite'. Once registered, non-invited users will be presented with a Stripe payment request. All payment will be handled by Stripe, only the current status of the user's payment is needed to be held - i.e. `has_paid`, `is_current`, or similar.
 *   **Details:**
+    *   Document how to integrate Stripe and which API keys, etc are required and how to get it setup
     *   Set up Stripe webhook handling for payment events
-    *   Implement subscription management (create, update, cancel)
     *   Add one-time payment processing
-    *   Create payment UI components with Stripe Elements
-    *   Implement billing dashboard and invoice management
-    *   Add payment method management (cards, bank accounts)
-    *   Handle failed payments and dunning management
 *   **Files to Create/Modify:**
     *   `server/src/services/payment_service.rs` (Stripe integration)
     *   `server/src/handlers/payment_handler.rs` (payment endpoints)
@@ -732,31 +738,30 @@ let req = ChatCompletionRequest::new(
     *   `server/src/middleware/stripe_webhook.rs` (webhook verification)
     *   `client/src/lib/components/payments/` (payment UI components)
     *   `client/src/lib/services/payments.ts` (payment API client)
-    *   `client/src/routes/billing/` (billing dashboard routes)
+    *   `client/src/routes/payment/` (payment routes)
 *   **Implementation Notes:**
     *   Use Stripe's official Rust SDK
     *   Implement idempotency for payment operations
     *   Add comprehensive webhook event handling
-    *   Ensure PCI compliance best practices
+    *   Ensure PCI compliance best practices - Stripe will handle all payment, card, etc. nothing stored in application
 *   **Quality Checks:**
     *   Test with Stripe test mode and webhook testing
     *   Security audit for payment data handling
     *   Integration tests for payment flows
 
-### Task 3.3: Documentation - Deployment Guides
+### Task 3.3: Deployment Guides and tools
 *   **Status:** **[ ] TODO**
 *   **Action:** Create comprehensive deployment guides for major cloud platforms
 *   **Details:**
     *   Create a PostgreSQL database provider option
-    *   Create GCP Cloud Run deployment guide with Docker
-    *   Create fly.io deployment guide with Docker
+    *   Create GCP Cloud Run deployment with Docker
+    *   Create fly.io deployment with Docker
     *   Create CI/CD pipeline examples (GitHub Actions)
-    *   Add monitoring and logging setup guides
+    *   Add monitoring and logging setup guides - may need refactor of server tracing to support JSON-style GCP logging
     *   Create environment variable management guides
 *   **Files to Create:**
     *   `documentation/deployment/gcp-cloud-run.md`
-    *   `documentation/deployment/vercel.md`
-    *   `documentation/deployment/railway.md`
+    *   `documentation/deployment/flyio.md`
     *   `documentation/deployment/database-setup.md`
     *   `documentation/deployment/ci-cd.md`
     *   `documentation/deployment/monitoring.md`
@@ -783,13 +788,13 @@ let req = ChatCompletionRequest::new(
     *   Implement feature flag system for optional components
     *   Create update mechanism for template improvements
 *   **Files to Create:**
-    *   `scripts/create-project.js` (project scaffolding script)
-    *   `scripts/setup-wizard.js` (interactive setup)
-    *   `scripts/update-template.js` (template update utility)
+    *   `scripts/create-project.rs` (project scaffolding script)
+    *   `scripts/setup-wizard.rs` (interactive setup)
+    *   `scripts/update-template.rs` (template update utility)
     *   `template.config.json` (template configuration)
     *   `documentation/template-usage.md` (usage guide)
 *   **Implementation Notes:**
-    *   Use Node.js for cross-platform compatibility
+    *   Use Cargo for cross-platform compatibility
     *   Implement file templating with variable substitution
     *   Add Git repository initialization and cleanup
     *   Support different database options during setup

@@ -4,7 +4,6 @@
 	import { isAuthenticated, currentUser, authStore } from '$lib/stores';
 	import { _ } from 'svelte-i18n';
 	import ChatInterface from '$lib/components/chat/ChatInterface.svelte';
-	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
 	// Check authentication and payment status
@@ -12,10 +11,10 @@
 		const checkAccess = setTimeout(async () => {
 			if (!$isAuthenticated) {
 				// Not authenticated - redirect to login
-				await goto('/login');
+				window.location.href = '/login';
 			} else if ($authStore.paymentRequired) {
 				// Authenticated but needs payment
-				await goto('/payment');
+				window.location.href = '/payment';
 			}
 			// Otherwise, user has access - show chat
 		}, 100);

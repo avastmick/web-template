@@ -2,7 +2,6 @@
 
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { _ } from 'svelte-i18n';
 	import { Container, Flex, Button } from '$lib/components/ui/index.js';
 	import { authStore, isAuthLoading } from '$lib/stores';
@@ -80,12 +79,12 @@
 
 	function handleCancel() {
 		// Redirect to home or show cancellation message
-		goto('/');
+		window.location.href = '/';
 	}
 
 	// Check if user is authenticated
 	$: if (!$authStore.isAuthenticated && !$isAuthLoading) {
-		goto('/login');
+		window.location.href = '/login';
 	}
 </script>
 

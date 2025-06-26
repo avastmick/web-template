@@ -2,7 +2,7 @@
 
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { redirect } from '@sveltejs/kit';
 	import { page } from '$app/stores';
 	import { _ } from 'svelte-i18n';
 	import { Container, Flex, Button } from '$lib/components/ui/index.js';
@@ -59,7 +59,7 @@
 
 	function handleContinue() {
 		// Redirect to main app
-		goto('/');
+		redirect(302, '/');
 	}
 </script>
 
@@ -99,7 +99,7 @@
 							{$_('payment.success.errorTitle')}
 						</h1>
 						<p class="text-text-secondary">{error}</p>
-						<Button onclick={() => goto('/payment')}>
+						<Button onclick={() => redirect(302, '/payment')}>
 							{$_('payment.success.tryAgain')}
 						</Button>
 					</Flex>
@@ -182,7 +182,7 @@
 						<p class="text-text-secondary max-w-prose">
 							{$_('payment.success.failedDescription')}
 						</p>
-						<Button onclick={() => goto('/payment')}>
+						<Button onclick={() => redirect(302, '/payment')}>
 							{$_('payment.success.tryAgain')}
 						</Button>
 					</Flex>

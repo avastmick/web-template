@@ -9,29 +9,25 @@
 	 */
 
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 	import { authStore, isAuthenticated } from '$lib/stores';
 	import { _ } from 'svelte-i18n';
+	import { get } from 'svelte/store';
 
-	let status: 'loading' | 'success' | 'error' = 'loading';
-	let errorMessage = '';
-	let isNewUser = false;
+	// Get data from load function
+	let { data } = $props();
+
+	let status = $state<'loading' | 'success' | 'error'>('loading');
+	let errorMessage = $state('');
+	let isNewUser = $state(false);
 
 	onMount(async () => {
 		// If already authenticated, redirect to home
 		if ($isAuthenticated) {
-			await goto('/');
-			return;
+			window.location.href = '/';
 		}
 
-		// Get OAuth parameters from URL
-		const urlParams = new URLSearchParams($page.url.search);
-		const token = urlParams.get('token');
-		const userId = urlParams.get('user_id');
-		const email = urlParams.get('email');
-		const error = urlParams.get('error');
-		const isNewUserParam = urlParams.get('is_new_user');
+		// Get OAuth parameters from load function
+		const { token, userId, email, error, isNewUser: isNew } = data;
 
 		// Handle OAuth error
 		if (error) {
@@ -51,7 +47,7 @@
 
 		try {
 			// Set authentication data directly from redirect parameters
-			isNewUser = isNewUserParam === 'true';
+			isNewUser = isNew;
 
 			// Store the token and user data
 			authStore.loginSuccess(
@@ -68,9 +64,16 @@
 
 			status = 'success';
 
-			// Redirect to home after a brief success message
+			// authStore is already a store value, check payment status from the store state
+			const authState = get(authStore);
+			const paymentRequired = authState.paymentRequired;
+
+			// Redirect after a brief success message
 			setTimeout(async () => {
-				await goto('/');
+				if (paymentRequired) {
+					window.location.href = '/payment';
+					window.location.href = '/chat';
+				}
 			}, 2000);
 		} catch (err) {
 			status = 'error';
@@ -105,7 +108,7 @@
 	 * Handle manual redirect to login
 	 */
 	async function goToLogin() {
-		await goto('/login');
+		window.location.href = '/login';
 	}
 </script>
 
@@ -209,7 +212,7 @@
 				<div class="mt-6">
 					<button
 						type="button"
-						on:click={goToLogin}
+						onclick={goToLogin}
 						class="bg-color-primary text-text-on-primary hover:bg-color-primary-hover focus:ring-color-primary inline-flex items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium shadow-sm transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
 					>
 						{$_('auth.failed.tryAgain')}

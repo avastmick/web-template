@@ -1,10 +1,10 @@
 import type { PageLoad } from './$types';
 
-// Force route re-rendering in SPA mode
-export const load: PageLoad = async () => {
-	// This ensures the route is properly loaded and previous route components are cleaned up
+export const load: PageLoad = async ({ url }) => {
+	// Check for registration success message
+	const registered = url.searchParams.get('registered') === 'true';
+
 	return {
-		// Timestamp to force re-render
-		timestamp: Date.now()
+		registered
 	};
 };

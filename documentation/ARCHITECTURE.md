@@ -6,7 +6,7 @@ This document outlines the architecture for the `web-template` project.
 
 The system is designed as a modern web application with a decoupled frontend and backend.
 
--   **Client (Frontend):** A SvelteKit single-page application (SPA) responsible for user interface, user experience, and client-side interactions.
+-   **Client (Frontend):** A Svelte single-page application (SPA) responsible for user interface, user experience, and client-side interactions.
 -   **Server (Backend):** A Rust-based RESTful API server built with Axum, responsible for business logic, data persistence, and third-party integrations.
 -   **Database:** SQLite will be used for local development. The design will allow for easy swapping to other SQL databases (e.g., PostgreSQL) for production. Database migrations are managed by `dbmate`.
 -   **Task Runner:** `just` is used as the command runner for managing common development and build tasks across the project.
@@ -14,19 +14,20 @@ The system is designed as a modern web application with a decoupled frontend and
 
 ## 2. Components
 
-### 2.1. Client (SvelteKit) - `web-template/client/`
+### 2.1. Client (Svelte) - `web-template/client/`
 
--   **Framework:** SvelteKit
+-   **Framework:** Svelte v5+
 -   **Language:** TypeScript (with strict type checking)
 -   **Package Manager:** Bun
 -   **Key Responsibilities:**
+    -   SPA output
     -   Rendering UI components.
     -   Handling user input and interactions.
     -   Communicating with the backend API via HTTP requests.
     -   Managing client-side state (e.g., user authentication status, UI state) using Svelte stores.
     -   Routing.
 -   **Structure (High-Level):**
-    -   `src/routes/`: Defines application pages and API routes (for SvelteKit endpoints, if any).
+    -   `src/routes/`: Defines application pages and API routes (for Svelte endpoints, if any).
     -   `src/lib/components/`: Reusable Svelte components. All components must follow theming guidelines in [UI/UX and Theme Documentation](./UI_UX_THEME.md).
     -   `src/lib/stores/`: Svelte stores for global state management (including theme store).
     -   `src/lib/services/`: Modules for interacting with the backend API.
@@ -173,7 +174,7 @@ Each route directory contains only the files needed for that specific route. No 
 -   **Theming (Dark/Light Modes):** Client-side implementation using CSS variables and Svelte stores to manage theme state. See [UI/UX and Theme Documentation](./UI_UX_THEME.md) for detailed guidelines.
 -   **Deployment:**
     -   GCP Cloud Run: Containerize server and client (or serve client from server).
-    -   Vercel: Optimal for SvelteKit client. Server might be deployed as serverless functions or a separate service.
+    -   Fly.io: Containerised server and client using SQLite or PostgreSQL
     -   Supabase: Could be an alternative for database and auth if project pivots.
 
 This document will be updated as the project evolves.

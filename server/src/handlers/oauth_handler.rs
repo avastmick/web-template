@@ -307,7 +307,10 @@ async fn get_or_create_user(
                     "user_creation_failed"
                 })?;
 
-            // Mark invite as used
+            // Check if there is an invite
+            // FIXME: it is not an error if a user does not have an invite
+            // If a the call returns a INVITENOTFOUND error, then they have to pay
+            // else log as info that they are an invited user (add email)
             if let Err(e) = state
                 .app_state
                 .invite_service

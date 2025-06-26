@@ -7,7 +7,6 @@
 	import { waitLocale, _ } from 'svelte-i18n';
 	import { locale } from '$lib/stores/locale';
 	import Navigation from '$lib/components/Navigation.svelte';
-	import { page } from '$app/stores';
 	import { afterNavigate } from '$app/navigation';
 
 	let { children } = $props();
@@ -65,10 +64,7 @@
 	<Navigation />
 
 	<!-- Main Content -->
-	<!-- Key by full URL to force complete remount on route changes -->
-	{#key $page.url.href}
-		<div class="bg-bg-primary min-h-screen">
-			{@render children()}
-		</div>
-	{/key}
+	<main id="main-content">
+		{@render children()}
+	</main>
 {/await}

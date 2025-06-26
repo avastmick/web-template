@@ -15,8 +15,10 @@
 
 This project aims to create a high-performance, secure, and high-quality web application. There are two main components:
 
--   `client/`: A SvelteKit application (TypeScript) serving the web interface.
+-   `client/`: A Svelte 5 SPA (Single Page Application) with client-side routing only (NO SSR). Built with SvelteKit configured for static adapter with SPA fallback.
 -   `server/`: A Rust/Axum application providing REST API endpoints and interacting with a database (`sqlx`).
+
+**IMPORTANT**: The client is a pure SPA with CSR (Client-Side Rendering) only. There is NO Server-Side Rendering (SSR) in this application. In production, the client is served as static files from the server.
 
 The database is SQLite for local development, with `dbmate` for migrations. `just` is used for ALL command running, and `direnv` manages environment variables through `.envrc`.
 

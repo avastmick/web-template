@@ -127,6 +127,8 @@ pub async fn register_user_handler(
     match state.user_service.create_user(&payload).await {
         Ok(created_user) => {
             // Mark invite as used
+            // FIXME: should check state and log as info if INVITENOTFOUND, only log error if not
+            // that
             if let Err(e) = state.invite_service.mark_invite_used(&payload.email).await {
                 tracing::error!(
                     "Failed to mark invite as used for email {}: {:?}",

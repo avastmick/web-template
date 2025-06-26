@@ -13,8 +13,9 @@ import {
 	type PaymentIntent
 } from '@stripe/stripe-js';
 
-// Will need to be configured in environment
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_default';
+// Stripe publishable key from environment
+// This is mapped from STRIPE_PUBLISHABLE_KEY in vite.config.ts
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
 
 // Import the ApiError from apiAuth
 import { ApiError } from './apiAuth';
@@ -45,6 +46,12 @@ export class PaymentService {
 	 */
 	async init(): Promise<void> {
 		if (!this.stripe) {
+			if (!STRIPE_PUBLISHABLE_KEY || STRIPE_PUBLISHABLE_KEY === 'pk_test_default') {
+				throw new Error(
+					'Stripe publishable key not configured. Please set VITE_STRIPE_PUBLISHABLE_KEY in your environment.'
+				);
+			}
+
 			this.stripe = await loadStripe(STRIPE_PUBLISHABLE_KEY);
 			if (!this.stripe) {
 				throw new Error('Failed to load Stripe');
@@ -185,9 +192,9 @@ export class PaymentService {
 			Object.assign(headers, options.headers);
 		}
 
-		// Add Authorization header if available (simplified version)
-		// In a real app, you'd get this from your auth store
-		const token = localStorage.getItem('authToken');
+		// Add Authorization header if available
+		// Use the same key as authStore uses: 'auth_token'
+		const token = localStorage.getItem('auth_token');
 		if (token) {
 			headers.Authorization = `Bearer ${token}`;
 		}

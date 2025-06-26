@@ -14,5 +14,11 @@ export default defineConfig({
 				secure: false
 			}
 		}
+	},
+	define: {
+		// Map existing env vars to VITE_ prefixed ones for client access
+		'import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY': JSON.stringify(
+			process.env.STRIPE_PUBLISHABLE_KEY || ''
+		)
 	}
 });

@@ -140,15 +140,6 @@
 											tabindex="-1"
 										>
 											<div class="py-1">
-												<a
-													href="/profile"
-													class="text-text-primary hover:bg-bg-tertiary focus-visible-ring flex items-center gap-2 px-4 py-2 text-sm transition-colors"
-													role="menuitem"
-													onclick={closeUserDropdown}
-												>
-													<User class="h-4 w-4" aria-hidden="true" />
-													{$_('nav.profile')}
-												</a>
 												<button
 													type="button"
 													class="text-text-primary hover:bg-bg-tertiary focus-visible-ring flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors"
@@ -242,14 +233,6 @@
 									<span class="text-text-secondary truncate">{$currentUser.email}</span>
 								</div>
 								<div class="mt-2 space-y-1">
-									<a
-										href="/profile"
-										class="focus-visible-ring text-text-secondary hover:bg-bg-secondary hover:text-text-primary flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium transition-colors"
-										onclick={closeMobileMenu}
-									>
-										<User class="h-4 w-4" aria-hidden="true" />
-										{$_('nav.profile')}
-									</a>
 									<button
 										type="button"
 										class="focus-visible-ring text-text-secondary hover:bg-bg-secondary hover:text-text-primary flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-base font-medium transition-colors"

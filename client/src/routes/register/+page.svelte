@@ -126,16 +126,11 @@
 				password
 			};
 
-			const response = await register(userData);
+			await register(userData);
 
-			// Check if payment is required
-			if (response.payment_required) {
-				// Redirect to payment page
-				await goto('/payment');
-			} else {
-				// Registration successful and no payment required - redirect to login page
-				await goto('/login?registered=true');
-			}
+			// Registration successful - redirect to login page
+			// The user needs to login first before we can check payment requirements
+			await goto('/login?registered=true', { replaceState: true });
 		} catch (error) {
 			// Error is already handled by the auth service and stored in authStore
 			console.error('Registration failed:', error);

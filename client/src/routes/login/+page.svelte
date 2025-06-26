@@ -42,9 +42,9 @@
 			successMessage = $_('auth.register.success') + ' ' + $_('auth.login.subtitle');
 		}
 
-		// If user is already authenticated, redirect to profile
+		// If user is already authenticated, redirect to root dispatcher
 		if ($isAuthenticated) {
-			goto('/profile');
+			goto('/');
 		}
 	});
 
@@ -112,8 +112,8 @@
 				// Redirect to payment page
 				await goto('/payment');
 			} else {
-				// Login successful - redirect to profile page
-				await goto('/profile');
+				// Login successful - redirect to root dispatcher
+				await goto('/');
 			}
 		} catch (error) {
 			// Error is already handled by the auth service and stored in authStore

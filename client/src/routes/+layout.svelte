@@ -7,6 +7,8 @@
 	import { waitLocale, _ } from 'svelte-i18n';
 	import { locale } from '$lib/stores/locale';
 	import Navigation from '$lib/components/Navigation.svelte';
+	import { page } from '$app/stores';
+	import { afterNavigate } from '$app/navigation';
 
 	let { children } = $props();
 
@@ -17,6 +19,16 @@
 	onMount(() => {
 		initTheme();
 		authStore.init();
+	});
+
+	// Ensure proper cleanup after navigation
+	afterNavigate(() => {
+		// Force scroll to top on navigation
+		window.scrollTo(0, 0);
+		// Clear any lingering focus states
+		if (document.activeElement instanceof HTMLElement) {
+			document.activeElement.blur();
+		}
 	});
 
 	// Apply direction and language to document
@@ -53,7 +65,10 @@
 	<Navigation />
 
 	<!-- Main Content -->
-	<div class="bg-bg-primary min-h-screen">
-		{@render children()}
-	</div>
+	<!-- Key by full URL to force complete remount on route changes -->
+	{#key $page.url.href}
+		<div class="bg-bg-primary min-h-screen">
+			{@render children()}
+		</div>
+	{/key}
 {/await}

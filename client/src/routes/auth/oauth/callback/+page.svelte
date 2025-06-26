@@ -19,9 +19,9 @@
 	let isNewUser = false;
 
 	onMount(async () => {
-		// If already authenticated, redirect to profile
+		// If already authenticated, redirect to home
 		if ($isAuthenticated) {
-			await goto('/profile');
+			await goto('/');
 			return;
 		}
 
@@ -68,13 +68,9 @@
 
 			status = 'success';
 
-			// Redirect to profile after a brief success message
+			// Redirect to home after a brief success message
 			setTimeout(async () => {
-				if (isNewUser) {
-					await goto('/profile?welcome=true');
-				} else {
-					await goto('/profile');
-				}
+				await goto('/');
 			}, 2000);
 		} catch (err) {
 			status = 'error';

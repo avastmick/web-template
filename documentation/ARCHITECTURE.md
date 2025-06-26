@@ -101,7 +101,41 @@ The system is designed as a modern web application with a decoupled frontend and
 -   **Local Database:** SQLite (file defined by `DATABASE_URL` in `.envrc`).
 -   **Database Access (Server):** `sqlx` crate for asynchronous, compile-time checked SQL queries.
 
-## 3. Key Architectural Goals & Principles
+## 3. Client UI Architecture Principles
+
+### 3.1. Route Isolation
+-   **One Route, One UI:** Each route must have a dedicated page component that renders only its specific UI. No route should display UI elements from other routes.
+-   **No UI Bleeding:** Routes must be completely isolated from each other. Components from one route should never appear on another route.
+-   **Clear URL-to-Page Mapping:** Each URL path must map to exactly one page component. Avoid conditional rendering based on URL parameters for major UI changes.
+
+### 3.2. Component Architecture
+-   **Separation of Concerns:** Each part of the application should have separated UI components that are fully reusable.
+-   **Component Boundaries:** Components should have clear boundaries and responsibilities. A component should do one thing well.
+-   **Route-Specific Pages:** Each route gets its own page component in `src/routes/`. These page components orchestrate the display of reusable components from `src/lib/components/`.
+
+### 3.3. Display Logic
+-   **Route-Based Logic:** Separate display logic by route, not by URL parameters. Major UI variations should be different routes, not conditional rendering.
+-   **Avoid Parameter-Based UI:** Using URL parameters for major UI changes is messy and error-prone. Parameters should only be used for minor variations within the same UI context.
+-   **Clear Navigation Flow:** Navigation between routes should be explicit and predictable. No hidden redirects or unclear state transitions.
+
+### 3.4. Route Directory Structure
+```
+src/routes/
+├── +page.svelte          # Landing page (/)
+├── login/
+│   └── +page.svelte      # Login page (/login)
+├── register/
+│   └── +page.svelte      # Registration page (/register)
+├── payment/
+│   └── +page.svelte      # Payment page (/payment)
+├── chat/
+│   └── +page.svelte      # Chat interface (/chat)
+└── [other routes]/
+```
+
+Each route directory contains only the files needed for that specific route. No cross-contamination of UI elements.
+
+## 4. Key Architectural Goals & Principles
 
 -   **Decoupling:** Frontend and backend are separate applications, communicating via a well-defined API. This allows for independent development, scaling, and technology choices.
 -   **Modularity:** Both client and server are structured into modules with clear responsibilities.
@@ -111,7 +145,7 @@ The system is designed as a modern web application with a decoupled frontend and
 -   **Testability:** Design components and services to be easily testable at unit, integration, and end-to-end levels.
 -   **Maintainability:** Clear code structure, good documentation, and consistent coding standards.
 
-## 4. Data Flow (Example: User Registration)
+## 5. Data Flow (Example: User Registration)
 
 1.  **Client:** User submits registration form (email, password).
 2.  **Client:** `AuthService` sends a `POST` request to `/api/auth/register` with user data.
@@ -121,7 +155,7 @@ The system is designed as a modern web application with a decoupled frontend and
 6.  **Server (Handler):** Returns success (e.g., 201 Created) or error response.
 7.  **Client:** `AuthService` receives response, updates UI accordingly (e.g., redirect to login, show error message).
 
-## 5. Authentication and Authorization
+## 6. Authentication and Authorization
 
 -   **Initial Strategy:** Local authentication using email and password.
 -   **Mechanism:** JSON Web Tokens (JWTs).
@@ -132,7 +166,7 @@ The system is designed as a modern web application with a decoupled frontend and
     5.  Server middleware validates the JWT on incoming requests to protected routes.
 -   **Future Enhancements:** Google OAuth integration.
 
-## 6. Future Considerations / Integrations (as per PRD)
+## 7. Future Considerations / Integrations (as per PRD)
 
 -   **Payment Integration (Stripe):** Will involve client-side components for collecting payment information (Stripe Elements) and server-side handlers for processing payments and managing subscriptions.
 -   **Generative AI Integration:** Server-side services to interact with AI provider APIs (OpenAI, Gemini, Mistral). API keys managed via environment variables.
@@ -144,11 +178,11 @@ The system is designed as a modern web application with a decoupled frontend and
 
 This document will be updated as the project evolves.
 
-## 7. Authentication Flow (Local Provider - Email/Password)
+## 8. Authentication Flow (Local Provider - Email/Password)
 
 This section details the flow for user registration, login, session management using JWTs, and accessing protected resources for the local email/password authentication provider.
 
-### 7.1. Core Principles & Security Considerations
+### 8.1. Core Principles & Security Considerations
 
 -   **Password Hashing:** Passwords will never be stored in plaintext. A strong, salted, and adaptive hashing algorithm like Argon2 (preferred) or bcrypt will be used on the server-side.
 -   **Input Validation:** All user inputs (email, password) will be validated on both client and server-side.
@@ -163,7 +197,7 @@ This section details the flow for user registration, login, session management u
 -   **Rate Limiting:** Implement rate limiting on authentication endpoints (`/register`, `/login`) to protect against brute-force attacks.
 -   **Error Handling:** Generic error messages for failed login attempts to avoid disclosing whether an email exists or not. Specific error messages for registration where appropriate (e.g., "Email already taken").
 
-### 7.2. Registration Flow
+### 8.2. Registration Flow
 
 1.  **Client (UI):** User navigates to the registration page and enters their email and password. Client-side validation provides immediate feedback on format/complexity.
 2.  **Client (API Call):** On submit, the client sends a `POST` request to `/api/auth/register` with the payload:
@@ -188,7 +222,7 @@ This section details the flow for user registration, login, session management u
             ```
         *   On failure (e.g., database error): Returns a `500 Internal Server Error`.
 
-### 7.3. Login Flow
+### 8.3. Login Flow
 
 1.  **Client (UI):** User navigates to the login page and enters their email and password.
 2.  **Client (API Call):** On submit, the client sends a `POST` request to `/api/auth/login` with the payload:
@@ -213,7 +247,7 @@ This section details the flow for user registration, login, session management u
         ```
         (Alternatively, the JWT could be sent in an HttpOnly cookie for better XSS protection if not using `localStorage` on client).
 
-### 7.4. Session Management & Accessing Protected Resources
+### 8.4. Session Management & Accessing Protected Resources
 
 1.  **Client (Storage):** On successful login, the client stores the `accessToken` securely (e.g., in an Svelte store that persists to `localStorage` or `sessionStorage`).
 2.  **Client (API Call to Protected Endpoint):** When accessing a protected resource (e.g., `/api/users/me`), the client includes the `accessToken` in the `Authorization` header with the `Bearer` scheme:
@@ -243,7 +277,7 @@ This section details the flow for user registration, login, session management u
         }
         ```
 
-### 7.5. Logout
+### 8.5. Logout
 
 1.  **Client (Action):** User clicks a logout button.
 2.  **Client (State Update):**
@@ -257,7 +291,7 @@ This section details the flow for user registration, login, session management u
         *   Use opaque session tokens stored in DB and HttpOnly cookies, moving away from pure JWT statelessness for sessions.
     *   For this initial implementation, client-side removal is sufficient given short token expiry.
 
-### 7.6. API Endpoints Summary
+### 8.6. API Endpoints Summary
 
 -   `POST /api/auth/register`: User registration.
 -   `POST /api/auth/login`: User login, returns JWT.
@@ -265,7 +299,7 @@ This section details the flow for user registration, login, session management u
 -   (Future) `POST /api/auth/refresh`: (If refresh tokens are implemented) Get a new access token.
 -   (Future) `POST /api/auth/logout`: (If server-side token invalidation is implemented) Invalidate current token/session.
 
-### 7.7. Client-Side State Management (Svelte Stores)
+### 8.7. Client-Side State Management (Svelte Stores)
 
 -   `authStore`:
     -   `user: User | null` (User object, null if not authenticated)

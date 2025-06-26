@@ -725,8 +725,22 @@ let req = ChatCompletionRequest::new(
     *   File upload testing with various file types
 
 ### Task 3.2: Server & Client - Stripe Payment Integration
-*   **Status:** **[ ] TODO**
+*   **Status:** **[🔄] IN PROGRESS - READY FOR IMPLEMENTATION**
+*   **Completed Fixes:**
+    *   ✅ **Fixed UI Bleeding Bug:** SvelteKit SPA navigation now properly isolates routes
+    *   ✅ Added `+page.ts` files to force route re-rendering in SPA mode
+    *   ✅ Changed `{#key}` block to use `$page.url.href` for complete remount
+    *   ✅ Added `afterNavigate` hook for proper navigation cleanup
+    *   ✅ Updated navigation calls to use `invalidateAll()` before `goto()`
+    *   ✅ Fixed OAuth button `type="button"` to prevent Enter key triggering
+    *   ✅ Updated navigation flow to redirect to `/` instead of `/profile`
+    *   ✅ Fixed login page redirects per PRD requirements
+    *   ✅ Removed all profile route references per PRD requirements
 *   **Action:** Integrate Stripe for subscription and one-time payment processing for users that do not have an 'invite'. Once registered, non-invited users will be presented with a Stripe payment request. All payment will be handled by Stripe, only the current status of the user's payment is needed to be held - i.e. `has_paid`, `is_current`, or similar.
+*   **Current Payment Flow Issues to Fix:**
+    *   OAuth registration for non-invited users shows error instead of redirecting to payment page
+    *   Payment page shows Stripe initialization error (needs authentication)
+    *   OAuth callback redirect should go to `/` instead of old `/profile` route
 *   **Details:**
     *   Document how to integrate Stripe and which API keys, etc are required and how to get it setup
     *   Set up Stripe webhook handling for payment events

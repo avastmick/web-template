@@ -2,7 +2,6 @@
 
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { redirect } from '@sveltejs/kit';
 	import { page } from '$app/stores';
 	import { _ } from 'svelte-i18n';
 	import { Container, Flex, Button } from '$lib/components/ui/index.js';
@@ -59,7 +58,7 @@
 
 	function handleContinue() {
 		// Redirect to main app
-		redirect(302, '/');
+		window.location.href = '/';
 	}
 </script>
 
@@ -99,7 +98,7 @@
 							{$_('payment.success.errorTitle')}
 						</h1>
 						<p class="text-text-secondary">{error}</p>
-						<Button onclick={() => redirect(302, '/payment')}>
+						<Button onclick={() => (window.location.href = '/payment')}>
 							{$_('payment.success.tryAgain')}
 						</Button>
 					</Flex>
@@ -182,7 +181,7 @@
 						<p class="text-text-secondary max-w-prose">
 							{$_('payment.success.failedDescription')}
 						</p>
-						<Button onclick={() => redirect(302, '/payment')}>
+						<Button onclick={() => (window.location.href = '/payment')}>
 							{$_('payment.success.tryAgain')}
 						</Button>
 					</Flex>

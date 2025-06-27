@@ -235,6 +235,7 @@
 	"payment.error.initialization": "Failed to initialize payment. Please try again.",
 	"payment.error.processing": "Payment processing failed. Please try again.",
 	"payment.error.unexpected": "An unexpected error occurred. Please try again.",
+	"payment.error.incomplete": "Please fill in all required fields.",
 
 	"payment.success.pageTitle": "Payment Status",
 	"payment.success.pageDescription": "Check your payment status",

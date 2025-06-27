@@ -14,8 +14,11 @@
 	let stripe: ReturnType<typeof paymentService.getStripe> | null = null;
 	let elements: StripeElements | null = null;
 	let paymentElement: StripePaymentElement | null = null;
-	let canSubmit = false;
 	let elementMounted = false;
+
+	// Log initial loading state
+	$: console.log('Loading state changed:', loading);
+	$: console.log('Processing state changed:', processing);
 
 	// Payment amount in cents (e.g., $10.00 = 1000 cents)
 	const PAYMENT_AMOUNT_CENTS = 1000; // $10.00
@@ -51,13 +54,10 @@
 				// Mount using selector string as Stripe expects
 				paymentElement.mount('#payment-element');
 
-				// Listen for ready event first
+				// Listen for ready event
 				paymentElement.on('ready', () => {
 					console.log('Payment element is ready');
 					elementMounted = true;
-					// Enable submit button when element is ready
-					// Let Stripe handle validation on submit
-					canSubmit = true;
 				});
 
 				// Note: The 'change' event is not available in the current Stripe types
@@ -81,12 +81,11 @@
 	});
 
 	async function handleSubmit() {
-		if (!stripe || !elements || processing || !elementMounted) {
+		if (!stripe || !elements || processing) {
 			console.log('Cannot submit:', {
 				stripe: !!stripe,
 				elements: !!elements,
-				processing,
-				elementMounted
+				processing
 			});
 			return;
 		}
@@ -197,10 +196,12 @@
 					<Flex gap="3">
 						<Button
 							type="submit"
-							disabled={processing || loading || !canSubmit}
+							disabled={processing}
 							loading={processing}
 							loadingText={$_('payment.processing')}
 							class="flex-1"
+							onclick={() =>
+								console.log('Button clicked, state:', { processing, loading, elementMounted })}
 						>
 							{$_('payment.submit')}
 						</Button>
@@ -218,14 +219,6 @@
 					<p class="text-text-secondary mt-4 text-center text-sm">
 						{$_('payment.secureNotice')}
 					</p>
-
-					{#if !canSubmit && !loading && !processing}
-						<p class="text-text-secondary text-center text-sm">
-							{$_('payment.enterCardDetails', {
-								default: 'Please enter your card details to continue'
-							})}
-						</p>
-					{/if}
 				</form>
 			</div>
 		</Flex>

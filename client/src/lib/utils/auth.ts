@@ -33,10 +33,21 @@ export async function checkAuthAndRedirect(options: AuthCheckOptions = {}): Prom
 
 	const { requireAuth = false, requirePayment = false, redirectTo, currentUrl } = options;
 
+	console.log('[Auth] checkAuthAndRedirect called', {
+		requireAuth,
+		requirePayment,
+		currentUrl: currentUrl?.pathname
+	});
+
+	// Wait for auth store to be initialized
+	await authStore.waitForInit();
+
 	// Get current state
 	const authenticated = get(isAuthenticated);
 	// Use provided URL or fall back to page store (which may not be available in all contexts)
 	const currentPath = currentUrl ? currentUrl.pathname : browser ? window.location.pathname : '/';
+
+	console.log('[Auth] Auth check result:', { authenticated, currentPath });
 
 	// Define protected routes that require authentication
 	const protectedRoutes = ['/chat', '/payment', '/payment/success', '/payment/cancel'];

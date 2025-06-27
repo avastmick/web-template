@@ -15,9 +15,9 @@
 	initializeI18n();
 
 	// Initialize theme system and auth store when component mounts
-	onMount(() => {
+	onMount(async () => {
 		initTheme();
-		authStore.init();
+		await authStore.init();
 	});
 
 	// Ensure proper cleanup after navigation

@@ -1,21 +1,12 @@
 import type { PageLoad } from './$types';
-import { get } from 'svelte/store';
-import { isAuthenticated, authStore } from '$lib/stores';
+import { checkAuthAndRedirect } from '$lib/utils/auth';
 
-export const load: PageLoad = async () => {
-	// Get current auth state
-	const authenticated = get(isAuthenticated);
-	const auth = get(authStore);
+export const load: PageLoad = async ({ url }) => {
+	// Use centralized auth check to handle redirects
+	// This will automatically redirect to the appropriate page
+	// Pass the current URL to avoid accessing page store in load context
+	await checkAuthAndRedirect({ currentUrl: url });
 
-	// Handle redirects based on authentication status
-	if (!authenticated) {
-		// Not authenticated - redirect to login
-		window.location.href = '/login';
-	} else if (auth.paymentRequired) {
-		// Authenticated but needs payment
-		window.location.href = '/payment';
-	} else {
-		// Authenticated with access - redirect to chat
-		window.location.href = '/chat';
-	}
+	// Return empty object as this page just handles redirects
+	return {};
 };

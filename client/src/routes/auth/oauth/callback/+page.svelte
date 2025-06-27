@@ -11,7 +11,6 @@
 	import { onMount } from 'svelte';
 	import { authStore, isAuthenticated } from '$lib/stores';
 	import { _ } from 'svelte-i18n';
-	import { get } from 'svelte/store';
 
 	// Get data from load function
 	let { data } = $props();
@@ -64,15 +63,27 @@
 
 			status = 'success';
 
-			// authStore is already a store value, check payment status from the store state
-			const authState = get(authStore);
-			const paymentRequired = authState.paymentRequired;
+			// Need to fetch the payment status from the server
+			// since OAuth callback doesn't include payment_required field yet
+			let paymentRequired = false;
+			try {
+				const { getCurrentUser } = await import('$lib/services/apiAuth');
+				const userData = await getCurrentUser();
+				paymentRequired = userData.payment_required || false;
+
+				// Update the auth store with payment status
+				authStore.setPaymentRequired(paymentRequired);
+			} catch (err) {
+				console.error('Failed to fetch payment status:', err);
+				// Continue with redirect anyway
+			}
 
 			// Redirect after a brief success message
 			setTimeout(async () => {
 				if (paymentRequired) {
 					window.location.href = '/payment';
-					window.location.href = '/chat';
+				} else {
+					window.location.href = '/';
 				}
 			}, 2000);
 		} catch (err) {

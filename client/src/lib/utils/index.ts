@@ -12,6 +12,9 @@ export function cn(...inputs: ClassValue[]) {
 // Re-export accessibility utilities
 export { a11y } from './accessibility.js';
 
+// Re-export authentication utilities
+export { checkAuthAndRedirect, hasCompletedPayment, isProtectedRoute } from './auth.js';
+
 /**
  * Generate a unique ID for components
  */

@@ -7,7 +7,7 @@
 	import { _ } from 'svelte-i18n';
 	import { Container, Flex, Button } from '$lib/components/ui/index.js';
 	import { paymentService } from '$lib/services/paymentService';
-	import { fetchCurrentUser } from '$lib/services/apiAuth';
+	import { getCurrentUser } from '$lib/services/apiAuth';
 
 	let loading = true;
 	let paymentStatus: 'succeeded' | 'processing' | 'failed' | null = null;
@@ -42,7 +42,7 @@
 			// If payment succeeded, refresh user data to update payment status
 			if (paymentStatus === 'succeeded') {
 				try {
-					await fetchCurrentUser();
+					await getCurrentUser();
 				} catch (err) {
 					console.error('Failed to refresh user data:', err);
 					// Non-critical error, payment still succeeded

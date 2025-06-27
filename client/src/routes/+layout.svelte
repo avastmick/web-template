@@ -46,7 +46,7 @@
 			<div
 				class="border-accent-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"
 			></div>
-			<p class="text-text-secondary">{$_('common.loading')}</p>
+			<p class="text-text-secondary">Loading...</p>
 		</div>
 	</div>
 {:then}

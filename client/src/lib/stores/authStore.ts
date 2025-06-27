@@ -136,6 +136,14 @@ function createAuthStore() {
 		// Reset to initial state (useful for testing)
 		reset: () => {
 			set(initialState);
+		},
+
+		// Get the current token
+		getToken: (): string | null => {
+			if (browser) {
+				return localStorage.getItem(TOKEN_STORAGE_KEY);
+			}
+			return null;
 		}
 	};
 }

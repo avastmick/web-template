@@ -1,93 +1,109 @@
 // web-template/client/src/lib/services/apiAuth.ts
 
 /**
- * API service for authentication endpoints
+ * Auth API client module
  *
- * This service handles all HTTP calls to the server's auth endpoints:
- * - User registration
- * - User login
- * - Fetching current user profile
- *
- * It integrates with the authStore for state management.
+ * Handles authentication operations including login, registration, and JWT token management.
+ * All auth operations update the global auth store automatically.
  */
 
-import { authStore } from '$lib/stores/authStore';
-import type {
-	LoginRequest,
-	RegisterRequest,
-	LoginResponse,
-	OAuthLoginResponse,
-	User,
-	AuthError
-} from '$lib/types';
-import type { RegisterResponse } from '$lib/types/auth';
+import { authStore } from '$lib/stores';
+import type { LoginRequest, RegisterRequest, LoginResponse, User } from '$lib/types/auth';
 
-// Configuration
-// In production/Docker, client and server run on the same port
-// In development, they run on separate ports (client on CLIENT_PORT, server on VITE_SERVER_PORT)
-const SERVER_PORT = import.meta.env.VITE_SERVER_PORT || window.location.port || '8081';
-const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:${SERVER_PORT}`;
+// API base URL - can be configured based on environment
+const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:${
+	import.meta.env.VITE_SERVER_PORT || window.location.port || '8081'
+}`;
 
-/**
- * Custom error class for API errors
- */
+// Custom error class for API errors
 export class ApiError extends Error {
 	constructor(
 		message: string,
 		public status: number,
-		public response?: AuthError
+		public data?: AuthError
 	) {
 		super(message);
 		this.name = 'ApiError';
 	}
 }
 
+// Auth error response type
+export interface AuthError {
+	error: string;
+}
+
+export interface OAuthLoginResponse extends LoginResponse {
+	is_new_user: boolean;
+}
+
 /**
- * Helper function to make HTTP requests with proper error handling
+ * Register a new user
+ * @param data Registration data
+ * @returns User data and JWT token on success
  */
-async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-	const url = `${API_BASE_URL}${endpoint}`;
-
-	// Default headers - use Record for easier manipulation
-	const headers: Record<string, string> = {
-		'Content-Type': 'application/json'
-	};
-
-	// Add any existing headers from options
-	if (options.headers) {
-		if (options.headers instanceof Headers) {
-			options.headers.forEach((value, key) => {
-				headers[key] = value;
-			});
-		} else if (Array.isArray(options.headers)) {
-			options.headers.forEach(([key, value]) => {
-				headers[key] = value;
-			});
-		} else {
-			Object.assign(headers, options.headers);
-		}
-	}
-
-	// Add Authorization header if we have a token
-	// We need to get the current value synchronously, so we'll use get() if available
-	// or create a temporary subscription
-	let currentToken: string | null = null;
-	const unsubscribe = authStore.subscribe((state) => {
-		currentToken = state.token;
-	});
-	unsubscribe(); // Immediately unsubscribe after getting the value
-
-	if (currentToken) {
-		headers.Authorization = `Bearer ${currentToken}`;
-	}
+export async function register(data: RegisterRequest): Promise<LoginResponse> {
+	authStore.setLoading(true);
+	authStore.clearError();
 
 	try {
-		const response = await fetch(url, {
-			...options,
-			headers
+		const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(data)
 		});
 
-		// Handle non-2xx responses
+		if (!response.ok) {
+			let errorData: AuthError;
+			try {
+				errorData = await response.json();
+			} catch {
+				errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+			}
+
+			// Don't update auth state on error
+			throw new ApiError(
+				errorData.error || `Registration failed with status ${response.status}`,
+				response.status,
+				errorData
+			);
+		}
+
+		const registerResponse: LoginResponse = await response.json();
+
+		// Note: We don't automatically log in users after registration
+		// They need to go through login flow
+		authStore.setLoading(false);
+
+		return registerResponse;
+	} catch (error) {
+		authStore.setLoading(false);
+		const errorMessage =
+			error instanceof ApiError ? error.message : 'Registration failed. Please try again.';
+		authStore.setError(errorMessage);
+		throw error;
+	}
+}
+
+/**
+ * Login user with email and password
+ * @param data Login credentials
+ * @returns User data and JWT token on success
+ */
+export async function login(data: LoginRequest): Promise<LoginResponse> {
+	authStore.setLoading(true);
+	authStore.clearError();
+
+	try {
+		const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(data)
+		});
+
 		if (!response.ok) {
 			let errorData: AuthError;
 			try {
@@ -97,73 +113,23 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 			}
 
 			throw new ApiError(
-				errorData.error || `Request failed with status ${response.status}`,
+				errorData.error || `Login failed with status ${response.status}`,
 				response.status,
 				errorData
 			);
 		}
 
-		// Handle empty responses (like 204 No Content)
-		if (response.status === 204) {
-			return {} as T;
-		}
-
-		return await response.json();
-	} catch (error) {
-		if (error instanceof ApiError) {
-			throw error;
-		}
-
-		// Network errors, parsing errors, etc.
-		throw new ApiError(error instanceof Error ? error.message : 'An unknown error occurred', 0);
-	}
-}
-
-/**
- * Register a new user
- */
-export async function register(data: RegisterRequest): Promise<RegisterResponse> {
-	authStore.setLoading(true);
-	authStore.clearError();
-
-	try {
-		const response = await apiRequest<RegisterResponse>('/api/auth/register', {
-			method: 'POST',
-			body: JSON.stringify(data)
-		});
-
-		authStore.setLoading(false);
-		return response;
-	} catch (error) {
-		authStore.setLoading(false);
-		const errorMessage = error instanceof ApiError ? error.message : 'Registration failed';
-		authStore.setError(errorMessage);
-		throw error;
-	}
-}
-
-/**
- * Log in an existing user
- */
-export async function login(data: LoginRequest): Promise<LoginResponse> {
-	authStore.setLoading(true);
-	authStore.clearError();
-
-	try {
-		const response = await apiRequest<LoginResponse>('/api/auth/login', {
-			method: 'POST',
-			body: JSON.stringify(data)
-		});
+		const loginResponse: LoginResponse = await response.json();
 
 		// Update auth store with login success
-		authStore.loginSuccess(response.user, response.token);
+		authStore.loginSuccess(loginResponse.user, loginResponse.token);
 
-		// Store payment required status for use by login page
-		if (response.payment_required) {
-			authStore.setPaymentRequired(true);
+		// Set payment required status if provided
+		if (loginResponse.payment_required !== undefined) {
+			authStore.setPaymentRequired(loginResponse.payment_required);
 		}
 
-		return response;
+		return loginResponse;
 	} catch (error) {
 		authStore.setLoading(false);
 		const errorMessage = error instanceof ApiError ? error.message : 'Login failed';
@@ -173,58 +139,99 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
 }
 
 /**
- * Fetch the current user's profile
- * Requires authentication
+ * Logout user - clears auth state and token
  */
-export async function fetchCurrentUser(): Promise<User> {
-	authStore.setLoading(true);
-	authStore.clearError();
+export async function logout(): Promise<void> {
+	authStore.logout();
+	// Clear payment status cache
+	const { clearPaymentStatusCache } = await import('$lib/utils/auth');
+	clearPaymentStatusCache();
+	// Redirect to login page
+	window.location.href = '/login';
+}
 
-	try {
-		const user = await apiRequest<User>('/api/users/me', {
-			method: 'GET'
-		});
+/**
+ * Verify JWT token validity
+ * @param token JWT token to verify
+ * @returns User data if token is valid
+ */
+export async function verifyToken(token?: string): Promise<User> {
+	const authToken = token || localStorage.getItem('auth_token');
 
-		// Update the user data in the store
-		authStore.updateUser(user);
-		authStore.setLoading(false);
+	if (!authToken) {
+		throw new ApiError('No token provided', 401);
+	}
 
-		return user;
-	} catch (error) {
-		authStore.setLoading(false);
+	const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${authToken}`
+		}
+	});
 
-		// If we get a 401, the token is likely invalid - logout
-		if (error instanceof ApiError && error.status === 401) {
-			authStore.logout();
+	if (!response.ok) {
+		let errorData: AuthError;
+		try {
+			errorData = await response.json();
+		} catch {
+			errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
 		}
 
-		const errorMessage = error instanceof ApiError ? error.message : 'Failed to fetch user data';
-		authStore.setError(errorMessage);
-		throw error;
+		throw new ApiError(
+			errorData.error || `Token verification failed with status ${response.status}`,
+			response.status,
+			errorData
+		);
 	}
+
+	const user: User = await response.json();
+	return user;
 }
 
 /**
- * Log out the current user
- * This clears local state - there's no server endpoint for logout with JWT
+ * Refresh auth state from token
+ * Useful for checking auth status on app initialization
  */
-export function logout(): void {
-	authStore.logout();
-}
+export async function refreshAuth(): Promise<void> {
+	const token = localStorage.getItem('auth_token');
 
-/**
- * Check if the current user's token is still valid by trying to fetch their profile
- * This is useful for checking auth status on app initialization
- */
-export async function validateToken(): Promise<boolean> {
-	try {
-		await fetchCurrentUser();
-		return true;
-	} catch {
-		// If fetch fails, token is invalid or expired
+	if (!token) {
 		authStore.logout();
-		return false;
+		return;
 	}
+
+	try {
+		const user = await verifyToken(token);
+		authStore.loginSuccess(user, token);
+	} catch {
+		// Token is invalid, clear auth state
+		authStore.logout();
+	}
+}
+
+/**
+ * Get authorization header for API requests
+ * @returns Authorization header object or empty object
+ */
+export function getAuthHeader(): { Authorization?: string } {
+	const token = localStorage.getItem('auth_token');
+
+	if (!token) {
+		return {};
+	}
+
+	return {
+		Authorization: `Bearer ${token}`
+	};
+}
+
+/**
+ * Check if user is authenticated
+ * @returns true if user has a valid token
+ */
+export function isAuthenticated(): boolean {
+	return !!localStorage.getItem('auth_token');
 }
 
 /**
@@ -307,4 +314,48 @@ export async function handleOAuthCallback(
 		authStore.setError(errorMessage);
 		throw error;
 	}
+}
+
+/**
+ * Get current user data including payment status
+ * @returns User data with payment status
+ */
+export async function getCurrentUser(): Promise<LoginResponse> {
+	const token = localStorage.getItem('auth_token');
+	if (!token) {
+		throw new ApiError('No authentication token', 401);
+	}
+
+	const response = await fetch(`${API_BASE_URL}/api/users/me`, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${token}`
+		}
+	});
+
+	if (!response.ok) {
+		let errorData: AuthError;
+		try {
+			errorData = await response.json();
+		} catch {
+			errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+		}
+
+		throw new ApiError(
+			errorData.error || `Failed to get user data with status ${response.status}`,
+			response.status,
+			errorData
+		);
+	}
+
+	const userData: LoginResponse = await response.json();
+
+	// Update auth store with latest data
+	authStore.loginSuccess(userData.user, userData.token);
+	if (userData.payment_required !== undefined) {
+		authStore.setPaymentRequired(userData.payment_required);
+	}
+
+	return userData;
 }

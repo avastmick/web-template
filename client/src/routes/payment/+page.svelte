@@ -14,7 +14,8 @@
 	let stripe: ReturnType<typeof paymentService.getStripe> | null = null;
 	let elements: StripeElements | null = null;
 	let paymentElement: StripePaymentElement | null = null;
-	let paymentElementContainer: HTMLDivElement;
+	let canSubmit = false;
+	let elementMounted = false;
 
 	// Payment amount in cents (e.g., $10.00 = 1000 cents)
 	const PAYMENT_AMOUNT_CENTS = 1000; // $10.00
@@ -22,9 +23,11 @@
 
 	onMount(async () => {
 		try {
+			console.log('Initializing Stripe payment...');
 			// Initialize Stripe
 			await paymentService.init();
 			stripe = paymentService.getStripe();
+			console.log('Stripe initialized:', stripe);
 
 			// Create payment intent
 			const { client_secret } = await paymentService.createPaymentIntent(
@@ -32,24 +35,59 @@
 				PAYMENT_CURRENCY
 			);
 
-			// Create Stripe Elements
+			// Create Stripe Elements with client secret
 			elements = paymentService.createElements(client_secret);
 
-			// Create and mount payment element
+			// Create payment element
 			paymentElement = paymentService.createPaymentElement(elements);
 
-			// Mount to the container using ID selector
-			paymentElement.mount('#payment-element');
+			// Set loading to false before mounting to ensure DOM is ready
+			loading = false;
+
+			// Use requestAnimationFrame to ensure DOM is painted
+			requestAnimationFrame(() => {
+				if (!paymentElement) return;
+
+				// Mount using selector string as Stripe expects
+				paymentElement.mount('#payment-element');
+
+				// Listen for ready event first
+				paymentElement.on('ready', () => {
+					console.log('Payment element is ready');
+					elementMounted = true;
+					// Enable submit button when element is ready
+					// Let Stripe handle validation on submit
+					canSubmit = true;
+				});
+
+				// Note: The 'change' event is not available in the current Stripe types
+				// We enable the button on ready and let Stripe handle validation on submit
+				// The confirmPayment method will return any validation errors
+
+				// Try other events that might give us state
+				paymentElement.on('blur', () => {
+					console.log('Payment element blurred');
+				});
+
+				paymentElement.on('focus', () => {
+					console.log('Payment element focused');
+				});
+			});
 		} catch (err) {
 			console.error('Failed to initialize payment:', err);
 			error = err instanceof Error ? err.message : $_('payment.error.initialization');
-		} finally {
 			loading = false;
 		}
 	});
 
 	async function handleSubmit() {
-		if (!stripe || !elements || processing) {
+		if (!stripe || !elements || processing || !elementMounted) {
+			console.log('Cannot submit:', {
+				stripe: !!stripe,
+				elements: !!elements,
+				processing,
+				elementMounted
+			});
 			return;
 		}
 
@@ -57,19 +95,26 @@
 		error = '';
 
 		try {
-			// Confirm the payment
+			console.log('Confirming payment...');
+			// Confirm the payment - Stripe will validate the form
 			const { error: stripeError } = await paymentService.confirmPayment(
 				elements,
 				`${window.location.origin}/payment/success`
 			);
 
 			if (stripeError) {
+				console.error('Stripe error:', stripeError);
 				// Show error to customer
-				error = stripeError.message || $_('payment.error.processing');
+				if (stripeError.type === 'validation_error') {
+					error = $_('payment.error.incomplete');
+				} else {
+					error = stripeError.message || $_('payment.error.processing');
+				}
 				processing = false;
 			} else {
 				// Payment succeeded, redirect will happen automatically
 				// The confirmPayment method redirects to the return_url
+				console.log('Payment confirmed, redirecting...');
 			}
 		} catch (err) {
 			console.error('Payment failed:', err);
@@ -114,7 +159,6 @@
 					<!-- Stripe Payment Element Container - Always in DOM -->
 					<div
 						id="payment-element"
-						bind:this={paymentElementContainer}
 						class="border-border-default bg-background-secondary min-h-[200px] rounded-lg border p-4"
 					>
 						{#if loading}
@@ -153,7 +197,7 @@
 					<Flex gap="3">
 						<Button
 							type="submit"
-							disabled={processing || loading}
+							disabled={processing || loading || !canSubmit}
 							loading={processing}
 							loadingText={$_('payment.processing')}
 							class="flex-1"
@@ -174,6 +218,14 @@
 					<p class="text-text-secondary mt-4 text-center text-sm">
 						{$_('payment.secureNotice')}
 					</p>
+
+					{#if !canSubmit && !loading && !processing}
+						<p class="text-text-secondary text-center text-sm">
+							{$_('payment.enterCardDetails', {
+								default: 'Please enter your card details to continue'
+							})}
+						</p>
+					{/if}
 				</form>
 			</div>
 		</Flex>

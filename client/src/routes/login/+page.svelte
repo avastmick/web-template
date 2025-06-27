@@ -10,7 +10,7 @@
 
 	import { onMount, onDestroy } from 'svelte';
 	import { login } from '$lib/services/apiAuth';
-	import { authStore, authError, isAuthLoading, isAuthenticated } from '$lib/stores';
+	import { authStore, authError, isAuthLoading } from '$lib/stores';
 	import { Container, Flex, Button, Input } from '$lib/components/ui/index.js';
 	import { GoogleOAuthButton, GitHubOAuthButton } from '$lib/components/auth/index.js';
 	import type { LoginRequest } from '$lib/types';
@@ -36,16 +36,15 @@
 	const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 	// Check for registration success message
-	onMount(() => {
+	onMount(async () => {
 		if (data.registered) {
 			showSuccessMessage = true;
 			successMessage = $_('auth.register.success') + ' ' + $_('auth.login.subtitle');
 		}
 
-		// If user is already authenticated, redirect to root dispatcher
-		if ($isAuthenticated) {
-			window.location.href = '/';
-		}
+		// Use centralized auth check - will redirect if already authenticated
+		const { checkAuthAndRedirect } = await import('$lib/utils/auth');
+		await checkAuthAndRedirect();
 	});
 
 	// Clean up component state on unmount
@@ -120,16 +119,11 @@
 				password
 			};
 
-			const response = await login(loginData);
+			await login(loginData);
 
-			// Check if payment is required
-			if (response.payment_required) {
-				// Redirect to payment page
-				window.location.href = '/payment';
-			} else {
-				// Login successful - redirect to root dispatcher
-				window.location.href = '/';
-			}
+			// Login successful - use centralized auth check for redirect
+			const { checkAuthAndRedirect } = await import('$lib/utils/auth');
+			await checkAuthAndRedirect();
 		} catch (error) {
 			// Error is already handled by the auth service and stored in authStore
 			console.error('Login failed:', error);

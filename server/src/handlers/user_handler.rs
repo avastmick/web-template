@@ -5,14 +5,18 @@
 //! This module contains handlers for user-specific operations such as
 //! retrieving user profile information.
 
-use axum::{Json, http::StatusCode, response::IntoResponse};
+use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
+use serde::Serialize;
+use std::sync::Arc;
 
-use crate::{errors::AppResult, handlers::auth_handler::UserResponse, middleware::JwtAuth};
+use crate::{
+    core::AppState, errors::AppResult, handlers::auth_handler::UserResponse, middleware::JwtAuth,
+};
 
 /// Handler for GET /api/users/me - returns current user's profile information
 ///
 /// This is a protected endpoint that requires a valid JWT token in the Authorization header.
-/// The JWT token is automatically validated by the JwtAuth extractor.
+/// The JWT token is automatically validated by the `JwtAuth` extractor.
 ///
 /// # Arguments
 /// * `auth` - JWT authentication extractor containing the authenticated user
@@ -25,18 +29,49 @@ use crate::{errors::AppResult, handlers::auth_handler::UserResponse, middleware:
 /// * 401 Unauthorized - If JWT token is missing, invalid, or expired
 /// * 404 Not Found - If the user referenced in the JWT no longer exists
 /// * 500 Internal Server Error - For database or other server errors
-#[tracing::instrument(skip(auth), fields(user_id = %auth.user.user_id, email = %auth.user.email))]
-pub async fn get_current_user_handler(auth: JwtAuth) -> AppResult<impl IntoResponse> {
+#[derive(Serialize)]
+pub struct CurrentUserResponse {
+    #[serde(flatten)]
+    pub user: UserResponse,
+    pub payment_required: bool,
+}
+
+/// Get the current user's profile information
+///
+/// # Errors
+/// Returns appropriate HTTP error responses:
+/// * 401 Unauthorized - If JWT token is missing, invalid, or expired
+/// * 500 Internal Server Error - For database or other server errors
+#[tracing::instrument(skip(auth, state), fields(user_id = %auth.user.user_id, email = %auth.user.email))]
+pub async fn get_current_user_handler(
+    auth: JwtAuth,
+    State(state): State<Arc<AppState>>,
+) -> AppResult<impl IntoResponse> {
     tracing::info!(
         "Fetching profile for authenticated user: {} ({})",
         auth.user.email,
         auth.user.user_id
     );
 
-    // Since the JWT extractor already validated the user exists and is valid,
-    // we can construct the response directly from the authenticated user data
-    // Note: In a more complex scenario, you might want to fetch fresh user data
-    // from the database to ensure the most up-to-date information
+    // Check if user has valid invite or active payment
+    let has_invite = state
+        .invite_service
+        .check_invite_exists(&auth.user.email)
+        .await?;
+
+    let payment_status = state
+        .payment_service
+        .get_user_payment_status(auth.user.user_id)
+        .await?;
+
+    let payment_required = !has_invite && !payment_status.has_active_payment;
+
+    if payment_required {
+        tracing::info!(
+            "User {} requires payment (no invite and no active payment)",
+            auth.user.email
+        );
+    }
 
     // For now, we'll create a mock User object since we already have the core data
     // In a real implementation, you might want to fetch the full user from the database
@@ -49,12 +84,18 @@ pub async fn get_current_user_handler(auth: JwtAuth) -> AppResult<impl IntoRespo
         updated_at: chrono::Utc::now(), // This should come from the DB
     };
 
+    let response = CurrentUserResponse {
+        user: user_response,
+        payment_required,
+    };
+
     tracing::info!(
-        "Successfully retrieved profile for user: {}",
-        auth.user.email
+        "Successfully retrieved profile for user: {} (payment_required: {})",
+        auth.user.email,
+        payment_required
     );
 
-    Ok((StatusCode::OK, Json(user_response)))
+    Ok((StatusCode::OK, Json(response)))
 }
 
 // Alternative implementation that fetches fresh data from the database

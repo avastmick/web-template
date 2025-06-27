@@ -46,7 +46,8 @@ export class PaymentService {
 	 */
 	async init(): Promise<void> {
 		if (!this.stripe) {
-			if (!STRIPE_PUBLISHABLE_KEY || STRIPE_PUBLISHABLE_KEY === 'pk_test_default') {
+			console.log('PaymentService init - STRIPE_PUBLISHABLE_KEY:', STRIPE_PUBLISHABLE_KEY);
+			if (!STRIPE_PUBLISHABLE_KEY) {
 				throw new Error(
 					'Stripe publishable key not configured. Please set VITE_STRIPE_PUBLISHABLE_KEY in your environment.'
 				);
@@ -56,6 +57,7 @@ export class PaymentService {
 			if (!this.stripe) {
 				throw new Error('Failed to load Stripe');
 			}
+			console.log('Stripe loaded successfully');
 		}
 	}
 
@@ -122,7 +124,15 @@ export class PaymentService {
 	 * Create payment element
 	 */
 	createPaymentElement(elements: StripeElements): StripePaymentElement {
-		const paymentElement = elements.create('payment');
+		const paymentElement = elements.create('payment', {
+			// Use default layout which should work better
+			layout: {
+				type: 'tabs',
+				defaultCollapsed: false,
+				radios: true,
+				spacedAccordionItems: false
+			}
+		});
 		return paymentElement;
 	}
 

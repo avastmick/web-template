@@ -53,8 +53,125 @@ Review the current approach to registration and refactor to enable watertight re
         4. If the `payment_user` has `payment_or_invite_exists` == false OR `payment_or_invite_status_expires` is <= `today()` then the user is directed to the `/payment` route to pay, else they are directed to `/` home
         5. If the user starts a new session, or the `payment_user` is stale, the client MUST fetch a new `payment_user` object and store it appropriately. If the payment has expired go to '4'.
         6. A successfully authn'd user with a valid payment/invite will be redirected to `/chat` (should be configurable in ONE place).
+
+*   **Current Issues Identified:**
+    1. **OAuth Registration Blocks Non-Invited Users:** OAuth users without invites cannot register at all - they should register and be redirected to payment
+    2. **Payment Status Not Cached:** Client fetches payment status on every route navigation instead of using sessionStorage
+    3. **Missing Expiry Validation:** Database has expiry fields but they're not consistently checked
+    4. **UI Navigation Bug:** Svelte `goto()` causes UI stacking - need proper navigation handling
+    5. **Inconsistent Error Handling:** Different auth methods show errors differently
+
+*   **Implementation Steps (in order):**
+
+    **Step 1: Database Schema Updates**
+    - Update `user_invites` table: make `expires_at` NOT NULL with default expiry
+    - Create new migration to ensure all existing invites have expiry dates
+    - Add indexes for performance on email lookups
+
+    **Step 2: Server-Side Payment User Model**
+    - Create unified `PaymentUser` response model with fields:
+      - `payment_or_invite_exists: bool`
+      - `payment_or_invite_status_expires: Option<DateTime>`
+      - `payment_type: enum { Invite, Subscription, OneTime }`
+      - `requires_payment: bool`
+    - Create service method to build PaymentUser from user data
+
+    **Step 3: Fix OAuth Registration Flow**
+    - Modify `oauth_handler.rs` to allow registration without invite
+    - Set `payment_required = true` for non-invited OAuth users
+    - Return same response structure as email/password registration
+    - Ensure OAuth callback handles payment redirect properly
+
+    **Step 4: Centralize Auth Response Handler (Server)**
+    - Create `AuthResponseBuilder` service that:
+      - Checks invite status
+      - Checks payment status with expiry validation
+      - Builds consistent response for all auth methods
+      - Validates expiry dates against current time
+    - Use in both registration and login handlers
+
+    **Step 5: Client-Side Storage Service**
+    - Create `StorageService` in `client/src/lib/services/storageService.ts`:
+      - Manages localStorage for auth data
+      - Manages sessionStorage for payment data
+      - Provides methods for checking staleness
+      - Handles storage errors gracefully
+
+    **Step 6: Client-Side Auth Flow Manager**
+    - Create `AuthFlowManager` in `client/src/lib/services/authFlowManager.ts`:
+      - Single source of truth for auth/payment state
+      - Handles all redirects (configurable success route)
+      - Checks payment expiry on route changes
+      - Refreshes payment status when stale
+      - Uses proper navigation (fix goto() issue)
+
+    **Step 7: Update Auth Guard**
+    - Modify `authGuard.ts` to use AuthFlowManager
+    - Remove direct API calls
+    - Use cached payment status from sessionStorage
+    - Only refresh when data is stale or missing
+
+    **Step 8: Fix Payment Page**
+    - Add proper authentication headers to Stripe API calls
+    - Handle payment success/failure redirects
+    - Update payment status in sessionStorage on success
+    - Show clear error messages for common issues
+
+    **Step 9: Update All Auth Components**
+    - Update login/register pages to use AuthFlowManager
+    - Ensure consistent error handling
+    - Remove duplicate logic
+    - Use centralized navigation
+
+    **Step 10: Documentation Updates**
+    - Update `CLIENT_STORAGE.md` with new storage pattern
+    - Document navigation workaround in `ARCHITECTURE.md`
+    - Add auth flow diagram to documentation
+
+    **Step 11: E2E Tests**
+    - Test email/password registration with/without invite
+    - Test OAuth registration with/without invite
+    - Test payment flow completion
+    - Test expiry date handling
+    - Test session storage persistence
+    - Test navigation between protected routes
+
 *   **Files to Create/Modify:**
-    * TODO - Update this!
+    **Database:**
+    - `db/migrations/XXXXXX_add_invite_expiry_not_null.sql` (new migration)
+
+    **Server - New Files:**
+    - `server/src/models/payment_user.rs` (PaymentUser model)
+    - `server/src/services/auth_response_builder.rs` (centralized auth response)
+
+    **Server - Modify:**
+    - `server/src/handlers/oauth_handler.rs` (fix OAuth registration)
+    - `server/src/handlers/auth_handler.rs` (use AuthResponseBuilder)
+    - `server/src/services/invite_service.rs` (add expiry validation)
+    - `server/src/services/payment/payment_service.rs` (add expiry checks)
+
+    **Client - New Files:**
+    - `client/src/lib/services/storageService.ts` (storage management)
+    - `client/src/lib/services/authFlowManager.ts` (auth flow control)
+    - `client/src/lib/types/storage.ts` (storage types)
+
+    **Client - Modify:**
+    - `client/src/lib/guards/authGuard.ts` (use AuthFlowManager)
+    - `client/src/routes/auth/oauth/callback/+page.svelte` (fix redirects)
+    - `client/src/routes/login/+page.svelte` (use AuthFlowManager)
+    - `client/src/routes/register/+page.svelte` (use AuthFlowManager)
+    - `client/src/routes/payment/+page.svelte` (fix Stripe auth)
+    - `client/src/lib/stores/authStore.ts` (integrate with StorageService)
+
+    **Documentation:**
+    - `documentation/CLIENT_STORAGE.md` (update storage patterns)
+    - `documentation/ARCHITECTURE.md` (document navigation issue)
+    - `documentation/AUTH_FLOW.md` (new - auth flow diagram)
+
+    **Tests:**
+    - `client/e2e/auth-flow.test.ts` (new - comprehensive auth tests)
+    - `server/tests/auth_flow_test.rs` (new - server auth tests)
+
 *   **Implementation Notes:**
     - the client is CSR only (there is no SSR aspect at all), ensure this is clearly documented.
     - the `documentation/CLIENT_STORAGE.md` needs to be updated as it is outdated. `payment_user` is new and not documented.

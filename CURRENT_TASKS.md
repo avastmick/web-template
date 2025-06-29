@@ -5,7 +5,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 ## Status Summary
 
 ### Task 1.1: Server & Client - Stripe Payment Integration
-*   **Status:** **[🔄] IN PROGRESS - READY FOR IMPLEMENTATION**
+*   **Status:** **[x] DONE
 *   **Action:** Integrate Stripe for subscription and one-time payment processing for users that do not have an 'invite'. Once registered, non-invited users will be presented with a Stripe payment request. All payment will be handled by Stripe, only the current status of the user's payment is needed to be held - i.e. `has_paid`, `is_current`, or similar.
 *   **Current Payment Flow Issues to Fix:**
     *   OAuth registration for non-invited users shows error instead of redirecting to payment page
@@ -35,11 +35,12 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 
 ### Task 1.2: Client - UI overhaul, optimisation and refinement
 *   **Status:** **[ ] TODO
-*   **Action:** Update UI on client to optimise the user experience and make all components and theming consistent
+*   **Action:** Review the current approach to the UI and theming. Update UI on client to optimise the user experience and make all components and theming consistent
 *   **Details:**
-    *   Document how to integrate Stripe and which API keys, etc are required and how to get it setup
-    *   Set up Stripe webhook handling for payment events
-    *   Add one-time payment processing
+    *   Review the current UI documentation, `UI-UX_SPECIFICATION.md` and `UI_UX_THEME.md`, and understand the shortcomings of the current approach to theming
+    *   Update documentation to provide a simpler, `tailwindcss`-based (i.e. with little to no custom colours) approach that will ensure consistent UI/UX theming and simple "in one place" configuration to enable easier changes
+    *   Update the CSS to reflect the new approach
+    *   Ensure all components align to new approach and there is a simple, non-repeating, set of components that allow for easier changes and consistent outcomes.
 *   **Files to Create/Modify:**
 *   **Implementation Notes:**
     *   Use `tailwindcss` as means of styling. Remove all custom CSS that does not directly use `tailwindcss`.
@@ -47,24 +48,49 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
     *   Ensure all navigation bar components are consistent and share look and feel
     *   Ensure that all components have shared styling and theming and fully reusable
     *   Ensure that the theme is consistent across all pages; create a mechanism that allows the simple addition of pages, ensuring the new pages align with application styling, theming, etc.
+    *   Ensure that the dark/light theming is logical and the base colours are opposites - e.g., if the theme background for 'dark' is `indigo-950`, then by logic the 'light' is `indigo-50`, etc.
 *   **Quality Checks:**
     *   Use `playwright` MCP to test the UI and its consistency of look and feel
     *   Create e2e tests that ensure the UI works as expected
     *   Create a test that shows that styling and theme can be updated in one place and affect all of the client
 
-### Task 1.3: Deployment Guides and tools
+### Task 1.3: Enable workspace 'features'
+*   **Status:** **[ ] TODO**
+*   **Action:** Create a means of enabling/disabling workspace features, such as local auth, Google auth, PostgreSQL, etc.
+*   **Details:**
+    *   Create a set of features in the `server` using the conventional `Cargo.toml` feature flags for:
+        - local auth as `local_auth`, where email/password is offered as an option to register/login
+        - Google oauth as `google_auth`, where Google oauth is offered as an option to register/login
+        - GitHub oauth as `github_auth`, where GitHub oauth is offered as an option to register/login
+        - PostgreSQL as a `db_pg`, where PostgreSQL is offered as an overriding option for the database backend instead of `SQLite`
+        - Stripe as `stripe_payment`, where Stripe is conditionally offered as a payment option provider. Note if this option is not set then non-invited users registering will get an error 'This service is invite only'; if it is set then the non-invited users will be presented the payment page.
+        - Chat as `chat`, where chat is offered as the main application option on successful registration and login - the main page. If disabled, the main page is just a holding page.
+    *   Create a means of switching off components in the client, if the features are not set - i.e., they are not compiled into JS.
+    *   The default is all current features: `local_auth`, `google_auth`, `github_auth`, `db_sqlite`, `stripe_payment`, and `chat`. Only `db_pg` is default disabled.
+*   **Files to Create:**
+    *   TODO: list changes here
+*   **Implementation Notes:**
+    *   Document options clearly in `README.md` and architecture documentation
+*   **Quality Checks:**
+    *   Include e2e tests to assess whether the correct code is generated on the frontend
+    *   Verify all options
+    *   Document troubleshooting common issues
+
+### Task 1.4: Deployment Guides and tools
 *   **Status:** **[ ] TODO**
 *   **Action:** Create comprehensive deployment guides for major cloud platforms
 *   **Details:**
     *   Create a PostgreSQL database provider option
     *   Create GCP Cloud Run deployment with Docker
     *   Create fly.io deployment with Docker
+    *   Create Vercel deployment
     *   Create CI/CD pipeline examples (GitHub Actions)
     *   Add monitoring and logging setup guides - may need refactor of server tracing to support JSON-style GCP logging
     *   Create environment variable management guides
 *   **Files to Create:**
     *   `documentation/deployment/gcp-cloud-run.md`
     *   `documentation/deployment/flyio.md`
+    *   `documentation/deployment/vercel.md`
     *   `documentation/deployment/database-setup.md`
     *   `documentation/deployment/ci-cd.md`
     *   `documentation/deployment/monitoring.md`
@@ -79,7 +105,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
     *   Verify all environment variables and configurations
     *   Document troubleshooting common issues
 
-### Task 1.4: Developer Experience - Template Scaffolding
+### Task 1.5: Developer Experience - Template Scaffolding
 *   **Status:** **[ ] TODO**
 *   **Action:** Create scaffolding tools for new projects using this template
 *   **Details:**

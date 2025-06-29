@@ -25,6 +25,12 @@
 	const PAYMENT_CURRENCY = 'usd';
 
 	onMount(async () => {
+		// Check auth first
+		const { checkAuth } = await import('$lib/guards/authGuard');
+		const canProceed = await checkAuth(true, false); // Require auth but not payment (we're on payment page)
+
+		if (!canProceed) return;
+
 		try {
 			console.log('Initializing Stripe payment...');
 			// Initialize Stripe

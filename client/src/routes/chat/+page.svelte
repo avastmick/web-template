@@ -1,25 +1,14 @@
 <!-- web-template/client/src/routes/chat/+page.svelte -->
 
 <script lang="ts">
-	import { isAuthenticated, currentUser, authStore } from '$lib/stores';
+	import { onMount } from 'svelte';
 	import { _ } from 'svelte-i18n';
 	import ChatInterface from '$lib/components/chat/ChatInterface.svelte';
-	import { onMount } from 'svelte';
 
-	// Check authentication and payment status
-	onMount(() => {
-		const checkAccess = setTimeout(async () => {
-			if (!$isAuthenticated) {
-				// Not authenticated - redirect to login
-				window.location.href = '/login';
-			} else if ($authStore.paymentRequired) {
-				// Authenticated but needs payment
-				window.location.href = '/payment';
-			}
-			// Otherwise, user has access - show chat
-		}, 100);
-
-		return () => clearTimeout(checkAccess);
+	// Check auth and payment status
+	onMount(async () => {
+		const { checkAuth } = await import('$lib/guards/authGuard');
+		await checkAuth(true, true); // Require auth and payment
 	});
 </script>
 
@@ -28,18 +17,6 @@
 	<meta name="description" content={$_('chat.description')} />
 </svelte:head>
 
-{#if $isAuthenticated && $currentUser && !$authStore.paymentRequired}
-	<!-- User has full access: Show Chat Interface -->
-	<ChatInterface />
-{:else}
-	<!-- Loading state while checking access -->
-	<main
-		id="main-content"
-		tabindex="-1"
-		class="flex h-[calc(100vh-4rem)] items-center justify-center"
-	>
-		<div class="text-text-secondary animate-pulse">
-			{$_('common.loading')}
-		</div>
-	</main>
-{/if}
+<!-- User has full access: Show Chat Interface -->
+<!-- Auth checks are handled in the load function, so if we're here, user has access -->
+<ChatInterface />

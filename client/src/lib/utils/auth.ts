@@ -151,6 +151,8 @@ export function clearPaymentStatusCache(): void {
 	if (browser) {
 		sessionStorage.removeItem(PAYMENT_STATUS_KEY);
 		sessionStorage.removeItem(PAYMENT_REQUIRED_KEY);
+		// Also clear OAuth state if present
+		sessionStorage.removeItem('oauth_state');
 	}
 }
 

@@ -9,7 +9,7 @@
 	 */
 
 	import { onMount } from 'svelte';
-	import { authStore, isAuthenticated } from '$lib/stores';
+	import { authStore } from '$lib/stores';
 	import { _ } from 'svelte-i18n';
 
 	// Get data from load function
@@ -20,10 +20,7 @@
 	let isNewUser = $state(false);
 
 	onMount(async () => {
-		// If already authenticated, redirect to home
-		if ($isAuthenticated) {
-			window.location.href = '/';
-		}
+		// Don't check if already authenticated here - let the auth flow complete
 
 		// Get OAuth parameters from load function
 		const { token, userId, email, error, isNewUser: isNew } = data;
@@ -78,13 +75,9 @@
 				// Continue with redirect anyway
 			}
 
-			// Redirect after a brief success message
-			setTimeout(async () => {
-				if (paymentRequired) {
-					window.location.href = '/payment';
-				} else {
-					window.location.href = '/';
-				}
+			// Redirect after a brief success message - always go to root which will handle proper routing
+			setTimeout(() => {
+				window.location.href = '/';
 			}, 2000);
 		} catch (err) {
 			status = 'error';

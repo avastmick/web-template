@@ -37,12 +37,17 @@ This document describes how the web-template client application uses browser sto
 
 ### Auth Storage (`authStore.ts`)
 
-The auth store manages three localStorage keys:
+The auth store manages two localStorage keys:
 
 ```typescript
 const TOKEN_STORAGE_KEY = 'auth_token';
 const USER_STORAGE_KEY = 'auth_user';
-const PAYMENT_REQUIRED_KEY = 'payment_required';
+```
+
+The payment store manages one sessionStorage key:
+
+```typescript
+const PAYMENT_REQUIRED_KEY = 'payment_user';
 ```
 
 **Important:** Any service that needs to access the auth token MUST use the key `'auth_token'`, not variations like `'authToken'` or `'auth-token'`.
@@ -92,7 +97,7 @@ logout: () => {
     if (browser) {
         localStorage.removeItem(TOKEN_STORAGE_KEY);
         localStorage.removeItem(USER_STORAGE_KEY);
-        localStorage.removeItem(PAYMENT_REQUIRED_KEY);
+        sessionStorage.removeItem(PAYMENT_REQUIRED_KEY);
     }
     set(initialState);
 }

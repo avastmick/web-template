@@ -33,7 +33,38 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
     *   Security audit for payment data handling
     *   Integration tests for payment flows
 
-### Task 1.2: Client - UI overhaul, optimisation and refinement
+### Task 1.2: Registration, Authn, Payment/Invite flow refactor
+*   **Status:** **[ ] TODO
+*   **Action:** The whole registration/authentication/payment/authorization flow needs to be heavily refactored.
+Review the current approach to registration and refactor to enable watertight registration/authn/payment/invite handling
+*   **Details:**
+    *   You need to refactor to align with industry best practice and NOT implement tactical point solutions that may vary from client route to route. The new solution MUST be watertight and provably robust. There MUST be e2e tests to prove the flow and the expected outcomes.
+    *   full flow:
+        Registration:
+        1. User registers using either oauth or email/password
+        2. The server checks the user email for duplicate - fails registration if existing email found
+        3. The server checks if the user email exists in the 'user_invites' table - if it does there is no need for payment
+        4. The server registers the user - the server returns a set of data: `auth_user` and `auth_token` and `payment_user`. The first two holds the user's auth state and JWT token for API use. The latter holds their payment status and its expiry date (both user_invites AND payments MUST have expiry dates - the database migration script needs to be updated, as will the server code)
+
+        Login:
+        1. They can use email/password, or oauth. The existing server flow for each is used, but with updated handling for payment/invite. If authn is successful:
+        2. The server provides `auth_user` and `auth_token` and `payment_user` information.
+        3. The client stores the `auth_user` and `auth_token` in `localStorage` and `payment_user` details in `sessionStorage`
+        4. If the `payment_user` has `payment_or_invite_exists` == false OR `payment_or_invite_status_expires` is <= `today()` then the user is directed to the `/payment` route to pay, else they are directed to `/` home
+        5. If the user starts a new session, or the `payment_user` is stale, the client MUST fetch a new `payment_user` object and store it appropriately. If the payment has expired go to '4'.
+        6. A successfully authn'd user with a valid payment/invite will be redirected to `/chat` (should be configurable in ONE place).
+*   **Files to Create/Modify:**
+    * TODO - Update this!
+*   **Implementation Notes:**
+    - the client is CSR only (there is no SSR aspect at all), ensure this is clearly documented.
+    - the `documentation/CLIENT_STORAGE.md` needs to be updated as it is outdated. `payment_user` is new and not documented.
+    - there is an issue with using the Svelte `goto()` whereby the previous UI element is not unloaded and instead the new UI is appended below the old UI - for a user it appears the page has not changed (expect the URL in the browser). As a workaround `window.location.href` has been used successfully. Please ensure that this is clearly documented in the `ARCHITECTURE.md` as an issue to resolve / manage.
+    - ALWAYS use the simplest solution and ALWAYs use the DRY principle, with a single handler for registration/invite/payment/auth state management and flow on the client.
+*   **Quality Checks:**
+    *   Use `playwright` MCP to test the registration / authn flow to ensure consistency and correctness
+    *   Create e2e tests that ensure the registration/authn and invite/payment flow works correctly in future
+
+### Task 1.3: Client - UI overhaul, optimisation and refinement
 *   **Status:** **[ ] TODO
 *   **Action:** Review the current approach to the UI and theming. Update UI on client to optimise the user experience and make all components and theming consistent
 *   **Details:**
@@ -42,6 +73,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
     *   Update the CSS to reflect the new approach
     *   Ensure all components align to new approach and there is a simple, non-repeating, set of components that allow for easier changes and consistent outcomes.
 *   **Files to Create/Modify:**
+    * TODO - Update this!
 *   **Implementation Notes:**
     *   Use `tailwindcss` as means of styling. Remove all custom CSS that does not directly use `tailwindcss`.
     *   Ensure navigation bar menu is correctly reactive and scales across all screen sizes.
@@ -54,7 +86,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
     *   Create e2e tests that ensure the UI works as expected
     *   Create a test that shows that styling and theme can be updated in one place and affect all of the client
 
-### Task 1.3: Enable workspace 'features'
+### Task 1.4: Enable workspace 'features'
 *   **Status:** **[ ] TODO**
 *   **Action:** Create a means of enabling/disabling workspace features, such as local auth, Google auth, PostgreSQL, etc.
 *   **Details:**
@@ -76,7 +108,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
     *   Verify all options
     *   Document troubleshooting common issues
 
-### Task 1.4: Deployment Guides and tools
+### Task 1.5: Deployment Guides and tools
 *   **Status:** **[ ] TODO**
 *   **Action:** Create comprehensive deployment guides for major cloud platforms
 *   **Details:**
@@ -105,7 +137,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
     *   Verify all environment variables and configurations
     *   Document troubleshooting common issues
 
-### Task 1.5: Developer Experience - Template Scaffolding
+### Task 1.6: Developer Experience - Template Scaffolding
 *   **Status:** **[ ] TODO**
 *   **Action:** Create scaffolding tools for new projects using this template
 *   **Details:**
@@ -132,8 +164,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
     *   Verify generated projects build and run correctly
     *   Test with different configuration combinations
 
-
-**Note on Testing:**
+## **Note on Testing:**
 *   **Server:** Unit tests for individual functions/modules. Integration tests for API endpoints (testing request/response, database interaction). Use `cargo test`.
-*   **Client:** Unit tests for Svelte components, stores, and services (using Vitest or Jest). E2E tests for user flows (using Playwright). Use `bun test`.
+*   **Client:** Unit tests for Svelte components, stores, and services (using Vitest or Jest). E2E tests for user flows (using Playwright). Use `bun test` with `just test` wrappers.
 *   All tests should be runnable via `just` commands (e.g., `just server-test`, `just client-test`, `just test-e2e`).

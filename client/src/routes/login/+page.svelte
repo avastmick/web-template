@@ -35,16 +35,16 @@
 	// Email validation regex
 	const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-	// Check for registration success message
+	// Check for registration success message and auth status
 	onMount(async () => {
 		if (data.registered) {
 			showSuccessMessage = true;
 			successMessage = $_('auth.register.success') + ' ' + $_('auth.login.subtitle');
 		}
 
-		// Use centralized auth check - will redirect if already authenticated
-		const { checkAuthAndRedirect } = await import('$lib/utils/auth');
-		await checkAuthAndRedirect();
+		// Check if already authenticated
+		const { checkPublicRoute } = await import('$lib/guards/authGuard');
+		await checkPublicRoute();
 	});
 
 	// Clean up component state on unmount
@@ -121,9 +121,9 @@
 
 			await login(loginData);
 
-			// Login successful - use centralized auth check for redirect
-			const { checkAuthAndRedirect } = await import('$lib/utils/auth');
-			await checkAuthAndRedirect();
+			// Login successful - check where to redirect
+			const { checkPublicRoute } = await import('$lib/guards/authGuard');
+			await checkPublicRoute();
 		} catch (error) {
 			// Error is already handled by the auth service and stored in authStore
 			console.error('Login failed:', error);

@@ -7,12 +7,17 @@
 	import { Container, Flex, Button } from '$lib/components/ui/index.js';
 	import { paymentService } from '$lib/services/paymentService';
 	import { getCurrentUser } from '$lib/services/apiAuth';
+	import { AuthFlowManager } from '$lib/services/authFlowManager';
+	import { authStore } from '$lib/stores';
 
 	let loading = true;
 	let paymentStatus: 'succeeded' | 'processing' | 'failed' | null = null;
 	let error = '';
 
 	onMount(async () => {
+		// Wait for auth store to initialize first
+		await authStore.waitForInit();
+
 		// Get payment intent client secret from URL
 		const clientSecret = $page.url.searchParams.get('payment_intent_client_secret');
 
@@ -41,7 +46,12 @@
 			// If payment succeeded, refresh user data to update payment status
 			if (paymentStatus === 'succeeded') {
 				try {
-					await getCurrentUser();
+					// Refresh user data which will update the payment status in store
+					const userData = await getCurrentUser();
+					// Update payment user data for immediate navigation
+					if (userData.payment_user) {
+						await AuthFlowManager.handlePaymentSuccess(userData.payment_user);
+					}
 				} catch (err) {
 					console.error('Failed to refresh user data:', err);
 					// Non-critical error, payment still succeeded
@@ -56,9 +66,9 @@
 		}
 	});
 
-	function handleContinue() {
-		// Redirect to main app
-		window.location.href = '/';
+	async function handleContinue() {
+		// Use AuthFlowManager for proper redirect
+		await AuthFlowManager.handleAuthSuccess();
 	}
 </script>
 

@@ -9,6 +9,8 @@ export const load: PageLoad = async ({ url }) => {
 		userId: params.get('user_id'),
 		email: params.get('email'),
 		error: params.get('error'),
-		isNewUser: params.get('is_new_user') === 'true'
+		isNewUser: params.get('is_new_user') === 'true',
+		paymentRequired: params.get('payment_required') === 'true',
+		hasValidInvite: params.get('has_valid_invite') === 'true'
 	};
 };

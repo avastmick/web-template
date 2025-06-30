@@ -9,13 +9,13 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use crate::{
-    core::AppState,
+    core::{AppState, build_unified_auth_response},
     errors::AppError,
     models::{
-        AuthUser, OAuthCallbackParams, PaymentUser, UnifiedAuthResponse, User,
+        OAuthCallbackParams, UnifiedAuthResponse, User,
         oauth::{OAuthProvider, OAuthUserInfo},
     },
-    services::{OAuthService, payment::PaymentDbOperations},
+    services::OAuthService,
 };
 
 /// Request payload for OAuth login initiation
@@ -186,32 +186,15 @@ async fn handle_oauth_callback(
         return Ok(redirect_with_error(&state, "token_generation_failed"));
     };
 
-    // Get payment and invite information
-    let invite = state
-        .app_state
-        .invite_service
-        .get_valid_invite(&user.email)
-        .await
-        .ok()
-        .flatten();
-
-    let payment = state
-        .app_state
-        .payment_service
-        .get_active_payment_for_user(user.id)
-        .await
-        .ok()
-        .flatten();
-
-    // Create unified response data
-    let auth_user = AuthUser::from(user.clone());
-    let payment_user = PaymentUser::from_payment_and_invite(payment.as_ref(), invite.as_ref());
-
-    let unified_response = UnifiedAuthResponse {
-        auth_token: token.clone(),
-        auth_user,
-        payment_user,
-    };
+    // Create unified response using shared function
+    let unified_response =
+        match build_unified_auth_response(&state.app_state, &user, token.clone()).await {
+            Ok(response) => response,
+            Err(e) => {
+                tracing::error!("Failed to build unified auth response: {:?}", e);
+                return Ok(redirect_with_error(&state, "internal_error"));
+            }
+        };
 
     tracing::info!(
         "OAuth login successful for user: {} (new_user: {}, payment_required: {})",

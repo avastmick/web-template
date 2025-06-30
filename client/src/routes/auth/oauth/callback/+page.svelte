@@ -23,7 +23,7 @@
 		// Don't check if already authenticated here - let the auth flow complete
 
 		// Get OAuth parameters from load function
-		const { token, userId, email, error, isNewUser: isNew } = data;
+		const { token, userId, email, error, isNewUser: isNew, paymentRequired, hasValidInvite } = data;
 
 		// Handle OAuth error
 		if (error) {
@@ -45,9 +45,10 @@
 			// Set authentication data directly from redirect parameters
 			isNewUser = isNew;
 
-			// Store the token and user data
-			authStore.loginSuccess(
-				{
+			// Create UnifiedAuthResponse from OAuth parameters
+			const unifiedResponse = {
+				auth_token: token,
+				auth_user: {
 					id: userId,
 					email: decodeURIComponent(email),
 					provider: 'google',
@@ -55,26 +56,21 @@
 					created_at: new Date().toISOString(),
 					updated_at: new Date().toISOString()
 				},
-				token
-			);
+				payment_user: {
+					payment_required: paymentRequired,
+					has_valid_invite: hasValidInvite,
+					payment_status: undefined,
+					subscription_end_date: undefined,
+					invite_expires_at: undefined
+				}
+			};
+
+			// Store the auth data using the new unified format
+			authStore.handleAuthResponse(unifiedResponse);
 
 			status = 'success';
 
-			// Need to fetch the payment status from the server
-			// since OAuth callback doesn't include payment_required field yet
-			let paymentRequired = false;
-			try {
-				const { getCurrentUser } = await import('$lib/services/apiAuth');
-				const userData = await getCurrentUser();
-				paymentRequired = userData.payment_required || false;
-
-				// Update the auth store with payment status
-				authStore.setPaymentRequired(paymentRequired);
-			} catch (err) {
-				console.error('Failed to fetch payment status:', err);
-				// Continue with redirect anyway
-			}
-
+			// No longer need to fetch payment status separately - it's in the callback params!
 			// Redirect after a brief success message - always go to root which will handle proper routing
 			setTimeout(() => {
 				window.location.href = '/';
@@ -92,6 +88,7 @@
 	function getErrorMessage(error: string): string {
 		switch (error) {
 			case 'no_invite':
+				// This error should no longer occur since server allows non-invited users
 				return $_('auth.errors.inviteOnly');
 			case 'oauth_exchange_failed':
 				return $_('auth.errors.exchangeCode');

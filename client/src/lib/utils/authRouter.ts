@@ -38,10 +38,13 @@ export async function navigateBasedOnAuthStatus(targetRoute = '/'): Promise<void
 
 				// Store payment status in sessionStorage
 				sessionStorage.setItem('payment_status_checked', 'true');
-				sessionStorage.setItem('payment_required', userData.payment_required.toString());
+				sessionStorage.setItem(
+					'payment_required',
+					userData.payment_user.payment_required.toString()
+				);
 
 				// Navigate based on payment status
-				if (userData.payment_required) {
+				if (userData.payment_user.payment_required) {
 					await goto('/payment');
 				} else {
 					await goto('/chat');

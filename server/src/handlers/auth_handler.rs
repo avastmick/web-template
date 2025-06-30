@@ -6,10 +6,8 @@ use std::sync::Arc;
 use validator::Validate;
 
 use crate::{
-    core::{AppState, password_utils::verify_password},
+    core::{AppState, build_unified_auth_response, password_utils::verify_password},
     errors::{AppError, AppResult},
-    models::{AuthUser, PaymentUser, UnifiedAuthResponse},
-    services::payment::PaymentDbOperations,
 };
 
 #[derive(Debug, Deserialize, Validate)]
@@ -76,14 +74,14 @@ pub async fn register_user_handler(
         payload.email
     );
 
-    // 2. Check if user has a valid invite
-    let has_invite = state
+    // 2. Check if user has a valid invite and get the invite details
+    let invite = state
         .invite_service
-        .check_invite_exists(&payload.email)
+        .get_valid_invite(&payload.email)
         .await?;
 
     // For MVP, we allow registration without invite but flag that payment is required
-    if has_invite {
+    if invite.is_some() {
         tracing::info!("Valid invite found for email: {}", payload.email);
     } else {
         tracing::info!(
@@ -107,12 +105,6 @@ pub async fn register_user_handler(
                 // We don't fail the registration since the user is already created
             }
 
-            // Get invite details for the response
-            let invite = state
-                .invite_service
-                .get_valid_invite(&created_user.email)
-                .await?;
-
             // Generate JWT token for immediate login (matches OAuth behavior)
             let token = state
                 .auth_service
@@ -131,15 +123,8 @@ pub async fn register_user_handler(
                 created_user.email
             );
 
-            // Create unified auth response
-            let auth_user = AuthUser::from(created_user);
-            let payment_user = PaymentUser::from_payment_and_invite(None, invite.as_ref());
-
-            let response = UnifiedAuthResponse {
-                auth_token: token,
-                auth_user,
-                payment_user,
-            };
+            // Create unified auth response using shared function
+            let response = build_unified_auth_response(&state, &created_user, token).await?;
 
             Ok((StatusCode::CREATED, Json(response)))
         }
@@ -206,15 +191,7 @@ pub async fn login_user_handler(
         return Err(AppError::InvalidCredentials);
     }
 
-    // 4. Check if user has valid invite or active payment
-    let invite = state.invite_service.get_valid_invite(&user.email).await?;
-
-    let payment = state
-        .payment_service
-        .get_active_payment_for_user(user.id)
-        .await?;
-
-    // 5. Generate JWT token
+    // 4. Generate JWT token
     let token = state
         .auth_service
         .generate_token(user.id, &user.email)
@@ -223,24 +200,17 @@ pub async fn login_user_handler(
             e
         })?;
 
-    // 6. Create unified auth response
-    let auth_user = AuthUser::from(user);
-    let payment_user = PaymentUser::from_payment_and_invite(payment.as_ref(), invite.as_ref());
+    // 5. Create unified auth response using shared function
+    let response = build_unified_auth_response(&state, &user, token).await?;
 
-    if payment_user.payment_required {
+    if response.payment_user.payment_required {
         tracing::info!(
             "User {} requires payment (no invite and no active payment)",
-            auth_user.email
+            response.auth_user.email
         );
     }
 
-    tracing::info!("User logged in successfully: {}", auth_user.email);
-
-    let response = UnifiedAuthResponse {
-        auth_token: token,
-        auth_user,
-        payment_user,
-    };
+    tracing::info!("User logged in successfully: {}", response.auth_user.email);
 
     Ok((StatusCode::OK, Json(response)))
 }

@@ -17,6 +17,7 @@
 	"nav.profile": "个人资料",
 	"nav.settings": "设置",
 	"nav.logout": "退出登录",
+	"nav.chat": "聊天",
 
 	"auth.login.title": "登录您的账户",
 	"auth.login.subtitle": "欢迎回来！请输入您的详细信息。",
@@ -220,5 +221,7 @@
 	"chat.welcome.suggestions.help": "协助完成任务",
 	"chat.welcome.suggestions.create": "创建某些内容",
 
-	"chat.messages.region": "聊天消息"
+	"chat.messages.region": "聊天消息",
+
+	"payment.title": "需要付款"
 }

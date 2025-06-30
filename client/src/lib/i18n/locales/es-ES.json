@@ -17,6 +17,7 @@
 	"nav.profile": "Perfil",
 	"nav.settings": "Ajustes",
 	"nav.logout": "Cerrar Sesión",
+	"nav.chat": "Chat",
 
 	"auth.login.title": "Inicia sesión en tu cuenta",
 	"auth.login.subtitle": "¡Bienvenido de nuevo! Por favor, ingresa tus datos.",
@@ -220,5 +221,7 @@
 	"chat.welcome.suggestions.help": "Ayude con una tarea",
 	"chat.welcome.suggestions.create": "Cree algo",
 
-	"chat.messages.region": "Mensajes de chat"
+	"chat.messages.region": "Mensajes de chat",
+
+	"payment.title": "Pago Requerido"
 }

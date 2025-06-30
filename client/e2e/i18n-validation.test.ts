@@ -36,7 +36,8 @@ const routes = [
 	{ path: '/', name: 'Home' },
 	{ path: '/login', name: 'Login' },
 	{ path: '/register', name: 'Register' },
-	{ path: '/profile', name: 'Profile', requiresAuth: true }
+	{ path: '/chat', name: 'Chat', requiresAuth: true },
+	{ path: '/payment', name: 'Payment', requiresAuth: true }
 ];
 
 test.describe('i18n Compliance Validation', () => {
@@ -60,7 +61,7 @@ test.describe('i18n Compliance Validation', () => {
 
 				// Navigation
 				'nav.home',
-				'nav.profile',
+				'nav.chat',
 				'nav.logout',
 
 				// Authentication
@@ -77,10 +78,9 @@ test.describe('i18n Compliance Validation', () => {
 				'home.title',
 				'home.description',
 
-				// Profile page (these should exist but may be missing)
-				'profile.title',
-				'profile.pageTitle',
-				'profile.pageDescription',
+				// Protected pages
+				'chat.title',
+				'payment.title',
 
 				// Accessibility
 				'accessibility.skipToMain',
@@ -243,40 +243,37 @@ test.describe('i18n Compliance Validation', () => {
 			}
 		});
 
-		test('should detect hardcoded text on profile page (when accessible)', async ({ page }) => {
-			// This test will show that profile page has hardcoded text
+		test('should detect hardcoded text on chat page (when accessible)', async ({ page }) => {
+			// This test will show that chat page has hardcoded text
 			// We'll skip it if user is not authenticated, but when it runs it should fail
 
-			await page.goto('/profile');
+			await page.goto('/chat');
 
 			// If redirected to login (not authenticated), skip the test
 			await page.waitForTimeout(1000);
 			if (page.url().includes('/login')) {
-				test.skip('Profile page requires authentication - cannot test hardcoded text');
+				test.skip('Chat page requires authentication - cannot test hardcoded text');
 				return;
 			}
 
-			// If we somehow got to profile page, test for hardcoded text
+			// If we somehow got to chat page, test for hardcoded text
 			// Switch to Spanish
 			const languageSelect = page.locator('#language-select').first();
 			await languageSelect.selectOption('es-ES');
 			await page.waitForTimeout(500);
 
 			// These phrases should NOT appear in Spanish mode if properly translated
-			const hardcodedProfilePhrases = [
-				'User Profile',
-				'Profile Information',
-				'Account Status',
-				'User ID',
-				'Email Address',
-				'Account Created',
-				'Last Updated',
-				'Active Account',
-				'Refresh'
+			const hardcodedChatPhrases = [
+				'Welcome to AI Chat',
+				'New Chat',
+				'Send message',
+				'Type a message',
+				'Conversations',
+				'No conversations yet'
 			];
 
 			const foundHardcoded = [];
-			for (const phrase of hardcodedProfilePhrases) {
+			for (const phrase of hardcodedChatPhrases) {
 				const elements = page.getByText(phrase, { exact: false });
 				const count = await elements.count();
 
@@ -286,9 +283,7 @@ test.describe('i18n Compliance Validation', () => {
 			}
 
 			if (foundHardcoded.length > 0) {
-				throw new Error(
-					`Profile page contains hardcoded English text: ${foundHardcoded.join(', ')}`
-				);
+				throw new Error(`Chat page contains hardcoded English text: ${foundHardcoded.join(', ')}`);
 			}
 		});
 	});

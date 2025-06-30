@@ -13,10 +13,11 @@
 	import { Container, Flex, Button, Input } from '$lib/components/ui/index.js';
 	import { GoogleOAuthButton, GitHubOAuthButton } from '$lib/components/auth/index.js';
 	import { _ } from 'svelte-i18n';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
+	import { AuthFlowManager } from '$lib/services/authFlowManager';
 
 	import type { RegisterRequest } from '$lib/types';
-	import type { RegisterResponse } from '$lib/types/auth';
+	import type { UnifiedAuthResponse } from '$lib/types/auth';
 
 	// Form state
 	let email = $state('');
@@ -30,10 +31,15 @@
 	let isSubmitting = $state(false);
 
 	// Registration state
-	let registrationDetails: RegisterResponse;
+	let registrationDetails: UnifiedAuthResponse;
 
 	// Email validation regex (matching server-side validation)
 	const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+	// Check if already authenticated on mount
+	onMount(async () => {
+		await AuthFlowManager.handlePublicRoute();
+	});
 
 	/**
 	 * Validate email format
@@ -132,16 +138,13 @@
 			};
 
 			registrationDetails = await register(userData);
-			// If registration is complete redirect
+			// Registration now returns token immediately, so user is logged in
 			if (registrationDetails) {
-				// Registration successful - redirect to login page
-				console.info('Registered new user with email:', registrationDetails.user.email);
+				console.info('Registered and logged in user:', registrationDetails.auth_user.email);
 
-				// The user needs to login first before we can check payment requirements
-				// The following leads to a replication of the content, so going old-skool for now
-				// FIXME: likely this some kind of usage issue of the form handling
-				// goto('/login?registered=true');
-				window.location.href = '/login?registered=true';
+				// Auth store is already updated by register() via handleAuthResponse
+				// Use AuthFlowManager to handle navigation
+				await AuthFlowManager.handleAuthSuccess();
 			}
 		} catch (error) {
 			// Error is already handled by the auth service and stored in authStore

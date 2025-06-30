@@ -17,6 +17,7 @@
 	"nav.profile": "Profile",
 	"nav.settings": "Settings",
 	"nav.logout": "Sign Out",
+	"nav.chat": "Chat",
 
 	"auth.login.title": "Sign in to your account",
 	"auth.login.subtitle": "Welcome back! Please enter your details.",

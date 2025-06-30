@@ -65,6 +65,36 @@ impl InviteService {
         Ok(invite)
     }
 
+    /// Get any invite for a user (used or unused)
+    /// This is used to check if a user has ever had a valid invite
+    pub async fn get_user_invite(&self, email: &str) -> Result<Option<UserInvite>, AppError> {
+        let email_lower = email.to_lowercase();
+
+        let invite = sqlx::query_as!(
+            UserInvite,
+            r#"
+            SELECT
+                id,
+                email,
+                invited_by,
+                invited_at as "invited_at: DateTime<Utc>",
+                used_at as "used_at: DateTime<Utc>",
+                expires_at as "expires_at: DateTime<Utc>",
+                created_at as "created_at: DateTime<Utc>",
+                updated_at as "updated_at: DateTime<Utc>"
+            FROM user_invites
+            WHERE email = ?1
+            ORDER BY created_at DESC
+            LIMIT 1
+            "#,
+            email_lower
+        )
+        .fetch_optional(&self.db)
+        .await?;
+
+        Ok(invite)
+    }
+
     /// Mark an invite as used
     pub async fn mark_invite_used(&self, email: &str) -> Result<(), AppError> {
         let email_lower = email.to_lowercase();

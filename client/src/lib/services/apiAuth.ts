@@ -8,7 +8,8 @@
  */
 
 import { authStore } from '$lib/stores';
-import type { LoginRequest, RegisterRequest, LoginResponse, User } from '$lib/types/auth';
+import type { LoginRequest, RegisterRequest, UnifiedAuthResponse, User } from '$lib/types/auth';
+import { StorageService } from '$lib/services/storageService';
 
 // API base URL - can be configured based on environment
 const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:${
@@ -32,16 +33,14 @@ export interface AuthError {
 	error: string;
 }
 
-export interface OAuthLoginResponse extends LoginResponse {
-	is_new_user: boolean;
-}
+// OAuthLoginResponse is now just UnifiedAuthResponse
 
 /**
  * Register a new user
  * @param data Registration data
  * @returns User data and JWT token on success
  */
-export async function register(data: RegisterRequest): Promise<LoginResponse> {
+export async function register(data: RegisterRequest): Promise<UnifiedAuthResponse> {
 	authStore.setLoading(true);
 	authStore.clearError();
 
@@ -70,10 +69,10 @@ export async function register(data: RegisterRequest): Promise<LoginResponse> {
 			);
 		}
 
-		const registerResponse: LoginResponse = await response.json();
+		const registerResponse: UnifiedAuthResponse = await response.json();
 
-		// Note: We don't automatically log in users after registration
-		// They need to go through login flow
+		// Server now returns token immediately, so we can log them in
+		authStore.handleAuthResponse(registerResponse);
 		authStore.setLoading(false);
 
 		return registerResponse;
@@ -91,7 +90,7 @@ export async function register(data: RegisterRequest): Promise<LoginResponse> {
  * @param data Login credentials
  * @returns User data and JWT token on success
  */
-export async function login(data: LoginRequest): Promise<LoginResponse> {
+export async function login(data: LoginRequest): Promise<UnifiedAuthResponse> {
 	authStore.setLoading(true);
 	authStore.clearError();
 
@@ -119,15 +118,10 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
 			);
 		}
 
-		const loginResponse: LoginResponse = await response.json();
+		const loginResponse: UnifiedAuthResponse = await response.json();
 
-		// Update auth store with login success
-		authStore.loginSuccess(loginResponse.user, loginResponse.token);
-
-		// Set payment required status if provided
-		if (loginResponse.payment_required !== undefined) {
-			authStore.setPaymentRequired(loginResponse.payment_required);
-		}
+		// Update auth store with unified response
+		authStore.handleAuthResponse(loginResponse);
 
 		return loginResponse;
 	} catch (error) {
@@ -143,9 +137,7 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
  */
 export async function logout(): Promise<void> {
 	authStore.logout();
-	// Clear payment status cache
-	const { clearPaymentStatusCache } = await import('$lib/utils/auth');
-	clearPaymentStatusCache();
+	// Storage is cleared by authStore.logout()
 	// Redirect to login page
 	window.location.href = '/login';
 }
@@ -156,7 +148,7 @@ export async function logout(): Promise<void> {
  * @returns User data if token is valid
  */
 export async function verifyToken(token?: string): Promise<User> {
-	const authToken = token || localStorage.getItem('auth_token');
+	const authToken = token || StorageService.getAuthToken();
 
 	if (!authToken) {
 		throw new ApiError('No token provided', 401);
@@ -194,7 +186,7 @@ export async function verifyToken(token?: string): Promise<User> {
  * Useful for checking auth status on app initialization
  */
 export async function refreshAuth(): Promise<void> {
-	const token = localStorage.getItem('auth_token');
+	const token = StorageService.getAuthToken();
 
 	if (!token) {
 		authStore.logout();
@@ -203,7 +195,16 @@ export async function refreshAuth(): Promise<void> {
 
 	try {
 		const user = await verifyToken(token);
-		authStore.loginSuccess(user, token);
+		// Create a minimal auth response for refresh
+		const response: UnifiedAuthResponse = {
+			auth_token: token,
+			auth_user: user,
+			payment_user: StorageService.getPaymentUser() || {
+				payment_required: false,
+				has_valid_invite: false
+			}
+		};
+		authStore.handleAuthResponse(response);
 	} catch {
 		// Token is invalid, clear auth state
 		authStore.logout();
@@ -215,15 +216,7 @@ export async function refreshAuth(): Promise<void> {
  * @returns Authorization header object or empty object
  */
 export function getAuthHeader(): { Authorization?: string } {
-	const token = localStorage.getItem('auth_token');
-
-	if (!token) {
-		return {};
-	}
-
-	return {
-		Authorization: `Bearer ${token}`
-	};
+	return StorageService.getAuthHeader();
 }
 
 /**
@@ -231,7 +224,7 @@ export function getAuthHeader(): { Authorization?: string } {
  * @returns true if user has a valid token
  */
 export function isAuthenticated(): boolean {
-	return !!localStorage.getItem('auth_token');
+	return StorageService.isAuthenticated();
 }
 
 /**
@@ -269,7 +262,7 @@ export function initiateGitHubOAuth(state?: string): void {
 export async function handleOAuthCallback(
 	code: string,
 	state?: string
-): Promise<OAuthLoginResponse> {
+): Promise<UnifiedAuthResponse> {
 	authStore.setLoading(true);
 	authStore.clearError();
 
@@ -302,10 +295,10 @@ export async function handleOAuthCallback(
 			);
 		}
 
-		const oauthResponse: OAuthLoginResponse = await response.json();
+		const oauthResponse: UnifiedAuthResponse = await response.json();
 
-		// Update auth store with login success
-		authStore.loginSuccess(oauthResponse.user, oauthResponse.token);
+		// Update auth store with unified response
+		authStore.handleAuthResponse(oauthResponse);
 
 		return oauthResponse;
 	} catch (error) {
@@ -320,8 +313,8 @@ export async function handleOAuthCallback(
  * Get current user data including payment status
  * @returns User data with payment status
  */
-export async function getCurrentUser(): Promise<LoginResponse> {
-	const token = localStorage.getItem('auth_token');
+export async function getCurrentUser(): Promise<UnifiedAuthResponse> {
+	const token = StorageService.getAuthToken();
 	if (!token) {
 		throw new ApiError('No authentication token', 401);
 	}
@@ -349,13 +342,20 @@ export async function getCurrentUser(): Promise<LoginResponse> {
 		);
 	}
 
-	const userData: LoginResponse = await response.json();
+	const userData: UnifiedAuthResponse = await response.json();
+
+	// The /api/users/me endpoint returns empty auth_token by design
+	// We need to preserve the existing token instead of overwriting it
+	if (!userData.auth_token) {
+		// Preserve the existing auth token
+		const existingToken = StorageService.getAuthToken();
+		if (existingToken) {
+			userData.auth_token = existingToken;
+		}
+	}
 
 	// Update auth store with latest data
-	authStore.loginSuccess(userData.user, userData.token);
-	if (userData.payment_required !== undefined) {
-		authStore.setPaymentRequired(userData.payment_required);
-	}
+	authStore.handleAuthResponse(userData);
 
 	return userData;
 }

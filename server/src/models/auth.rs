@@ -66,8 +66,12 @@ impl PaymentUser {
         payment: Option<&UserPayment>,
         invite: Option<&UserInvite>,
     ) -> Self {
-        let has_valid_invite = invite.is_some_and(|inv| !inv.is_expired() && inv.used_at.is_none());
+        // Check if user has a valid invite (either unused or used by this user)
+        let has_valid_invite = invite.is_some_and(|inv| !inv.is_expired());
 
+        // Payment is required only if:
+        // 1. User doesn't have a valid invite (expired or none), AND
+        // 2. User doesn't have an active payment
         let payment_required = !has_valid_invite && payment.is_none_or(|p| !p.is_active());
 
         PaymentUser {

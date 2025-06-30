@@ -11,5 +11,8 @@ export {
 	authToken,
 	isAuthLoading,
 	authError,
-	hasValidToken
+	hasValidToken,
+	paymentUser,
+	paymentRequired,
+	hasValidPayment
 } from './authStore';

@@ -6,7 +6,7 @@
 
 import { get } from 'svelte/store';
 import { browser } from '$app/environment';
-import { isAuthenticated, authStore } from '$lib/stores';
+import { isAuthenticated, authStore, paymentRequired as paymentRequiredStore } from '$lib/stores';
 import { getCurrentUser } from '$lib/services/apiAuth';
 
 // Session storage keys
@@ -69,8 +69,8 @@ export async function checkAuthAndRedirect(options: AuthCheckOptions = {}): Prom
 			// Fetch from server and cache for this session
 			try {
 				const userData = await getCurrentUser();
-				// Handle both the old format (LoginResponse) and new format (CurrentUserResponse)
-				paymentRequired = userData.payment_required || false;
+				// Use the new UnifiedAuthResponse format
+				paymentRequired = userData.payment_user.payment_required || false;
 
 				// Cache in session storage
 				sessionStorage.setItem(PAYMENT_STATUS_KEY, 'true');
@@ -141,7 +141,8 @@ export async function checkAuthAndRedirect(options: AuthCheckOptions = {}): Prom
  */
 export function hasCompletedPayment(): boolean {
 	const auth = get(authStore);
-	return auth.isAuthenticated && !auth.paymentRequired;
+	const paymentReq = get(paymentRequiredStore);
+	return auth.isAuthenticated && !paymentReq;
 }
 
 /**

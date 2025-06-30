@@ -9,11 +9,9 @@ use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 use std::sync::Arc;
 
 use crate::{
-    core::AppState,
+    core::{AppState, build_unified_auth_response_no_token},
     errors::AppResult,
     middleware::JwtAuth,
-    models::{AuthUser, PaymentUser, UnifiedAuthResponse},
-    services::payment::PaymentDbOperations,
 };
 
 /// Handler for GET /api/users/me - returns current user's profile information
@@ -52,34 +50,12 @@ pub async fn get_current_user_handler(
     // Fetch the full user from the database
     let user = state.user_service.find_by_email(&auth.user.email).await?;
 
-    // Check if user has valid invite or active payment
-    let invite = state.invite_service.get_valid_invite(&user.email).await?;
-
-    let payment = state
-        .payment_service
-        .get_active_payment_for_user(user.id)
-        .await?;
-
-    // Create unified auth response (without token since user is already authenticated)
-    let auth_user = AuthUser::from(user);
-    let payment_user = PaymentUser::from_payment_and_invite(payment.as_ref(), invite.as_ref());
-
-    if payment_user.payment_required {
-        tracing::info!(
-            "User {} requires payment (no invite and no active payment)",
-            auth_user.email
-        );
-    }
-
-    let response = UnifiedAuthResponse {
-        auth_token: String::new(), // Empty token for /me endpoint since user is already authenticated
-        auth_user: auth_user.clone(),
-        payment_user,
-    };
+    // Create unified auth response using shared function (without token)
+    let response = build_unified_auth_response_no_token(&state, &user).await?;
 
     tracing::info!(
         "Successfully retrieved profile for user: {} (payment_required: {})",
-        auth_user.email,
+        response.auth_user.email,
         response.payment_user.payment_required
     );
 

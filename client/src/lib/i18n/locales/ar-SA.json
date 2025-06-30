@@ -17,6 +17,7 @@
 	"nav.profile": "الملف الشخصي",
 	"nav.settings": "الإعدادات",
 	"nav.logout": "تسجيل الخروج",
+	"nav.chat": "الدردشة",
 
 	"auth.login.title": "تسجيل الدخول إلى حسابك",
 	"auth.login.subtitle": "مرحباً بعودتك! يرجى إدخال بياناتك.",
@@ -220,5 +221,7 @@
 	"chat.welcome.suggestions.help": "المساعدة في مهمة",
 	"chat.welcome.suggestions.create": "إنشاء شيء ما",
 
-	"chat.messages.region": "رسائل الدردشة"
+	"chat.messages.region": "رسائل الدردشة",
+
+	"payment.title": "الدفع مطلوب"
 }

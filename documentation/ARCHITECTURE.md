@@ -312,3 +312,49 @@ This section details the flow for user registration, login, session management u
 -   Store should persist `accessToken` to `localStorage` (or `sessionStorage`) and rehydrate on app load to maintain session across page refreshes.
 
 This detailed flow should provide a good basis for implementation.
+
+### 8.8. Unified Authentication Response (Updated 2024-06-30)
+
+All authentication endpoints now return a consistent `UnifiedAuthResponse` structure:
+
+```typescript
+interface UnifiedAuthResponse {
+  auth_token: string;        // JWT token (previously "token" or "accessToken")
+  auth_user: {              // User information (previously "user")
+    id: string;
+    email: string;
+    created_at: string;
+    updated_at: string;
+  };
+  payment_user: {           // Payment/subscription status (new)
+    payment_required: boolean;
+    payment_status?: string;
+    subscription_end_date?: string;
+    has_valid_invite: boolean;
+    invite_expires_at?: string;
+  };
+}
+```
+
+This unified response is returned by:
+- `POST /api/auth/register` - Now returns token immediately (no separate login required)
+- `POST /api/auth/login` - Returns full payment status
+- `GET /api/users/me` - Returns same structure (empty auth_token)
+- OAuth callback - Includes payment info in redirect parameters
+
+### 8.9. Known Issues and Workarounds
+
+#### Navigation Issue with Svelte's goto()
+There is a known issue where using Svelte's `goto()` function causes UI stacking - the previous UI element is not unloaded and the new UI is appended below it. This makes it appear to users that the page hasn't changed (except the URL).
+
+**Workaround:** Use `window.location.href` for navigation instead of `goto()`. This forces a full page navigation and properly clears the previous UI.
+
+```typescript
+// Problematic:
+goto('/login?registered=true');
+
+// Workaround:
+window.location.href = '/login?registered=true';
+```
+
+This issue needs to be properly investigated and resolved in the future.

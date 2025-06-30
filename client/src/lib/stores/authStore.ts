@@ -13,12 +13,10 @@
 
 import { writable, derived } from 'svelte/store';
 import { browser } from '$app/environment';
-import type { AuthState, User } from '$lib/types/auth';
+import type { AuthState, User, PaymentUser, UnifiedAuthResponse } from '$lib/types/auth';
+import { StorageService } from '$lib/services/storageService';
 
-// Storage keys for localStorage
-const TOKEN_STORAGE_KEY = 'auth_token';
-const USER_STORAGE_KEY = 'auth_user';
-const PAYMENT_REQUIRED_KEY = 'payment_required';
+// Removed storage keys - now using StorageService
 
 // Initial state
 const initialState: AuthState = {
@@ -27,7 +25,7 @@ const initialState: AuthState = {
 	isAuthenticated: false,
 	isLoading: false,
 	error: null,
-	paymentRequired: false
+	paymentUser: null
 };
 
 // Track if the store has been initialized
@@ -52,42 +50,37 @@ function createAuthStore() {
 			initializationPromise = new Promise<void>((resolve) => {
 				console.log('[AuthStore] Starting initialization');
 				try {
-					const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-					const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-					const paymentRequired = localStorage.getItem(PAYMENT_REQUIRED_KEY) === 'true';
+					const storedToken = StorageService.getAuthToken();
+					const storedUser = StorageService.getAuthUser();
+					const paymentUser = StorageService.getPaymentUser();
 
-					console.log('[AuthStore] Init - checking localStorage:', {
+					console.log('[AuthStore] Init - checking storage:', {
 						hasToken: !!storedToken,
 						hasUser: !!storedUser,
-						paymentRequired
+						hasPaymentUser: !!paymentUser
 					});
 
 					if (storedToken && storedUser) {
-						const user: User = JSON.parse(storedUser);
 						console.log('[AuthStore] Init - found valid auth data, updating store');
 						update((state) => ({
 							...state,
-							user,
+							user: storedUser,
 							token: storedToken,
 							isAuthenticated: true,
 							error: null,
-							paymentRequired
+							paymentUser
 						}));
 					} else {
-						console.log('[AuthStore] Init - no auth data found in localStorage');
+						console.log('[AuthStore] Init - no auth data found in storage');
 					}
 					initialized = true;
 					resolve();
 				} catch (error) {
 					console.error('[AuthStore] Failed to load auth data from localStorage:', error);
 					// Only clear data if we actually had corrupted data
-					const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-					const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-					if (storedToken || storedUser) {
+					if (StorageService.isAuthenticated()) {
 						console.error('[AuthStore] Clearing corrupted auth data');
-						localStorage.removeItem(TOKEN_STORAGE_KEY);
-						localStorage.removeItem(USER_STORAGE_KEY);
-						localStorage.removeItem(PAYMENT_REQUIRED_KEY);
+						StorageService.clearAll();
 					}
 					initialized = true;
 					resolve();
@@ -118,42 +111,36 @@ function createAuthStore() {
 			update((state) => ({ ...state, error: null }));
 		},
 
-		// Set payment required status
-		setPaymentRequired: (required: boolean) => {
-			if (browser) {
-				if (required) {
-					localStorage.setItem(PAYMENT_REQUIRED_KEY, 'true');
-				} else {
-					localStorage.removeItem(PAYMENT_REQUIRED_KEY);
-				}
+		// Set payment user data
+		setPaymentUser: (paymentUser: PaymentUser | null) => {
+			if (browser && paymentUser) {
+				StorageService.setPaymentUser(paymentUser);
 			}
-			update((state) => ({ ...state, paymentRequired: required }));
+			update((state) => ({ ...state, paymentUser }));
 		},
 
-		// Login success - store user and token
-		loginSuccess: (user: User, token: string) => {
-			console.log('[AuthStore] loginSuccess called', { userId: user.id, email: user.email });
-			if (browser) {
-				console.log('[AuthStore] Storing auth data to localStorage');
-				localStorage.setItem(TOKEN_STORAGE_KEY, token);
-				localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+		// Handle unified auth response
+		handleAuthResponse: (response: UnifiedAuthResponse) => {
+			console.log('[AuthStore] handleAuthResponse called', {
+				userId: response.auth_user.id,
+				email: response.auth_user.email,
+				paymentRequired: response.payment_user.payment_required
+			});
 
-				// Verify it was stored
-				const verifyToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-				const verifyUser = localStorage.getItem(USER_STORAGE_KEY);
-				console.log('[AuthStore] Verification:', {
-					tokenStored: !!verifyToken,
-					userStored: !!verifyUser,
-					tokenMatches: verifyToken === token
-				});
+			if (browser) {
+				console.log('[AuthStore] Storing auth data');
+				StorageService.setAuthToken(response.auth_token);
+				StorageService.setAuthUser(response.auth_user);
+				StorageService.setPaymentUser(response.payment_user);
 			}
 
 			update((state) => {
 				console.log('[AuthStore] Updating store state to authenticated');
 				return {
 					...state,
-					user,
-					token,
+					user: response.auth_user,
+					token: response.auth_token,
+					paymentUser: response.payment_user,
 					isAuthenticated: true,
 					isLoading: false,
 					error: null
@@ -161,10 +148,25 @@ function createAuthStore() {
 			});
 		},
 
+		// Legacy login success - for backward compatibility
+		loginSuccess: (user: User, token: string) => {
+			console.warn('[AuthStore] loginSuccess is deprecated, use handleAuthResponse instead');
+			// Create a minimal UnifiedAuthResponse for backward compatibility
+			const response: UnifiedAuthResponse = {
+				auth_token: token,
+				auth_user: user,
+				payment_user: {
+					payment_required: false,
+					has_valid_invite: false
+				}
+			};
+			authStore.handleAuthResponse(response);
+		},
+
 		// Update user data (for profile updates)
 		updateUser: (user: User) => {
 			if (browser) {
-				localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+				StorageService.setAuthUser(user);
 			}
 
 			update((state) => ({
@@ -176,9 +178,7 @@ function createAuthStore() {
 		// Logout - clear all auth data
 		logout: () => {
 			if (browser) {
-				localStorage.removeItem(TOKEN_STORAGE_KEY);
-				localStorage.removeItem(USER_STORAGE_KEY);
-				localStorage.removeItem(PAYMENT_REQUIRED_KEY);
+				StorageService.clearAll();
 			}
 
 			set(initialState);
@@ -191,10 +191,12 @@ function createAuthStore() {
 
 		// Get the current token
 		getToken: (): string | null => {
-			if (browser) {
-				return localStorage.getItem(TOKEN_STORAGE_KEY);
-			}
-			return null;
+			return StorageService.getAuthToken();
+		},
+
+		// Check if payment user data needs refresh
+		needsPaymentRefresh: (): boolean => {
+			return StorageService.isPaymentUserStale();
 		}
 	};
 }
@@ -214,5 +216,16 @@ export const hasValidToken = derived(authStore, ($authStore) => {
 	return $authStore.token !== null && $authStore.user !== null;
 });
 
-// Derived store for payment required status
-export const paymentRequired = derived(authStore, ($authStore) => $authStore.paymentRequired);
+// Derived store for payment user data
+export const paymentUser = derived(authStore, ($authStore) => $authStore.paymentUser);
+
+// Derived store for payment required status (backward compatibility)
+export const paymentRequired = derived(
+	authStore,
+	($authStore) => $authStore.paymentUser?.payment_required ?? false
+);
+
+// Derived store for checking if payment is valid
+export const hasValidPayment = derived(authStore, ($authStore) =>
+	StorageService.isPaymentValid($authStore.paymentUser)
+);

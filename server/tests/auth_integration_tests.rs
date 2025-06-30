@@ -173,7 +173,7 @@ async fn register_and_login_user(app: Router, email: &str, password: &str) -> St
     assert_eq!(login_response.status(), StatusCode::OK);
 
     let login_body = extract_json_response(login_response).await;
-    login_body["token"].as_str().unwrap().to_string()
+    login_body["auth_token"].as_str().unwrap().to_string()
 }
 
 #[tokio::test]
@@ -194,11 +194,11 @@ async fn test_register_user_success() {
     assert_eq!(response.status(), StatusCode::CREATED);
 
     let json_body = extract_json_response(response).await;
-    assert!(json_body["user"]["id"].is_string());
-    assert_eq!(json_body["user"]["email"], "test@example.com");
-    assert!(json_body["user"]["created_at"].is_string());
-    assert!(json_body["user"]["updated_at"].is_string());
-    assert!(json_body["payment_required"].is_boolean());
+    assert!(json_body["auth_user"]["id"].is_string());
+    assert_eq!(json_body["auth_user"]["email"], "test@example.com");
+    assert!(json_body["auth_user"]["created_at"].is_string());
+    assert!(json_body["auth_user"]["updated_at"].is_string());
+    assert!(json_body["payment_user"]["payment_required"].is_boolean());
 }
 
 #[tokio::test]
@@ -217,12 +217,12 @@ async fn test_register_user_without_invite() {
     assert_eq!(response.status(), StatusCode::CREATED);
 
     let json_body = extract_json_response(response).await;
-    assert!(json_body["user"]["id"].is_string());
-    assert_eq!(json_body["user"]["email"], "noinvite@example.com");
-    assert!(json_body["user"]["created_at"].is_string());
-    assert!(json_body["user"]["updated_at"].is_string());
+    assert!(json_body["auth_user"]["id"].is_string());
+    assert_eq!(json_body["auth_user"]["email"], "noinvite@example.com");
+    assert!(json_body["auth_user"]["created_at"].is_string());
+    assert!(json_body["auth_user"]["updated_at"].is_string());
     // Without invite, payment should be required
-    assert_eq!(json_body["payment_required"], true);
+    assert_eq!(json_body["payment_user"]["payment_required"], true);
 }
 
 #[tokio::test]
@@ -391,11 +391,11 @@ async fn test_login_user_success() {
     assert_eq!(login_response.status(), StatusCode::OK);
 
     let json_body = extract_json_response(login_response).await;
-    assert!(json_body["token"].is_string());
-    assert!(json_body["user"]["id"].is_string());
-    assert_eq!(json_body["user"]["email"], "login_test@example.com");
-    assert!(json_body["user"]["created_at"].is_string());
-    assert!(json_body["user"]["updated_at"].is_string());
+    assert!(json_body["auth_token"].is_string());
+    assert!(json_body["auth_user"]["id"].is_string());
+    assert_eq!(json_body["auth_user"]["email"], "login_test@example.com");
+    assert!(json_body["auth_user"]["created_at"].is_string());
+    assert!(json_body["auth_user"]["updated_at"].is_string());
 }
 
 #[tokio::test]
@@ -556,10 +556,13 @@ async fn test_get_current_user_success() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let json_body = extract_json_response(response).await;
-    assert!(json_body["id"].is_string());
-    assert_eq!(json_body["email"], "protected_test@example.com");
-    assert!(json_body["created_at"].is_string());
-    assert!(json_body["updated_at"].is_string());
+    assert!(json_body["auth_user"]["id"].is_string());
+    assert_eq!(
+        json_body["auth_user"]["email"],
+        "protected_test@example.com"
+    );
+    assert!(json_body["auth_user"]["created_at"].is_string());
+    assert!(json_body["auth_user"]["updated_at"].is_string());
 }
 
 #[tokio::test]

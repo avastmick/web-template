@@ -338,7 +338,7 @@ async fn register_and_login_user(pool: Pool<Sqlite>, email: &str, password: &str
     assert_eq!(login_response.status(), StatusCode::OK);
 
     let login_body = extract_json_response(login_response).await;
-    login_body["token"].as_str().unwrap().to_string()
+    login_body["auth_token"].as_str().unwrap().to_string()
 }
 
 #[tokio::test]

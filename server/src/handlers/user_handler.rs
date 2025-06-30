@@ -6,11 +6,14 @@
 //! retrieving user profile information.
 
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
-use serde::Serialize;
 use std::sync::Arc;
 
 use crate::{
-    core::AppState, errors::AppResult, handlers::auth_handler::UserResponse, middleware::JwtAuth,
+    core::AppState,
+    errors::AppResult,
+    middleware::JwtAuth,
+    models::{AuthUser, PaymentUser, UnifiedAuthResponse},
+    services::payment::PaymentDbOperations,
 };
 
 /// Handler for GET /api/users/me - returns current user's profile information
@@ -29,13 +32,6 @@ use crate::{
 /// * 401 Unauthorized - If JWT token is missing, invalid, or expired
 /// * 404 Not Found - If the user referenced in the JWT no longer exists
 /// * 500 Internal Server Error - For database or other server errors
-#[derive(Serialize)]
-pub struct CurrentUserResponse {
-    #[serde(flatten)]
-    pub user: UserResponse,
-    pub payment_required: bool,
-}
-
 /// Get the current user's profile information
 ///
 /// # Errors
@@ -53,46 +49,38 @@ pub async fn get_current_user_handler(
         auth.user.user_id
     );
 
+    // Fetch the full user from the database
+    let user = state.user_service.find_by_email(&auth.user.email).await?;
+
     // Check if user has valid invite or active payment
-    let has_invite = state
-        .invite_service
-        .check_invite_exists(&auth.user.email)
-        .await?;
+    let invite = state.invite_service.get_valid_invite(&user.email).await?;
 
-    let payment_status = state
+    let payment = state
         .payment_service
-        .get_user_payment_status(auth.user.user_id)
+        .get_active_payment_for_user(user.id)
         .await?;
 
-    let payment_required = !has_invite && !payment_status.has_active_payment;
+    // Create unified auth response (without token since user is already authenticated)
+    let auth_user = AuthUser::from(user);
+    let payment_user = PaymentUser::from_payment_and_invite(payment.as_ref(), invite.as_ref());
 
-    if payment_required {
+    if payment_user.payment_required {
         tracing::info!(
             "User {} requires payment (no invite and no active payment)",
-            auth.user.email
+            auth_user.email
         );
     }
 
-    // For now, we'll create a mock User object since we already have the core data
-    // In a real implementation, you might want to fetch the full user from the database
-    let user_response = UserResponse {
-        id: auth.user.user_id,
-        email: auth.user.email.clone(),
-        // Since we don't have access to the timestamps here, we'd need to fetch from DB
-        // For this implementation, we'll use placeholder values
-        created_at: chrono::Utc::now(), // This should come from the DB
-        updated_at: chrono::Utc::now(), // This should come from the DB
-    };
-
-    let response = CurrentUserResponse {
-        user: user_response,
-        payment_required,
+    let response = UnifiedAuthResponse {
+        auth_token: String::new(), // Empty token for /me endpoint since user is already authenticated
+        auth_user: auth_user.clone(),
+        payment_user,
     };
 
     tracing::info!(
         "Successfully retrieved profile for user: {} (payment_required: {})",
-        auth.user.email,
-        payment_required
+        auth_user.email,
+        response.payment_user.payment_required
     );
 
     Ok((StatusCode::OK, Json(response)))

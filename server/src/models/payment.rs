@@ -227,6 +227,25 @@ impl TryFrom<UserPaymentFromDb> for UserPayment {
     }
 }
 
+impl UserPayment {
+    /// Check if the payment is currently active
+    #[must_use]
+    pub fn is_active(&self) -> bool {
+        match self.payment_status {
+            PaymentStatus::Active => {
+                // Check if subscription has not expired
+                if let Some(end_date) = self.subscription_end_date {
+                    end_date > Utc::now()
+                } else {
+                    // If no end date, consider active status as active
+                    true
+                }
+            }
+            _ => false,
+        }
+    }
+}
+
 /// Stripe webhook event record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StripeWebhookEvent {

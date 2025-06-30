@@ -151,6 +151,39 @@ async fn create_oauth_states_table(pool: &Pool<Sqlite>) {
     .expect("Failed to create oauth_states table in test database");
 }
 
+/// Create `user_payments` table
+async fn create_user_payments_table(pool: &Pool<Sqlite>) {
+    sqlx::query(
+        r"
+        CREATE TABLE user_payments (
+            id TEXT PRIMARY KEY NOT NULL,
+            user_id TEXT NOT NULL,
+            stripe_customer_id TEXT UNIQUE,
+            stripe_subscription_id TEXT,
+            stripe_payment_intent_id TEXT,
+            payment_status TEXT NOT NULL DEFAULT 'pending',
+            payment_type TEXT NOT NULL DEFAULT 'subscription',
+            amount_cents INTEGER,
+            currency TEXT DEFAULT 'usd',
+            subscription_start_date TEXT,
+            subscription_end_date TEXT,
+            subscription_cancelled_at TEXT,
+            last_payment_date TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now', 'utc')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now', 'utc')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        CREATE INDEX idx_user_payments_user_id ON user_payments(user_id);
+        CREATE INDEX idx_user_payments_stripe_customer_id ON user_payments(stripe_customer_id);
+        CREATE INDEX idx_user_payments_payment_status ON user_payments(payment_status);
+        CREATE INDEX idx_user_payments_subscription_end_date ON user_payments(subscription_end_date) WHERE subscription_end_date IS NOT NULL;
+        ",
+    )
+    .execute(pool)
+    .await
+    .expect("Failed to create user_payments table in test database");
+}
+
 /// Create a test database with all tables and indexes
 ///
 /// This function creates all tables with their final schema as they would appear
@@ -165,6 +198,7 @@ pub async fn setup_test_database() -> Pool<Sqlite> {
     create_user_invites_table(&pool).await;
     create_ai_tables(&pool).await;
     create_oauth_states_table(&pool).await;
+    create_user_payments_table(&pool).await;
 
     pool
 }

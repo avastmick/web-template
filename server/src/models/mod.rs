@@ -1,6 +1,7 @@
 // web-template/server/src/models/mod.rs
 
 pub mod ai_models;
+pub mod auth;
 pub mod invite;
 pub mod oauth;
 pub mod payment;
@@ -10,6 +11,7 @@ pub use ai_models::{
     AiConversation, AiMessage, AiUsage, ConversationResponse, ConversationWithMessages,
     CreateConversationRequest, CreateMessageRequest, MessageResponse, UsageStatsResponse,
 };
+pub use auth::{AuthUser, OAuthCallbackParams, PaymentUser, UnifiedAuthResponse};
 pub use invite::UserInvite;
 // Payment models exported internally to modules
 // Individual modules import directly from payment::

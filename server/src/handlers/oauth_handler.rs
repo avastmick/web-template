@@ -4,7 +4,7 @@ use axum::{
     extract::{Query, State},
     response::Redirect,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -12,10 +12,10 @@ use crate::{
     core::AppState,
     errors::AppError,
     models::{
-        User,
+        AuthUser, OAuthCallbackParams, PaymentUser, UnifiedAuthResponse, User,
         oauth::{OAuthProvider, OAuthUserInfo},
     },
-    services::OAuthService,
+    services::{OAuthService, payment::PaymentDbOperations},
 };
 
 /// Request payload for OAuth login initiation
@@ -36,13 +36,7 @@ pub struct OAuthCallbackQuery {
     pub error: Option<String>,
 }
 
-/// Response for successful OAuth login
-#[derive(Debug, Serialize)]
-pub struct OAuthLoginResponse {
-    pub token: String,
-    pub user: User,
-    pub is_new_user: bool,
-}
+// Note: We now use UnifiedAuthResponse with OAuthCallbackParams for OAuth responses
 
 /// Extended application state for OAuth handlers
 #[derive(Clone)]
@@ -181,7 +175,7 @@ async fn handle_oauth_callback(
         return Ok(redirect_with_error(&state, "oauth_exchange_failed"));
     };
 
-    // Get or create user (this will handle invite validation for new users only)
+    // Get or create user
     let (user, is_new_user) = match get_or_create_user(&state, &oauth_user_info).await {
         Ok(result) => result,
         Err(error_code) => return Ok(redirect_with_error(&state, &error_code)),
@@ -192,14 +186,46 @@ async fn handle_oauth_callback(
         return Ok(redirect_with_error(&state, "token_generation_failed"));
     };
 
+    // Get payment and invite information
+    let invite = state
+        .app_state
+        .invite_service
+        .get_valid_invite(&user.email)
+        .await
+        .ok()
+        .flatten();
+
+    let payment = state
+        .app_state
+        .payment_service
+        .get_active_payment_for_user(user.id)
+        .await
+        .ok()
+        .flatten();
+
+    // Create unified response data
+    let auth_user = AuthUser::from(user.clone());
+    let payment_user = PaymentUser::from_payment_and_invite(payment.as_ref(), invite.as_ref());
+
+    let unified_response = UnifiedAuthResponse {
+        auth_token: token.clone(),
+        auth_user,
+        payment_user,
+    };
+
     tracing::info!(
-        "OAuth login successful for user: {} (new_user: {})",
+        "OAuth login successful for user: {} (new_user: {}, payment_required: {})",
         user.email,
-        is_new_user
+        is_new_user,
+        unified_response.payment_user.payment_required
     );
 
     // Redirect to client with success data
-    Ok(redirect_with_success(&state, &token, &user, is_new_user))
+    Ok(redirect_with_success(
+        &state,
+        &unified_response,
+        is_new_user,
+    ))
 }
 
 /// Redirect to client with error
@@ -217,18 +243,21 @@ fn redirect_with_error(state: &OAuthAppState, error: &str) -> Redirect {
 /// Redirect to client with success data
 fn redirect_with_success(
     state: &OAuthAppState,
-    token: &str,
-    user: &User,
+    response: &UnifiedAuthResponse,
     is_new_user: bool,
 ) -> Redirect {
     let client_url = state.oauth_service.get_client_url();
+    let params = OAuthCallbackParams::from_unified_response(response, is_new_user);
+
     let redirect_url = format!(
-        "{}/auth/oauth/callback?token={}&user_id={}&email={}&is_new_user={}",
+        "{}/auth/oauth/callback?token={}&user_id={}&email={}&is_new_user={}&payment_required={}&has_valid_invite={}",
         client_url,
-        urlencoding::encode(token),
-        user.id,
-        urlencoding::encode(&user.email),
-        is_new_user
+        urlencoding::encode(&params.token),
+        params.user_id,
+        urlencoding::encode(&params.email),
+        params.is_new_user,
+        params.payment_required,
+        params.has_valid_invite
     );
     Redirect::permanent(&redirect_url)
 }
@@ -251,26 +280,6 @@ async fn exchange_oauth_code(
     );
 
     Ok(oauth_user_info)
-}
-
-/// Validate that user has an invite
-async fn validate_user_invite(state: &OAuthAppState, email: &str) -> Result<(), String> {
-    let has_invite = state
-        .app_state
-        .invite_service
-        .check_invite_exists(email)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to check invite: {:?}", e);
-            "invite_check_failed"
-        })?;
-
-    if !has_invite {
-        tracing::warn!("OAuth user {} does not have an invite", email);
-        return Err("no_invite".to_string());
-    }
-
-    Ok(())
 }
 
 /// Get existing user or create new one from OAuth info
@@ -297,9 +306,7 @@ async fn get_or_create_user(
                 oauth_user_info.email
             );
 
-            // For new users, validate they have an invite
-            validate_user_invite(state, &oauth_user_info.email).await?;
-
+            // Create user without requiring invite (users without invite will need payment)
             let new_user = create_user_from_oauth(state, oauth_user_info)
                 .await
                 .map_err(|e| {
@@ -307,18 +314,26 @@ async fn get_or_create_user(
                     "user_creation_failed"
                 })?;
 
-            // Check if there is an invite
-            // FIXME: it is not an error if a user does not have an invite
-            // If a the call returns a INVITENOTFOUND error, then they have to pay
-            // else log as info that they are an invited user (add email)
-            if let Err(e) = state
+            // Try to mark invite as used if one exists
+            match state
                 .app_state
                 .invite_service
                 .mark_invite_used(&oauth_user_info.email)
                 .await
             {
-                tracing::error!("Failed to mark invite as used: {:?}", e);
-                // Continue anyway since user was created successfully
+                Ok(()) => {
+                    tracing::info!("Marked invite as used for user: {}", oauth_user_info.email);
+                }
+                Err(AppError::InviteNotFound) => {
+                    tracing::info!(
+                        "No invite found for user: {} - payment will be required",
+                        oauth_user_info.email
+                    );
+                }
+                Err(e) => {
+                    tracing::error!("Failed to mark invite as used: {:?}", e);
+                    // Continue anyway since user was created successfully
+                }
             }
 
             Ok((new_user, true))

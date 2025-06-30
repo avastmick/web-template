@@ -54,142 +54,135 @@ Review the current approach to registration and refactor to enable watertight re
         5. If the user starts a new session, or the `payment_user` is stale, the client MUST fetch a new `payment_user` object and store it appropriately. If the payment has expired go to '4'.
         6. A successfully authn'd user with a valid payment/invite will be redirected to `/chat` (should be configurable in ONE place).
 
-*   **Server-Side Completed (2024-06-30):**
-    1. **Created UnifiedAuthResponse Structure:**
-       - New response format for all auth methods (OAuth, email/password, /me endpoint)
-       - Contains: `auth_token` (JWT), `auth_user` (user info), `payment_user` (payment/invite status)
-       - Located in `server/src/models/auth.rs`
-
-    2. **Updated All Auth Handlers:**
-       - Registration now returns token immediately (matching OAuth behavior)
-       - Login returns unified response with payment status
-       - OAuth allows non-invited users (fixed blocking issue)
-       - /me endpoint returns unified response
-       - All handlers use consistent response format
-
-    3. **Implemented Expiry Validation:**
-       - `UserPayment::is_active()` checks both payment status and subscription_end_date
-       - `PaymentUser::from_payment_and_invite()` evaluates invite expiry and payment status
-       - Consistent expiry handling across all auth methods
-
-    4. **Fixed OAuth Registration:**
-       - Non-invited users can now register via OAuth
-       - They are flagged with `payment_required: true`
-       - OAuth callback includes payment status in redirect params
-
-    5. **Updated Integration Tests:**
-       - All tests updated to use new response format
-       - Test database setup includes user_payments table
-       - All 86 tests passing
-
-*   **Client Impact - What Needs Updating:**
-    1. **Response Format Changes:**
-       - Change `token` → `auth_token`
-       - Change `user` → `auth_user`
-       - Change `payment_required` → `payment_user.payment_required`
-       - New fields available: `payment_user.has_valid_invite`, `payment_user.payment_status`, etc.
-
-    2. **OAuth Callback Parameters:**
-       - New params: `payment_required`, `has_valid_invite`
-       - Client needs to handle these for proper redirect logic
-
-    3. **Storage Updates Needed:**
-       - Store full `payment_user` object in sessionStorage
-       - Update auth store to handle new response format
-       - Implement proper expiry checking on client
-
-*   **Client-Side Completed (2024-06-30):**
-    1. **Created Storage Service:**
-       - Centralized management of localStorage (auth data) and sessionStorage (payment data)
-       - Implements proper expiry checking and cache staleness detection
-       - Located in `client/src/lib/services/storageService.ts`
-
-    2. **Created Auth Flow Manager:**
-       - Single source of truth for auth flow and navigation
-       - Uses cached payment status from sessionStorage
-       - Only refreshes from server when data is stale
-       - Handles all auth-related redirects using `window.location.href` (avoiding goto() UI stacking issue)
-       - Located in `client/src/lib/services/authFlowManager.ts`
-
-    3. **Updated All Auth Components:**
-       - Auth types updated to match server UnifiedAuthResponse
-       - Auth store updated with `handleAuthResponse()` method
-       - API auth service updated to use new response format
-       - OAuth callback updated to handle payment parameters
-       - Registration now auto-logs in users (server returns token immediately)
-       - Auth guard simplified to use AuthFlowManager
-
-    4. **Fixed All TypeScript Issues:**
-       - All type definitions updated to match new response format
-       - Proper type exports from stores
-       - All client checks passing
-
-*   **Issues Resolved:**
-    1. **[FIXED] OAuth Registration:** Non-invited users can now register via OAuth
-    2. **[FIXED] Payment Status Caching:** Client now uses sessionStorage with 5-minute cache
-    3. **[FIXED] Expiry Validation:** Both server and client check expiry dates
-    4. **[FIXED] UI Navigation Bug:** Using `window.location.href` instead of `goto()`
-    5. **[FIXED] Response Consistency:** All auth methods use UnifiedAuthResponse
-    6. **[FIXED] Auth Token Overwriting:** Fixed client overwriting auth_token when calling getCurrentUser()
-    7. **[FIXED] Invite Status Logic:** Fixed server to properly recognize users who have used invites
-
-*   **Latest Updates (2024-06-30 continued):**
-    1. **Fixed Auth Token Issue:**
-       - The `/api/users/me` endpoint returns empty auth_token by design (user already authenticated)
-       - Client was overwriting stored auth_token with empty value
-       - Fixed by preserving existing auth_token in getCurrentUser() function
-
-    2. **Fixed Invite Status Logic:**
-       - Server was only considering unused invites as valid
-       - Users who had used their invites were incorrectly required to pay
-       - Updated `get_user_invite()` method to check if user EVER had an invite
-       - Updated `PaymentUser::from_payment_and_invite()` to properly evaluate invite status
-
-*   **Remaining Tasks:**
-    1. **Database Schema Updates (TODO):**
-       - Update `user_invites` table: make `expires_at` NOT NULL with default expiry
-       - Create new migration to ensure all existing invites have expiry dates
-       - Add indexes for performance on email lookups
-
-    2. **Payment Page Updates (TODO):**
-       - Update to monthly subscription model ($10/month)
-       - Configure Stripe subscription pricing
-       - Update webhook handlers for subscription events
-       - Handle subscription success/failure properly
-
-    3. **E2E Tests (DONE):**
-       - Created comprehensive auth flow E2E tests in `client/e2e/auth-flow.test.ts`
-       - Tests cover registration, login, logout, session persistence
-       - Tests verify protected routes and OAuth flows
-       - Tests check form validation and error handling
-
-    4. **Additional E2E Tests (TODO):**
-       - Test email/password registration with/without invite
-       - Test OAuth registration with/without invite
-       - Test payment flow completion
-       - Test expiry date handling
-       - Test session storage persistence
-       - Test navigation between protected routes
-
-*   **Implementation Notes:**
-    - the client is CSR only (there is no SSR aspect at all), ensure this is clearly documented.
-    - the `documentation/CLIENT_STORAGE.md` needs to be updated as it is outdated. `payment_user` is new and not documented.
-    - there is an issue with using the Svelte `goto()` whereby the previous UI element is not unloaded and instead the new UI is appended below the old UI - for a user it appears the page has not changed (expect the URL in the browser). As a workaround `window.location.href` has been used successfully. Please ensure that this is clearly documented in the `ARCHITECTURE.md` as an issue to resolve / manage.
-    - ALWAYS use the simplest solution and ALWAYs use the DRY principle, with a single handler for registration/invite/payment/auth state management and flow on the client.
-*   **Quality Checks:**
-    *   Use `playwright` MCP to test the registration / authn flow to ensure consistency and correctness
-    *   Create e2e tests that ensure the registration/authn and invite/payment flow works correctly in future
-
 ### Task 1.3: Client - UI overhaul, optimisation and refinement
 *   **Status:** **[ ] TODO
 *   **Action:** Review the current approach to the UI and theming. Update UI on client to optimise the user experience and make all components and theming consistent
-*   **Details:**
-    *   Review the current UI documentation, `UI-UX_SPECIFICATION.md` and `UI_UX_THEME.md`, and understand the shortcomings of the current approach to theming
-    *   Update documentation to provide a simpler, `tailwindcss`-based (i.e. with little to no custom colours) approach that will ensure consistent UI/UX theming and simple "in one place" configuration to enable easier changes
-    *   Update the CSS to reflect the new approach
-    *   Ensure all components align to new approach and there is a simple, non-repeating, set of components that allow for easier changes and consistent outcomes.
+*   **Current Issues Analysis (2025-06-30):**
+
+    **1. Hardcoded Colors Found:**
+    *   `client/src/lib/components/chat/MarkdownContent.svelte:17-95` - Hardcoded RGB colors in styles (e.g., `rgb(17 24 39)`, `rgb(243 244 246)`)
+    *   `client/src/lib/components/auth/GoogleOAuthButton.svelte:14-30` - Hardcoded SVG fill colors (`#4285F4`, `#34A853`, `#FBBC05`, `#EA4335`)
+    *   `client/src/routes/login/+page.svelte:71-73` - Error message uses `bg-red-50`, `border-red-200`, `text-red-800`
+    *   `client/src/routes/register/+page.svelte:98-100` - Error message uses same hardcoded red colors
+    *   `client/src/routes/payment/+page.svelte:84,89,94` - Status indicators use `bg-green-100`, `bg-red-100`, `bg-yellow-100`
+    *   `client/src/lib/components/chat/ChatInput.svelte:135-141` - File upload uses `border-gray-200`, `bg-gray-50`
+    *   `client/src/lib/components/ui/button.svelte:41` - Destructive variant uses `bg-red-500`
+    *   `client/src/lib/components/ui/input.svelte:26-28` - Error state uses `border-red-500`, `bg-red-50`, `text-red-900`
+
+    **2. DRY Principle Violations:**
+    *   Error display pattern repeated in:
+        - `client/src/routes/login/+page.svelte:71-73`
+        - `client/src/routes/register/+page.svelte:98-100`
+        - `client/src/routes/payment/+page.svelte:89-91`
+    *   Success message pattern repeated in:
+        - `client/src/routes/payment/success/+page.svelte:21-23`
+        - `client/src/routes/payment/+page.svelte:84-86`
+    *   Email/password validation duplicated between Login and Register pages
+
+    **3. Navigation Issues:**
+    *   `client/src/lib/components/Navigation.svelte:99` - Inline style `style="background-color: var(--color-surface-raised);"`
+    *   `client/src/lib/components/Navigation.svelte:96-126` - Desktop dropdown implementation
+    *   `client/src/lib/components/Navigation.svelte:137-165` - Separate mobile menu implementation
+    *   Missing unified responsive approach
+
+    **4. Tailwind Config Issues:**
+    *   `client/tailwind.config.js:50-55` - Inconsistent naming: both `bg-bg-primary` and `bg-background-primary` defined
+    *   Missing proper status color utility classes for error/success/warning backgrounds
+
+    **5. Missing Reusable Components:**
+    *   No Alert/Message component for status messages
+    *   No Card component for consistent containers
+    *   No FormField component combining label/input/error
+
+    **6. Documentation Issues:**
+    *   Two separate UI docs: `UI-UX_SPECIFICATION.md` and `UI_UX_THEME.md` with overlapping content
+    *   `UI-UX_SPECIFICATION.md` recommends shadcn-svelte but project doesn't use it
+    *   Inconsistent terminology between docs
+
+*   **Phased Implementation Plan:**
+
+    **Phase 1: Create Core Reusable Components**
+    *   Create `client/src/lib/components/ui/alert.svelte` - For success/error/warning/info messages
+    *   Create `client/src/lib/components/ui/card.svelte` - For consistent container styling
+    *   Create `client/src/lib/components/ui/form-field.svelte` - Combines label, input, and error message
+    *   Update `client/src/lib/components/ui/index.ts` to export new components
+
+    **Phase 2: Fix Tailwind Configuration**
+    *   Update `client/tailwind.config.js` to:
+        - Remove duplicate color mappings (choose one naming convention)
+        - Add proper status color utilities (e.g., `bg-status-error`, `bg-status-success`)
+        - Ensure all CSS variables from `tokens.css` are properly mapped
+
+    **Phase 3: Update Base Components**
+    *   Fix `client/src/lib/components/ui/button.svelte:41` - Replace hardcoded `bg-red-500` with theme variable
+    *   Fix `client/src/lib/components/ui/input.svelte:26-28` - Use theme-aware error colors
+    *   Add proper focus ring colors using theme variables
+
+    **Phase 4: Refactor Navigation**
+    *   Refactor `client/src/lib/components/Navigation.svelte` to:
+        - Remove inline styles (line 99)
+        - Combine desktop/mobile into single responsive implementation
+        - Use Tailwind classes exclusively
+        - Ensure proper ARIA attributes for accessibility
+
+    **Phase 5: Update Authentication Pages**
+    *   Update `client/src/routes/login/+page.svelte`:
+        - Replace error message (lines 71-73) with Alert component
+        - Use FormField component for inputs
+    *   Update `client/src/routes/register/+page.svelte`:
+        - Replace error message (lines 98-100) with Alert component
+        - Use FormField component for inputs
+        - Extract validation logic to shared utility
+
+    **Phase 6: Update Payment Pages**
+    *   Update `client/src/routes/payment/+page.svelte`:
+        - Replace all status messages with Alert component
+        - Remove hardcoded colors (lines 84, 89, 94)
+    *   Update success/cancel pages to use Alert component
+
+    **Phase 7: Fix Remaining Components**
+    *   Update `client/src/lib/components/chat/MarkdownContent.svelte`:
+        - Replace all hardcoded RGB colors with CSS variables
+        - Ensure dark/light theme support
+    *   Update `client/src/lib/components/auth/GoogleOAuthButton.svelte`:
+        - Consider if brand colors need to remain for OAuth providers
+    *   Update `client/src/lib/components/chat/ChatInput.svelte`:
+        - Fix hardcoded colors in file upload section
+
+    **Phase 8: Documentation Consolidation**
+    *   Merge `UI-UX_SPECIFICATION.md` and `UI_UX_THEME.md` into single `UI_GUIDELINES.md`
+    *   Remove outdated recommendations
+    *   Document the actual implementation approach used
+    *   Add component usage examples
+
+    **Phase 9: Testing**
+    *   Create e2e test `client/e2e/ui-consistency.test.ts` to verify:
+        - All pages use consistent theming
+        - Dark/light mode switches properly
+        - No hardcoded colors remain
+        - Components are reused appropriately
+
 *   **Files to Create/Modify:**
-    * TODO - Update this!
+    *   Create: `client/src/lib/components/ui/alert.svelte`
+    *   Create: `client/src/lib/components/ui/card.svelte`
+    *   Create: `client/src/lib/components/ui/form-field.svelte`
+    *   Create: `client/e2e/ui-consistency.test.ts`
+    *   Create: `documentation/UI_GUIDELINES.md` (merge of existing docs)
+    *   Modify: `client/tailwind.config.js`
+    *   Modify: `client/src/lib/components/ui/button.svelte`
+    *   Modify: `client/src/lib/components/ui/input.svelte`
+    *   Modify: `client/src/lib/components/Navigation.svelte`
+    *   Modify: `client/src/routes/login/+page.svelte`
+    *   Modify: `client/src/routes/register/+page.svelte`
+    *   Modify: `client/src/routes/payment/+page.svelte`
+    *   Modify: `client/src/routes/payment/success/+page.svelte`
+    *   Modify: `client/src/routes/payment/cancel/+page.svelte`
+    *   Modify: `client/src/lib/components/chat/MarkdownContent.svelte`
+    *   Modify: `client/src/lib/components/auth/GoogleOAuthButton.svelte`
+    *   Modify: `client/src/lib/components/chat/ChatInput.svelte`
+    *   Delete: `documentation/UI-UX_SPECIFICATION.md` (after merging)
+    *   Delete: `documentation/UI_UX_THEME.md` (after merging)
+
 *   **Implementation Notes:**
     *   Use `tailwindcss` as means of styling. Remove all custom CSS that does not directly use `tailwindcss`.
     *   Ensure navigation bar menu is correctly reactive and scales across all screen sizes.
@@ -197,10 +190,16 @@ Review the current approach to registration and refactor to enable watertight re
     *   Ensure that all components have shared styling and theming and fully reusable
     *   Ensure that the theme is consistent across all pages; create a mechanism that allows the simple addition of pages, ensuring the new pages align with application styling, theming, etc.
     *   Ensure that the dark/light theming is logical and the base colours are opposites - e.g., if the theme background for 'dark' is `indigo-950`, then by logic the 'light' is `indigo-50`, etc.
+    *   Start each phase with `just check-client` and end with `just check-client`
+    *   Test UI changes using `playwright` MCP to verify visual consistency
+
 *   **Quality Checks:**
     *   Use `playwright` MCP to test the UI and its consistency of look and feel
     *   Create e2e tests that ensure the UI works as expected
     *   Create a test that shows that styling and theme can be updated in one place and affect all of the client
+    *   Verify all components work in both light and dark themes
+    *   Ensure no hardcoded colors remain after refactor
+    *   Check that all interactive elements meet 44px minimum touch target
 
 ### Task 1.4: Enable workspace 'features'
 *   **Status:** **[ ] TODO**

@@ -19,11 +19,11 @@
 	--color-background-accent: #ddd6fe; /* violet-200 for subtle contrast */
 
 	/* Text colors */
-	--color-text-primary: #1e1b4b; /* indigo-950 */
+	--color-text-primary: #1e1b4b; /* indigo-950 - darkest for max contrast */
 	--color-text-secondary: #312e81; /* indigo-900 */
-	--color-text-muted: #4338ca; /* indigo-700 */
-	--color-text-accent: #4f46e5; /* indigo-600 */
-	--color-text-inverse: #eef2ff; /* indigo-50 */
+	--color-text-muted: #4c1d95; /* violet-900 */
+	--color-text-accent: #4338ca; /* indigo-700 */
+	--color-text-inverse: #ffffff; /* white */
 
 	/* Border colors */
 	--color-border-default: #a5b4fc; /* indigo-300 */
@@ -72,10 +72,10 @@
 	--color-background-accent: #4c1d95; /* violet-900 for subtle contrast */
 
 	/* Text colors */
-	--color-text-primary: #e0e7ff; /* indigo-100 */
-	--color-text-secondary: #c7d2fe; /* indigo-200 */
-	--color-text-muted: #a5b4fc; /* indigo-300 */
-	--color-text-accent: #818cf8; /* indigo-400 */
+	--color-text-primary: #ffffff; /* white for maximum contrast */
+	--color-text-secondary: #e0e7ff; /* indigo-100 */
+	--color-text-muted: #c7d2fe; /* indigo-200 */
+	--color-text-accent: #a5b4fc; /* indigo-300 */
 	--color-text-inverse: #1e1b4b; /* indigo-950 */
 
 	/* Border colors */

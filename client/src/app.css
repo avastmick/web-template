@@ -9,8 +9,6 @@
 
 /* Tailwind CSS 4.0 with plugins */
 @import 'tailwindcss';
-@plugin '@tailwindcss/forms';
-@plugin '@tailwindcss/typography';
 
 /* Tailwind CSS v4 Theme Configuration - Map CSS variables to Tailwind utilities */
 @theme {
@@ -58,6 +56,14 @@
 	/* Focus colors */
 	--color-focus-ring: var(--color-focus-ring);
 }
+
+/* Ensure CSS variables are applied to body */
+body {
+	color: var(--color-text-primary);
+}
+
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
 
 /**
  * Global Styles - Modern Minimalist Design System

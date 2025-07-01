@@ -119,9 +119,14 @@
 		<div class="mb-3 flex flex-wrap gap-2">
 			{#each $uploadedFiles as file, index (file.name)}
 				<div
-					class="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
+					class="border-border-default bg-surface-secondary flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
 				>
-					<svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<svg
+						class="text-text-muted h-4 w-4"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
@@ -129,11 +134,11 @@
 							d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
 						/>
 					</svg>
-					<span class="truncate text-gray-700 dark:text-gray-300">{file.name}</span>
+					<span class="text-text-primary truncate">{file.name}</span>
 					<Button
 						variant="ghost"
 						size="sm"
-						class="h-4 w-4 p-0 text-gray-500 hover:text-red-500"
+						class="text-text-muted hover:text-error h-4 w-4 p-0 transition-colors"
 						onclick={() => removeFile(index)}
 						aria-label={$_('chat.input.removeFile', { values: { filename: file.name } })}
 					>
@@ -153,8 +158,8 @@
 
 	<!-- Main input container -->
 	<div
-		class="relative flex items-end gap-2 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-colors dark:border-gray-700 dark:bg-gray-800 {isDragOver
-			? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20'
+		class="border-border-default bg-surface-primary relative flex items-end gap-2 rounded-2xl border p-4 shadow-sm transition-colors {isDragOver
+			? 'border-primary bg-primary/10'
 			: ''}"
 		ondragover={handleDragOver}
 		ondragleave={handleDragLeave}
@@ -176,13 +181,13 @@
 		<Button
 			variant="ghost"
 			size="sm"
-			class="h-8 w-8 flex-shrink-0 p-0 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+			class="text-text-secondary hover:text-primary hover:bg-background-secondary h-10 w-10 flex-shrink-0 p-0 transition-colors"
 			onclick={() => fileInput?.click()}
 			disabled={$isUploading}
 			aria-label={$_('chat.input.uploadFile')}
 		>
 			{#if $isUploading}
-				<svg class="h-4 w-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<svg class="h-8 w-8 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
@@ -191,7 +196,7 @@
 					/>
 				</svg>
 			{:else}
-				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
@@ -212,7 +217,7 @@
 			}}
 			onkeydown={handleKeydown}
 			placeholder={$_('chat.input.placeholder')}
-			class="flex-1 resize-none border-none bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none focus-visible:ring-amber-300 dark:text-white dark:placeholder-gray-400"
+			class="text-text-primary placeholder-text-muted focus-visible:ring-focus flex-1 resize-none border-none bg-transparent focus:outline-none focus-visible:ring-2"
 			rows="1"
 			disabled={$isStreaming}
 			aria-label={$_('chat.input.message')}
@@ -223,26 +228,26 @@
 			<Button
 				variant="ghost"
 				size="sm"
-				class="h-8 w-8 flex-shrink-0 p-0 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+				class="text-text-secondary hover:text-error hover:bg-background-secondary h-10 w-10 flex-shrink-0 p-0 transition-colors"
 				onclick={handleStop}
 				aria-label={$_('chat.input.stop')}
 			>
-				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<rect width="6" height="6" x="9" y="9" rx="1" />
+				<svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+					<rect width="8" height="8" x="8" y="8" rx="1" />
 				</svg>
 			</Button>
 		{:else}
 			<Button
 				variant="ghost"
 				size="sm"
-				class="h-8 w-8 flex-shrink-0 p-0 {$inputText.trim()
-					? 'bg-green-600 text-white hover:bg-green-700'
-					: 'text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400'}"
+				class="h-10 w-10 flex-shrink-0 p-0 transition-colors {$inputText.trim()
+					? 'bg-primary text-text-inverse hover:bg-primary-hover'
+					: 'text-text-muted hover:bg-background-secondary hover:text-text-secondary'}"
 				onclick={handleSubmit}
 				disabled={!$inputText.trim() || $isUploading}
 				aria-label={$_('chat.input.send')}
 			>
-				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
@@ -256,11 +261,11 @@
 		<!-- Drag overlay -->
 		{#if isDragOver}
 			<div
-				class="absolute inset-0 flex items-center justify-center rounded-2xl border-2 border-dashed border-blue-500 bg-blue-50/50 dark:border-blue-400 dark:bg-blue-900/20"
+				class="border-primary bg-primary/20 absolute inset-0 flex items-center justify-center rounded-2xl border-2 border-dashed"
 			>
 				<div class="text-center">
 					<svg
-						class="mx-auto h-8 w-8 text-blue-600 dark:text-blue-400"
+						class="text-primary mx-auto h-8 w-8"
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
@@ -272,7 +277,7 @@
 							d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
 						/>
 					</svg>
-					<p class="mt-2 text-sm font-medium text-blue-600 dark:text-blue-400">
+					<p class="text-primary mt-2 text-sm font-medium">
 						{$_('chat.input.dropFiles')}
 					</p>
 				</div>
@@ -281,7 +286,7 @@
 	</div>
 
 	<!-- Input hints -->
-	<div class="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+	<div class="text-text-muted mt-2 flex items-center justify-between text-xs">
 		<div class="flex items-center gap-4">
 			<span>{$_('chat.input.hint.enter')}</span>
 			<span>{$_('chat.input.hint.shiftEnter')}</span>

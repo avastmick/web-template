@@ -233,11 +233,11 @@
 									<Button
 										variant="ghost"
 										size="sm"
-										class="text-text-muted hover:bg-background-tertiary hover:text-text-primary h-6 w-6 p-0"
+										class="text-text-muted hover:bg-background-tertiary hover:text-text-primary h-8 w-8 p-0 transition-colors"
 										onclick={(e) => archiveConversation(conversation.id, e)}
 										aria-label={$_('chat.sidebar.archive')}
 									>
-										<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path
 												stroke-linecap="round"
 												stroke-linejoin="round"
@@ -250,11 +250,11 @@
 									<Button
 										variant="ghost"
 										size="sm"
-										class="text-text-muted hover:bg-status-error h-6 w-6 p-0 hover:text-white"
+										class="text-text-muted hover:bg-status-error h-8 w-8 p-0 transition-colors hover:text-white"
 										onclick={(e) => deleteConversation(conversation.id, e)}
 										aria-label={$_('chat.sidebar.delete')}
 									>
-										<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path
 												stroke-linecap="round"
 												stroke-linejoin="round"
@@ -273,7 +273,7 @@
 	</div>
 
 	<!-- Footer -->
-	<div class="border-border border-t p-4">
+	<div class="border-border p-4">
 		<div class="text-text-muted text-xs">
 			{$_('chat.sidebar.footer', { values: { count: $conversations.length } })}
 		</div>

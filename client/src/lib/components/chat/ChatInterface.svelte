@@ -84,9 +84,7 @@
 	<!-- Main Chat Area -->
 	<main class="flex flex-1 flex-col overflow-hidden">
 		<!-- Clean header -->
-		<header
-			class="border-border bg-surface-primary flex h-14 flex-shrink-0 items-center justify-between border-b px-4"
-		>
+		<header class="bg-surface-primary flex h-14 flex-shrink-0 items-center justify-between px-4">
 			<div class="flex items-center gap-3">
 				<!-- Sidebar toggle -->
 				<Button
@@ -280,7 +278,7 @@
 			{/if}
 
 			<!-- Modern Chat Input -->
-			<div class="border-border bg-surface-primary flex-shrink-0 border-t">
+			<div class="bg-surface-primary flex-shrink-0">
 				<ChatInput on:send={handleMessageSend} />
 			</div>
 		</div>

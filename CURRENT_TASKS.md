@@ -125,7 +125,7 @@ Review the current approach to registration and refactor to enable watertight re
         - Use Tailwind classes exclusively
         - Ensure proper ARIA attributes for accessibility
 
-    **Phase 5: Update Authentication Pages** NOT WORKING
+    **Phase 5: Update Authentication Pages** DONE
     *   Update `client/src/routes/login/+page.svelte`:
         - Replace error message (lines 71-73) with Alert component
         - Use FormField component for inputs
@@ -141,11 +141,19 @@ Review the current approach to registration and refactor to enable watertight re
     *   Update success/cancel pages to use Alert component
 
     **Phase 7: Update Chat Pages** TODO
-    *   Update `client/src/routes/chat/+page.svelte`:
-        - Remove hardcoded colors
-        - Align with other pages
-    *   Update to use Alert component
-    *   Ensure all icons are suitably sized (2x) compared to font text
+    *   Update `client/src/lib/components/chat/ChatInterface.svelte`:
+        - Fix light/dark mode consistency
+    *   Update `client/src/lib/components/chat/MessageBubble.svelte`:
+        - Ensure bubbles have contrast colour with background and vary by user request / LLM response
+        - Ensure correct text colour for contrast
+        - Fix light/dark mode consistency
+    *   Update `client/src/lib/components/chat/ChatInput.svelte`:
+        - Make all icons 1.5x larger (h-8 w-8) - current 2x
+        - Add proper hover effects with theme colors to icons
+        - Fix light mode visibility issues
+        - Use CSS variables for all colors
+    *   Update `client/src/lib/components/chat/ConversationSidebar.svelte`:
+        - Make delete and archive icons larger with hover effects
 
     **Phase 8: Fix Remaining Components** TODO
     *   Update `client/src/lib/components/chat/MarkdownContent.svelte`:

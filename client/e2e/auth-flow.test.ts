@@ -32,9 +32,9 @@ test.describe('Authentication Flow', () => {
 		await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
 
 		// Step 2: Fill registration form
-		await page.getByLabel('Email').fill(testEmail);
-		await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
-		await page.getByLabel('Confirm Password').fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /email/i }).fill(testEmail);
+		await page.getByRole('textbox', { name: /^password/i }).fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /confirm password/i }).fill(TEST_PASSWORD);
 
 		// Step 3: Submit registration
 		await page.getByRole('button', { name: 'Create Account' }).click();
@@ -74,8 +74,8 @@ test.describe('Authentication Flow', () => {
 		await page.goto('/login');
 
 		// Fill login form
-		await page.getByLabel('Email').fill(testEmail);
-		await page.getByLabel('Password').fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /email/i }).fill(testEmail);
+		await page.getByRole('textbox', { name: /password/i }).fill(TEST_PASSWORD);
 
 		// Submit login
 		await page.getByRole('button', { name: 'Sign In' }).click();
@@ -93,9 +93,9 @@ test.describe('Authentication Flow', () => {
 
 		// Register and login
 		await page.goto('/register');
-		await page.getByLabel('Email').fill(testEmail);
-		await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
-		await page.getByLabel('Confirm Password').fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /email/i }).fill(testEmail);
+		await page.getByRole('textbox', { name: /^password/i }).fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /confirm password/i }).fill(TEST_PASSWORD);
 		await page.getByRole('button', { name: 'Create Account' }).click();
 
 		// Wait for redirect
@@ -117,9 +117,9 @@ test.describe('Authentication Flow', () => {
 
 		// Register and login
 		await page.goto('/register');
-		await page.getByLabel('Email').fill(testEmail);
-		await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
-		await page.getByLabel('Confirm Password').fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /email/i }).fill(testEmail);
+		await page.getByRole('textbox', { name: /^password/i }).fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /confirm password/i }).fill(TEST_PASSWORD);
 		await page.getByRole('button', { name: 'Create Account' }).click();
 
 		await expect(page).toHaveURL('/payment');
@@ -149,9 +149,9 @@ test.describe('Authentication Flow', () => {
 
 		// Register first
 		await page.goto('/register');
-		await page.getByLabel('Email').fill(testEmail);
-		await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
-		await page.getByLabel('Confirm Password').fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /email/i }).fill(testEmail);
+		await page.getByRole('textbox', { name: /^password/i }).fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /confirm password/i }).fill(TEST_PASSWORD);
 		await page.getByRole('button', { name: 'Create Account' }).click();
 
 		await expect(page).toHaveURL('/payment');
@@ -172,9 +172,9 @@ test.describe('Authentication Flow', () => {
 
 		// Register to get to payment page
 		await page.goto('/register');
-		await page.getByLabel('Email').fill(testEmail);
-		await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
-		await page.getByLabel('Confirm Password').fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /email/i }).fill(testEmail);
+		await page.getByRole('textbox', { name: /^password/i }).fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /confirm password/i }).fill(TEST_PASSWORD);
 		await page.getByRole('button', { name: 'Create Account' }).click();
 
 		// Should be on payment page
@@ -213,9 +213,9 @@ test.describe('Authentication Flow', () => {
 
 		// Register once
 		await page.goto('/register');
-		await page.getByLabel('Email').fill(testEmail);
-		await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
-		await page.getByLabel('Confirm Password').fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /email/i }).fill(testEmail);
+		await page.getByRole('textbox', { name: /^password/i }).fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /confirm password/i }).fill(TEST_PASSWORD);
 		await page.getByRole('button', { name: 'Create Account' }).click();
 
 		await expect(page).toHaveURL('/payment');
@@ -228,9 +228,9 @@ test.describe('Authentication Flow', () => {
 
 		// Try to register again with same email
 		await page.goto('/register');
-		await page.getByLabel('Email').fill(testEmail);
-		await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
-		await page.getByLabel('Confirm Password').fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /email/i }).fill(testEmail);
+		await page.getByRole('textbox', { name: /^password/i }).fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /confirm password/i }).fill(TEST_PASSWORD);
 		await page.getByRole('button', { name: 'Create Account' }).click();
 
 		// Should show error
@@ -241,15 +241,15 @@ test.describe('Authentication Flow', () => {
 		await page.goto('/login');
 
 		// Try to login with non-existent user
-		await page.getByLabel('Email').fill('nonexistent@example.com');
-		await page.getByLabel('Password').fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /email/i }).fill('nonexistent@example.com');
+		await page.getByRole('textbox', { name: /password/i }).fill(TEST_PASSWORD);
 		await page.getByRole('button', { name: 'Sign In' }).click();
 
-		// Should show error - look for the auth error message
-		// The error appears twice - in the heading and the message, so we need to be more specific
-		await expect(
-			page.locator('.text-red-700').filter({ hasText: 'Invalid email or password' })
-		).toBeVisible();
+		// Should show error - look for the auth error message in the alert
+		const alertElement = page.locator('[role="alert"]');
+		await expect(alertElement).toBeVisible();
+		// Just verify the alert contains the error text without being strict about which element
+		await expect(alertElement).toContainText('Invalid email or password');
 
 		// Should still be on login page
 		await expect(page).toHaveURL('/login');
@@ -311,9 +311,9 @@ test.describe('Session Management', () => {
 
 		// Register
 		await page.goto('/register');
-		await page.getByLabel('Email').fill(testEmail);
-		await page.getByLabel('Password', { exact: true }).fill(TEST_PASSWORD);
-		await page.getByLabel('Confirm Password').fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /email/i }).fill(testEmail);
+		await page.getByRole('textbox', { name: /^password/i }).fill(TEST_PASSWORD);
+		await page.getByRole('textbox', { name: /confirm password/i }).fill(TEST_PASSWORD);
 		await page.getByRole('button', { name: 'Create Account' }).click();
 
 		await expect(page).toHaveURL('/payment');

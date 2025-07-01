@@ -179,8 +179,8 @@ test.describe('Language Switching', () => {
 		await expect(page.getByText('¿No tienes una cuenta?')).toBeVisible();
 
 		// Test form labels
-		await expect(page.getByLabel('Correo Electrónico')).toBeVisible();
-		await expect(page.getByLabel('Contraseña')).toBeVisible();
+		await expect(page.getByRole('textbox', { name: /correo electrónico/i })).toBeVisible();
+		await expect(page.getByRole('textbox', { name: /contraseña/i })).toBeVisible();
 	});
 
 	test('should translate registration page correctly', async ({ page }) => {
@@ -188,7 +188,7 @@ test.describe('Language Switching', () => {
 
 		// Test English (default)
 		await expect(page.getByText('Create your account')).toBeVisible();
-		await expect(page.getByLabel('Email')).toBeVisible();
+		await expect(page.getByRole('textbox', { name: /email/i })).toBeVisible();
 
 		// Switch to Spanish
 		const languageSelect = page.locator('#language-select').first();
@@ -197,12 +197,12 @@ test.describe('Language Switching', () => {
 
 		// Check Spanish translations
 		await expect(page.getByText('Crea tu cuenta')).toBeVisible();
-		await expect(page.getByLabel('Correo Electrónico')).toBeVisible();
+		await expect(page.getByRole('textbox', { name: /correo electrónico/i })).toBeVisible();
 
 		// Test form labels and placeholders
-		await expect(page.getByLabel('Correo Electrónico')).toBeVisible();
-		await expect(page.getByLabel('Contraseña', { exact: true })).toBeVisible();
-		await expect(page.getByLabel('Confirmar Contraseña')).toBeVisible();
+		await expect(page.getByRole('textbox', { name: /correo electrónico/i })).toBeVisible();
+		await expect(page.getByRole('textbox', { name: /^contraseña/i })).toBeVisible();
+		await expect(page.getByRole('textbox', { name: /confirmar contraseña/i })).toBeVisible();
 	});
 
 	test('should translate OAuth buttons correctly', async ({ page }) => {
@@ -226,8 +226,8 @@ test.describe('Language Switching', () => {
 		await page.goto('/login');
 
 		// Check English form elements
-		await expect(page.getByLabel('Email')).toBeVisible();
-		await expect(page.getByLabel('Password')).toBeVisible();
+		await expect(page.getByRole('textbox', { name: /email/i })).toBeVisible();
+		await expect(page.getByRole('textbox', { name: /password/i })).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
 
 		// Switch to Spanish
@@ -236,8 +236,8 @@ test.describe('Language Switching', () => {
 		await page.waitForTimeout(500);
 
 		// Check Spanish form elements
-		await expect(page.getByLabel('Correo Electrónico')).toBeVisible();
-		await expect(page.getByLabel('Contraseña')).toBeVisible();
+		await expect(page.getByRole('textbox', { name: /correo electrónico/i })).toBeVisible();
+		await expect(page.getByRole('textbox', { name: /contraseña/i })).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Iniciar Sesión' })).toBeVisible();
 	});
 

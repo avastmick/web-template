@@ -40,15 +40,15 @@
 
 	// Base styles using our design tokens
 	const baseClasses =
-		'flex w-full rounded-md border px-4 py-3 text-base file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 transition-colors min-h-touch-target shadow-sm';
+		'flex w-full rounded-md border px-4 py-3 text-base file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors min-h-touch-target shadow-sm';
 
 	// Helper for determining if there's an error
 	const hasError = typeof error === 'string' ? error.length > 0 : !!error;
 
 	// Conditional styles based on error state
 	const conditionalClasses = hasError
-		? 'border-red-500 bg-red-50 text-red-900'
-		: 'border-border-default bg-bg-primary';
+		? 'border-status-error bg-status-error-bg text-status-error'
+		: 'border-border-default bg-background-primary';
 
 	// Determine the helper text to display
 	const displayHelperText =
@@ -73,7 +73,7 @@
 
 	{#if displayHelperText}
 		<p
-			class={cn('text-sm', hasError ? 'text-red-600' : 'text-text-secondary')}
+			class={cn('text-sm', hasError ? 'text-status-error' : 'text-text-secondary')}
 			id="{inputId}-description"
 			aria-live="polite"
 		>

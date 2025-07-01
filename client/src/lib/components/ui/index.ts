@@ -17,5 +17,12 @@ export { default as Container } from './container.svelte';
 export { default as Grid } from './grid.svelte';
 export { default as Flex } from './flex.svelte';
 
+// Feedback components
+export { default as Alert } from './alert.svelte';
+export { default as Card } from './card.svelte';
+
+// Form components
+export { default as FormField } from './form-field.svelte';
+
 // Re-export component types for TypeScript users
 export type { ComponentProps } from 'svelte';

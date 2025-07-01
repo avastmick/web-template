@@ -176,11 +176,11 @@
 					</div>
 
 					{#if error}
-						<div class="rounded-md border border-red-200 bg-red-50 p-4">
+						<div class="border-status-error bg-status-error-bg rounded-md border p-4">
 							<Flex align="center" gap="3">
 								<div class="flex-shrink-0">
 									<svg
-										class="h-5 w-5 text-red-400"
+										class="text-status-error h-5 w-5"
 										viewBox="0 0 20 20"
 										fill="currentColor"
 										aria-hidden="true"
@@ -193,7 +193,7 @@
 									</svg>
 								</div>
 								<div>
-									<p class="text-sm text-red-700">{error}</p>
+									<p class="text-status-error text-sm">{error}</p>
 								</div>
 							</Flex>
 						</div>

@@ -12,30 +12,30 @@
 /* === LIGHT THEME (DEFAULT) === */
 :root,
 .light {
-	/* Background colors */
-	--color-background-primary: #ffffff; /* Pure white */
-	--color-background-secondary: #fafafa; /* Off-white */
-	--color-background-tertiary: #f5f5f5; /* Light gray */
-	--color-background-accent: #f0f0f0;
+	/* Background colors - Indigo-based theme */
+	--color-background-primary: #eef2ff; /* indigo-50 */
+	--color-background-secondary: #e0e7ff; /* indigo-100 */
+	--color-background-tertiary: #c7d2fe; /* indigo-200 */
+	--color-background-accent: #ddd6fe; /* violet-200 for subtle contrast */
 
 	/* Text colors */
-	--color-text-primary: #171717; /* Nearly black */
-	--color-text-secondary: #525252; /* Dark gray */
-	--color-text-muted: #737373; /* Muted gray */
-	--color-text-accent: #171717;
-	--color-text-inverse: #ffffff;
+	--color-text-primary: #1e1b4b; /* indigo-950 */
+	--color-text-secondary: #312e81; /* indigo-900 */
+	--color-text-muted: #4338ca; /* indigo-700 */
+	--color-text-accent: #4f46e5; /* indigo-600 */
+	--color-text-inverse: #eef2ff; /* indigo-50 */
 
 	/* Border colors */
-	--color-border-default: #e5e5e5;
-	--color-border-light: #f0f0f0;
-	--color-border-dark: #d4d4d4;
-	--color-border-accent: #d4d4d4;
+	--color-border-default: #a5b4fc; /* indigo-300 */
+	--color-border-light: #c7d2fe; /* indigo-200 */
+	--color-border-dark: #818cf8; /* indigo-400 */
+	--color-border-accent: #6366f1; /* indigo-500 */
 
 	/* Action colors */
-	--color-action-primary: #171717;
-	--color-action-primary-hover: #404040;
-	--color-action-primary-active: #525252;
-	--color-action-primary-disabled: #e5e5e5;
+	--color-action-primary: #4f46e5; /* indigo-600 */
+	--color-action-primary-hover: #4338ca; /* indigo-700 */
+	--color-action-primary-active: #3730a3; /* indigo-800 */
+	--color-action-primary-disabled: #c7d2fe; /* indigo-200 */
 
 	/* Status colors */
 	--color-success: #10b981;
@@ -48,47 +48,47 @@
 	--color-info-background: #dbeafe;
 
 	/* Surface colors for cards, modals, etc. */
-	--color-surface-primary: #ffffff;
-	--color-surface-secondary: #fafafa;
+	--color-surface-primary: #ffffff; /* white for contrast */
+	--color-surface-secondary: #f5f3ff; /* violet-50 for subtle variation */
 	--color-surface-raised: #ffffff;
-	--color-surface-overlay: rgba(0, 0, 0, 0.05);
+	--color-surface-overlay: rgba(79, 70, 229, 0.05); /* indigo-600 with opacity */
 
 	/* Shadows */
-	--shadow-color: rgba(0, 0, 0, 0.08);
-	--shadow-color-strong: rgba(0, 0, 0, 0.16);
+	--shadow-color: rgba(79, 70, 229, 0.08); /* indigo-600 tinted shadows */
+	--shadow-color-strong: rgba(79, 70, 229, 0.16);
 
 	/* Focus colors */
 	--color-focus-ring: #fbbf24; /* amber-400 */
-	--focus-ring-width: 1px;
-	--focus-ring-offset: 1px;
+	--focus-ring-width: 2px;
+	--focus-ring-offset: 2px;
 }
 
 /* === DARK THEME === */
 .dark {
-	/* Background colors - ChatGPT.com style */
-	--color-background-primary: #212121; /* Very dark gray */
-	--color-background-secondary: #171717; /* Darker for sidebars */
-	--color-background-tertiary: #0a0a0a; /* Nearly black */
-	--color-background-accent: #2a2a2a;
+	/* Background colors - Indigo-based dark theme */
+	--color-background-primary: #1e1b4b; /* indigo-950 */
+	--color-background-secondary: #312e81; /* indigo-900 */
+	--color-background-tertiary: #3730a3; /* indigo-800 */
+	--color-background-accent: #4c1d95; /* violet-900 for subtle contrast */
 
 	/* Text colors */
-	--color-text-primary: #e5e5e5; /* Light gray */
-	--color-text-secondary: #a3a3a3; /* Muted gray */
-	--color-text-muted: #737373; /* Dimmed gray */
-	--color-text-accent: #e5e5e5;
-	--color-text-inverse: #171717;
+	--color-text-primary: #e0e7ff; /* indigo-100 */
+	--color-text-secondary: #c7d2fe; /* indigo-200 */
+	--color-text-muted: #a5b4fc; /* indigo-300 */
+	--color-text-accent: #818cf8; /* indigo-400 */
+	--color-text-inverse: #1e1b4b; /* indigo-950 */
 
 	/* Border colors */
-	--color-border-default: #404040;
-	--color-border-light: #2a2a2a;
-	--color-border-dark: #525252;
-	--color-border-accent: #525252;
+	--color-border-default: #4338ca; /* indigo-700 */
+	--color-border-light: #3730a3; /* indigo-800 */
+	--color-border-dark: #4f46e5; /* indigo-600 */
+	--color-border-accent: #6366f1; /* indigo-500 */
 
 	/* Action colors */
-	--color-action-primary: #e5e5e5;
-	--color-action-primary-hover: #ffffff;
-	--color-action-primary-active: #d4d4d4;
-	--color-action-primary-disabled: #404040;
+	--color-action-primary: #818cf8; /* indigo-400 */
+	--color-action-primary-hover: #a5b4fc; /* indigo-300 */
+	--color-action-primary-active: #c7d2fe; /* indigo-200 */
+	--color-action-primary-disabled: #312e81; /* indigo-900 */
 
 	/* Status colors */
 	--color-success: #34d399;
@@ -101,19 +101,19 @@
 	--color-info-background: #1e3a8a;
 
 	/* Surface colors */
-	--color-surface-primary: #2a2a2a;
-	--color-surface-secondary: #212121;
-	--color-surface-raised: #303030;
-	--color-surface-overlay: rgba(255, 255, 255, 0.05);
+	--color-surface-primary: #312e81; /* indigo-900 */
+	--color-surface-secondary: #1e1b4b; /* indigo-950 */
+	--color-surface-raised: #3730a3; /* indigo-800 */
+	--color-surface-overlay: rgba(129, 140, 248, 0.1); /* indigo-400 with opacity */
 
 	/* Shadows */
-	--shadow-color: rgba(0, 0, 0, 0.4);
-	--shadow-color-strong: rgba(0, 0, 0, 0.7);
+	--shadow-color: rgba(0, 0, 0, 0.5);
+	--shadow-color-strong: rgba(0, 0, 0, 0.8);
 
 	/* Focus colors */
 	--color-focus-ring: #f59e0b; /* amber-500 */
-	--focus-ring-width: 1px;
-	--focus-ring-offset: 1px;
+	--focus-ring-width: 2px;
+	--focus-ring-offset: 2px;
 }
 
 /* === HIGH CONTRAST THEMES === */

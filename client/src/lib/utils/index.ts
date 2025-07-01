@@ -85,3 +85,23 @@ export function formatRelativeTime(date: string | Date): string {
 		return rtf.format(-Math.floor(diffInSeconds / 31536000), 'year');
 	}
 }
+
+/**
+ * Svelte action for handling clicks outside an element
+ * Usage: <div use:clickOutside={handleClickOutside} />
+ */
+export function clickOutside(node: HTMLElement, handler: () => void) {
+	const handleClick = (event: MouseEvent) => {
+		if (node && !node.contains(event.target as Node) && !event.defaultPrevented) {
+			handler();
+		}
+	};
+
+	document.addEventListener('click', handleClick, true);
+
+	return {
+		destroy() {
+			document.removeEventListener('click', handleClick, true);
+		}
+	};
+}

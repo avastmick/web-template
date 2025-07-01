@@ -9,51 +9,65 @@ export default {
 		extend: {
 			// Use our design tokens as Tailwind custom properties
 			colors: {
-				// Semantic colors that map to our CSS custom properties
-				primary: 'var(--color-action-primary)',
-				'primary-hover': 'var(--color-action-primary-hover)',
-				'primary-active': 'var(--color-action-primary-active)',
+				// Primary action colors (using CSS variables)
+				primary: {
+					DEFAULT: 'var(--color-action-primary)',
+					hover: 'var(--color-action-primary-hover)',
+					active: 'var(--color-action-primary-active)',
+					disabled: 'var(--color-action-primary-disabled)'
+				},
 
-				// Text colors
-				'text-primary': 'var(--color-text-primary)',
-				'text-secondary': 'var(--color-text-secondary)',
-				'text-muted': 'var(--color-text-muted)',
-				'text-tertiary': 'var(--color-text-muted)',
-				'text-on-primary': 'var(--color-text-inverse)',
+				// Background colors (simplified naming)
+				background: {
+					primary: 'var(--color-background-primary)',
+					secondary: 'var(--color-background-secondary)',
+					tertiary: 'var(--color-background-tertiary)',
+					accent: 'var(--color-background-accent)'
+				},
 
-				// Background colors
-				'bg-primary': 'var(--color-background-primary)',
-				'bg-secondary': 'var(--color-background-secondary)',
-				'bg-tertiary': 'var(--color-background-tertiary)',
-				'bg-elevated': 'var(--color-surface-raised)',
-				'background-primary': 'var(--color-background-primary)',
-				'background-secondary': 'var(--color-background-secondary)',
-				'background-tertiary': 'var(--color-background-tertiary)',
-				'background-elevated': 'var(--color-surface-raised)',
+				// Surface colors
+				surface: {
+					primary: 'var(--color-surface-primary)',
+					secondary: 'var(--color-surface-secondary)',
+					raised: 'var(--color-surface-raised)',
+					overlay: 'var(--color-surface-overlay)'
+				},
+
+				// Text colors (simplified naming)
+				text: {
+					primary: 'var(--color-text-primary)',
+					secondary: 'var(--color-text-secondary)',
+					muted: 'var(--color-text-muted)',
+					accent: 'var(--color-text-accent)',
+					inverse: 'var(--color-text-inverse)'
+				},
 
 				// Border colors
-				'border-default': 'var(--color-border-default)',
-				'border-light': 'var(--color-border-light)',
-				'border-dark': 'var(--color-border-dark)',
-				'border-subtle': 'var(--color-border-light)',
-				'border-strong': 'var(--color-border-dark)',
+				border: {
+					DEFAULT: 'var(--color-border-default)',
+					light: 'var(--color-border-light)',
+					dark: 'var(--color-border-dark)',
+					accent: 'var(--color-border-accent)'
+				},
 
-				// Primary/Action colors
-				'color-primary': 'var(--color-action-primary)',
-				'color-primary-hover': 'var(--color-action-primary-hover)',
-				'color-primary-active': 'var(--color-action-primary-active)',
+				// Status colors with backgrounds
+				status: {
+					success: 'var(--color-success)',
+					'success-bg': 'var(--color-success-background)',
+					warning: 'var(--color-warning)',
+					'warning-bg': 'var(--color-warning-background)',
+					error: 'var(--color-error)',
+					'error-bg': 'var(--color-error-background)',
+					info: 'var(--color-info)',
+					'info-bg': 'var(--color-info-background)'
+				},
 
-				// Status colors
-				'color-success': 'var(--color-success)',
-				'color-success-background': 'var(--color-success-background)',
-				'color-warning': 'var(--color-warning)',
-				'color-warning-background': 'var(--color-warning-background)',
-				'color-error': 'var(--color-error)',
-				'color-error-background': 'var(--color-error-background)',
-				'color-info': 'var(--color-info)',
-				'color-info-background': 'var(--color-info-background)',
+				// Focus colors
+				focus: {
+					ring: 'var(--color-focus-ring)'
+				},
 
-				// Neutral palette
+				// Neutral palette (keep as-is for granular control)
 				neutral: {
 					50: 'var(--color-neutral-50)',
 					100: 'var(--color-neutral-100)',
@@ -68,13 +82,43 @@ export default {
 					950: 'var(--color-neutral-950)'
 				},
 
-				// Blue accent palette
+				// Blue accent palette (keep for specific use)
 				blue: {
 					50: 'var(--color-blue-50)',
 					500: 'var(--color-blue-500)',
 					600: 'var(--color-blue-600)',
 					700: 'var(--color-blue-700)',
 					900: 'var(--color-blue-900)'
+				},
+
+				// Indigo palette for primary theme
+				indigo: {
+					50: '#eef2ff',
+					100: '#e0e7ff',
+					200: '#c7d2fe',
+					300: '#a5b4fc',
+					400: '#818cf8',
+					500: '#6366f1',
+					600: '#4f46e5',
+					700: '#4338ca',
+					800: '#3730a3',
+					900: '#312e81',
+					950: '#1e1b4b'
+				},
+
+				// Amber palette for highlights and focus
+				amber: {
+					50: '#fffbeb',
+					100: '#fef3c7',
+					200: '#fde68a',
+					300: '#fcd34d',
+					400: '#fbbf24',
+					500: '#f59e0b',
+					600: '#d97706',
+					700: '#b45309',
+					800: '#92400e',
+					900: '#78350f',
+					950: '#451a03'
 				}
 			},
 
@@ -118,33 +162,12 @@ export default {
 				12: 'var(--space-12)'
 			},
 
-			// Extended grid column support
-			gridTemplateColumns: {
-				1: 'repeat(1, minmax(0, 1fr))',
-				2: 'repeat(2, minmax(0, 1fr))',
-				3: 'repeat(3, minmax(0, 1fr))',
-				4: 'repeat(4, minmax(0, 1fr))',
-				5: 'repeat(5, minmax(0, 1fr))',
-				6: 'repeat(6, minmax(0, 1fr))',
-				7: 'repeat(7, minmax(0, 1fr))',
-				8: 'repeat(8, minmax(0, 1fr))',
-				9: 'repeat(9, minmax(0, 1fr))',
-				10: 'repeat(10, minmax(0, 1fr))',
-				11: 'repeat(11, minmax(0, 1fr))',
-				12: 'repeat(12, minmax(0, 1fr))',
-				'auto-fit-250': 'repeat(auto-fit, minmax(250px, 1fr))',
-				'auto-fill-250': 'repeat(auto-fill, minmax(250px, 1fr))',
-				'auto-fit-200': 'repeat(auto-fit, minmax(200px, 1fr))',
-				'auto-fill-200': 'repeat(auto-fill, minmax(200px, 1fr))'
-			},
-
-			// Container max-widths (matching our breakpoints)
-			maxWidth: {
-				'screen-sm': '640px',
-				'screen-md': '768px',
-				'screen-lg': '1024px',
-				'screen-xl': '1280px',
-				'screen-2xl': '1536px'
+			// Container padding
+			padding: {
+				'container-sm': 'var(--container-padding-sm)',
+				'container-md': 'var(--container-padding-md)',
+				'container-lg': 'var(--container-padding-lg)',
+				'container-xl': 'var(--container-padding-xl)'
 			},
 
 			// Border radius
@@ -162,7 +185,22 @@ export default {
 				sm: 'var(--shadow-sm)',
 				DEFAULT: 'var(--shadow-default)',
 				md: 'var(--shadow-md)',
-				lg: 'var(--shadow-lg)'
+				lg: 'var(--shadow-lg)',
+				color: 'var(--shadow-color)',
+				'color-strong': 'var(--shadow-color-strong)'
+			},
+
+			// Ring styles for focus states
+			ringWidth: {
+				DEFAULT: 'var(--focus-ring-width)'
+			},
+
+			ringOffsetWidth: {
+				DEFAULT: 'var(--focus-ring-offset)'
+			},
+
+			ringColor: {
+				DEFAULT: 'var(--color-focus-ring)'
 			},
 
 			// Transitions
@@ -178,13 +216,22 @@ export default {
 				'ease-out': 'var(--transition-easing-ease-out)'
 			},
 
-			// Custom utilities
+			// Touch target sizing
 			minHeight: {
 				'touch-target': 'var(--touch-target-min)'
 			},
 
 			minWidth: {
 				'touch-target': 'var(--touch-target-min)'
+			},
+
+			// Breakpoints (for reference)
+			screens: {
+				sm: 'var(--breakpoint-sm)',
+				md: 'var(--breakpoint-md)',
+				lg: 'var(--breakpoint-lg)',
+				xl: 'var(--breakpoint-xl)',
+				'2xl': 'var(--breakpoint-2xl)'
 			}
 		}
 	},

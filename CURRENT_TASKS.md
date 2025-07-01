@@ -56,7 +56,7 @@ Review the current approach to registration and refactor to enable watertight re
 
 ### Task 1.3: Client - UI overhaul, optimisation and refinement
 *   **Status:** **[ ] TODO
-*   **Action:** Review the current approach to the UI and theming. Update UI on client to optimise the user experience and make all components and theming consistent
+*   **Action:** Review the current approach to the UI and theming. Update UI on client to optimise the user experience and make all components and theming consistent. General colour theme is using tailwindcss `indigo` for background, at either end of scale; use `amber` for highlighting (focus border, hover over links and buttons, etc); contrast colours for ease of viewing.
 *   **Current Issues Analysis (2025-06-30):**
 
     **1. Hardcoded Colors Found:**

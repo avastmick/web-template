@@ -8,6 +8,7 @@
 	- Mobile-friendly hamburger menu
 	- Accessible keyboard navigation
 	- Proper ARIA labeling
+	- Unified responsive approach
 -->
 
 <script lang="ts">
@@ -19,6 +20,7 @@
 	import { Menu, X, User, Home, ChevronDown, LogOut } from 'lucide-svelte';
 	import { cn } from '$lib/utils/index.js';
 	import { _ } from 'svelte-i18n';
+	import { clickOutside } from '$lib/utils/index.js';
 
 	// Mobile menu state
 	let mobileMenuOpen = false;
@@ -42,13 +44,9 @@
 				}
 			];
 
-	// Close mobile menu when clicking outside or on navigation
-	const closeMobileMenu = () => {
+	// Close all menus
+	const closeAllMenus = () => {
 		mobileMenuOpen = false;
-	};
-
-	// Close user dropdown
-	const closeUserDropdown = () => {
 		userDropdownOpen = false;
 	};
 
@@ -57,19 +55,31 @@
 		const { logout } = await import('$lib/services/apiAuth');
 		const { goto } = await import('$app/navigation');
 		logout();
-		closeUserDropdown();
+		closeAllMenus();
 		await goto('/login');
 	};
 
-	// Handle keyboard navigation for mobile menu
-	const handleMenuKeydown = (event: KeyboardEvent) => {
+	// Handle keyboard navigation
+	const handleKeydown = (event: KeyboardEvent) => {
 		if (event.key === 'Escape') {
-			closeMobileMenu();
+			closeAllMenus();
 		}
 	};
+
+	// Navigation link classes
+	const getLinkClasses = (isCurrent: boolean) =>
+		cn(
+			'flex items-center gap-2 rounded-md px-3 py-2 font-medium transition-colors duration-fast',
+			'focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2',
+			isCurrent
+				? 'text-primary bg-background-secondary'
+				: 'text-text-secondary hover:text-text-primary hover:bg-background-secondary'
+		);
 </script>
 
-<header class="bg-bg-primary sticky top-0 z-50 w-full backdrop-blur-sm">
+<svelte:window on:keydown={handleKeydown} />
+
+<header class="bg-background-primary sticky top-0 z-50 w-full backdrop-blur-sm">
 	<Container>
 		<nav aria-label="Main navigation" class="relative">
 			<Flex justify="between" align="center" class="h-16">
@@ -77,10 +87,10 @@
 				<div class="flex-shrink-0">
 					<a
 						href="/"
-						class="text-text-primary focus-visible-ring flex items-center text-xl font-bold"
+						class="text-text-primary duration-fast flex items-center rounded-md text-xl font-bold transition-colors focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:outline-none"
 						aria-label="Web Template - Home"
 					>
-						<span class="text-primary mr-2">🚀</span>
+						<span class="text-text-accent mr-2">🚀</span>
 						<span class="hidden sm:inline">Web Template</span>
 						<span class="sm:hidden">WT</span>
 					</a>
@@ -88,83 +98,79 @@
 
 				<!-- Desktop Navigation -->
 				<div class="hidden md:block">
-					<Flex align="center" gap="8">
+					<Flex align="center" gap="6">
 						<!-- Navigation Links -->
-						<Flex align="center" gap="6">
-							{#each navigationItems as item (item.href)}
-								<a
-									href={item.href}
-									class={cn(
-										'focus-visible-ring flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-										item.current
-											? 'text-primary bg-bg-secondary'
-											: 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
-									)}
-									aria-current={item.current ? 'page' : undefined}
-								>
-									{#if item.icon}
-										<svelte:component this={item.icon} class="h-4 w-4" aria-hidden="true" />
-									{/if}
-									{item.label}
-								</a>
-							{/each}
-						</Flex>
+						{#each navigationItems as item (item.href)}
+							<a
+								href={item.href}
+								class={getLinkClasses(item.current)}
+								aria-current={item.current ? 'page' : undefined}
+							>
+								{#if item.icon}
+									<svelte:component this={item.icon} class="h-4 w-4" aria-hidden="true" />
+								{/if}
+								<span class="text-sm">{item.label}</span>
+							</a>
+						{/each}
 
 						<!-- User Menu / Auth Actions -->
-						<Flex align="center" gap="4">
-							{#if $isAuthenticated && $currentUser}
-								<!-- Authenticated User Dropdown -->
-								<div class="relative">
-									<Button
-										variant="ghost"
-										size="sm"
-										onclick={() => (userDropdownOpen = !userDropdownOpen)}
-										aria-expanded={userDropdownOpen}
-										aria-haspopup="menu"
-										class="flex items-center gap-2"
+						{#if $isAuthenticated && $currentUser}
+							<!-- Authenticated User Dropdown -->
+							<div class="relative ml-3">
+								<Button
+									variant="ghost"
+									size="sm"
+									onclick={() => (userDropdownOpen = !userDropdownOpen)}
+									aria-expanded={userDropdownOpen}
+									aria-haspopup="menu"
+									class="flex items-center gap-2"
+								>
+									<User class="h-4 w-4" aria-hidden="true" />
+									<span class="text-text-secondary hidden max-w-32 truncate text-sm lg:inline">
+										{$currentUser.email}
+									</span>
+									<ChevronDown
+										class="duration-fast h-3 w-3 transition-transform {userDropdownOpen
+											? 'rotate-180'
+											: ''}"
+										aria-hidden="true"
+									/>
+								</Button>
+
+								<!-- User Dropdown Menu -->
+								{#if userDropdownOpen}
+									<div
+										class="border-border-default bg-surface-raised absolute top-full right-0 z-50 mt-2 w-48 rounded-md border shadow-lg"
+										role="menu"
+										aria-orientation="vertical"
+										tabindex="-1"
+										use:clickOutside={() => (userDropdownOpen = false)}
 									>
-										<User class="h-4 w-4" aria-hidden="true" />
-										<span class="text-text-secondary hidden max-w-32 truncate lg:inline">
-											{$currentUser.email}
-										</span>
-										<ChevronDown class="h-3 w-3" aria-hidden="true" />
-									</Button>
-
-									<!-- User Dropdown Menu -->
-									{#if userDropdownOpen}
-										<div
-											class="border-border-default absolute top-full right-0 z-50 mt-2 w-48 rounded-md border shadow-lg"
-											style="background-color: var(--color-surface-raised);"
-											role="menu"
-											aria-orientation="vertical"
-											tabindex="-1"
-										>
-											<div class="py-1">
-												<button
-													type="button"
-													class="text-text-primary hover:bg-bg-tertiary focus-visible-ring flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors"
-													role="menuitem"
-													onclick={handleLogout}
-												>
-													<LogOut class="h-4 w-4" aria-hidden="true" />
-													{$_('nav.logout')}
-												</button>
-											</div>
+										<div class="py-1">
+											<button
+												type="button"
+												class="text-text-primary hover:bg-background-secondary duration-fast flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors focus:ring-2 focus:ring-amber-400 focus:outline-none focus:ring-inset"
+												role="menuitem"
+												onclick={handleLogout}
+											>
+												<LogOut class="h-4 w-4" aria-hidden="true" />
+												{$_('nav.logout')}
+											</button>
 										</div>
-									{/if}
-								</div>
-							{/if}
+									</div>
+								{/if}
+							</div>
+						{/if}
 
-							<!-- Language Selector -->
-							<LanguageSelector />
+						<!-- Language Selector -->
+						<LanguageSelector />
 
-							<!-- Theme Toggle -->
-							<ThemeToggle />
-						</Flex>
+						<!-- Theme Toggle -->
+						<ThemeToggle />
 					</Flex>
 				</div>
 
-				<!-- Mobile Menu Button -->
+				<!-- Mobile Actions -->
 				<div class="md:hidden">
 					<Flex align="center" gap="2">
 						<!-- Language Selector (Mobile) -->
@@ -181,7 +187,6 @@
 							aria-expanded={mobileMenuOpen}
 							aria-controls="mobile-menu"
 							aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-							class="md:hidden"
 						>
 							{#if mobileMenuOpen}
 								<X class="h-5 w-5" aria-hidden="true" />
@@ -195,28 +200,21 @@
 
 			<!-- Mobile Navigation Menu -->
 			{#if mobileMenuOpen}
-				<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 				<div
 					id="mobile-menu"
-					class="bg-bg-primary border-border-default absolute top-full right-0 left-0 border-b shadow-lg backdrop-blur-sm md:hidden"
+					class="bg-background-primary border-border-light absolute top-full right-0 left-0 border-t shadow-lg backdrop-blur-sm md:hidden"
 					role="navigation"
 					aria-label="Mobile navigation"
-					tabindex="-1"
-					onkeydown={handleMenuKeydown}
+					use:clickOutside={() => (mobileMenuOpen = false)}
 				>
 					<div class="space-y-1 px-4 pt-4 pb-6">
 						<!-- Mobile Navigation Links -->
 						{#each navigationItems as item (item.href)}
 							<a
 								href={item.href}
-								class={cn(
-									'focus-visible-ring flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium transition-colors',
-									item.current
-										? 'text-primary bg-bg-secondary'
-										: 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
-								)}
+								class={cn(getLinkClasses(item.current), 'text-base')}
 								aria-current={item.current ? 'page' : undefined}
-								onclick={closeMobileMenu}
+								onclick={() => (mobileMenuOpen = false)}
 							>
 								{#if item.icon}
 									<svelte:component this={item.icon} class="h-4 w-4" aria-hidden="true" />
@@ -229,13 +227,13 @@
 						{#if $isAuthenticated && $currentUser}
 							<div class="border-border-light mt-4 border-t pt-4">
 								<div class="flex items-center gap-2 px-3 py-2 text-sm">
-									<User class="h-4 w-4" aria-hidden="true" />
+									<User class="text-text-secondary h-4 w-4" aria-hidden="true" />
 									<span class="text-text-secondary truncate">{$currentUser.email}</span>
 								</div>
 								<div class="mt-2 space-y-1">
 									<button
 										type="button"
-										class="focus-visible-ring text-text-secondary hover:bg-bg-secondary hover:text-text-primary flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-base font-medium transition-colors"
+										class="text-text-secondary hover:bg-background-secondary hover:text-text-primary duration-fast flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-base font-medium transition-colors focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:outline-none"
 										onclick={handleLogout}
 									>
 										<LogOut class="h-4 w-4" aria-hidden="true" />
@@ -251,18 +249,9 @@
 	</Container>
 </header>
 
-<!-- Click outside to close mobile menu -->
+<!-- Overlay for mobile menu -->
 {#if mobileMenuOpen}
-	<div
-		class="bg-opacity-25 fixed inset-0 z-40 bg-black md:hidden"
-		onclick={closeMobileMenu}
-		aria-hidden="true"
-	></div>
-{/if}
-
-<!-- Click outside to close user dropdown -->
-{#if userDropdownOpen}
-	<div class="fixed inset-0 z-40" onclick={closeUserDropdown} aria-hidden="true"></div>
+	<div class="bg-opacity-25 fixed inset-0 z-40 bg-black md:hidden" aria-hidden="true"></div>
 {/if}
 
 <!--
@@ -276,10 +265,11 @@
 	- Screen reader friendly
 	- Skip links integration
 	- Mobile-first responsive design
+	- Consistent focus ring styling
 
 	Responsive Behavior:
 	- Desktop: Horizontal navigation with full labels
-	- Mobile: Hamburger menu with overlay
+	- Mobile: Hamburger menu with slide-down panel
 	- Theme toggle available on both desktop and mobile
 	- User info shown contextually
 -->

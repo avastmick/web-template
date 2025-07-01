@@ -19,7 +19,7 @@
 	export let value: $$Props['value'] = '';
 </script>
 
-<div class="space-y-1.5">
+<div class="w-full space-y-1.5">
 	<label for={id} class="text-text-secondary block text-sm font-medium">
 		{label}
 		{#if required}

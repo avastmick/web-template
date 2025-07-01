@@ -62,13 +62,16 @@
 	}
 </script>
 
-<div class="markdown-content prose prose-sm dark:prose-invert max-w-none {className}">
+<div
+	class="markdown-content prose prose-sm dark:prose-invert prose-headings:text-text-primary prose-p:text-text-primary prose-strong:text-text-primary prose-a:text-action-primary prose-code:text-text-accent max-w-none {className}"
+>
 	{@html sanitizedHtml}
 </div>
 
 <style>
 	:global(.markdown-content) {
 		word-break: break-word;
+		color: inherit;
 	}
 
 	:global(.markdown-content > *:first-child) {
@@ -81,67 +84,63 @@
 
 	/* Headings */
 	:global(.markdown-content h1) {
-		font-size: 1.5rem;
-		font-weight: 700;
-		margin-top: 1rem;
-		margin-bottom: 0.5rem;
+		font-size: var(--font-size-xl);
+		font-weight: var(--font-weight-bold);
+		margin-top: var(--space-4);
+		margin-bottom: var(--space-2);
 	}
 
 	:global(.markdown-content h2) {
-		font-size: 1.25rem;
-		font-weight: 700;
-		margin-top: 1rem;
-		margin-bottom: 0.5rem;
+		font-size: var(--font-size-lg);
+		font-weight: var(--font-weight-bold);
+		margin-top: var(--space-4);
+		margin-bottom: var(--space-2);
 	}
 
 	:global(.markdown-content h3) {
-		font-size: 1.125rem;
-		font-weight: 600;
-		margin-top: 1rem;
-		margin-bottom: 0.5rem;
+		font-size: var(--font-size-base);
+		font-weight: var(--font-weight-semibold);
+		margin-top: var(--space-4);
+		margin-bottom: var(--space-2);
 	}
 
 	:global(.markdown-content h4),
 	:global(.markdown-content h5),
 	:global(.markdown-content h6) {
-		font-size: 1rem;
-		font-weight: 600;
-		margin-top: 1rem;
-		margin-bottom: 0.5rem;
+		font-size: var(--font-size-base);
+		font-weight: var(--font-weight-semibold);
+		margin-top: var(--space-4);
+		margin-bottom: var(--space-2);
 	}
 
 	/* Paragraphs and text */
 	:global(.markdown-content p) {
-		margin-bottom: 1em;
-		line-height: 1.625;
+		margin-bottom: var(--space-4);
+		line-height: var(--line-height-relaxed);
 	}
 
 	:global(.markdown-content strong) {
-		font-weight: 600;
+		font-weight: var(--font-weight-semibold);
 	}
 
 	/* Code blocks */
 	:global(.markdown-content pre) {
 		margin: 1em 0;
 		padding: 1rem;
-		background-color: rgb(17 24 39);
-		color: rgb(243 244 246);
-		border-radius: 0.375rem;
+		background-color: var(--color-surface-secondary);
+		color: var(--color-text-primary);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
 		overflow-x: auto;
-		font-size: 0.875rem;
+		font-size: var(--font-size-sm);
 	}
 
 	:global(.markdown-content code:not(pre code)) {
 		padding: 0.125rem 0.25rem;
-		background-color: rgb(243 244 246);
-		color: rgb(31 41 55);
-		border-radius: 0.25rem;
-		font-size: 0.875rem;
-	}
-
-	:global(.dark .markdown-content code:not(pre code)) {
-		background-color: rgb(55 65 81);
-		color: rgb(243 244 246);
+		background-color: var(--color-background-accent);
+		color: var(--color-text-accent);
+		border-radius: var(--radius-sm);
+		font-size: var(--font-size-sm);
 	}
 
 	/* Lists */
@@ -163,33 +162,22 @@
 
 	/* Blockquotes */
 	:global(.markdown-content blockquote) {
-		border-left: 4px solid rgb(209 213 219);
+		border-left: 4px solid var(--color-border-accent);
 		padding-left: 1rem;
 		font-style: italic;
 		margin: 1em 0;
-	}
-
-	:global(.dark .markdown-content blockquote) {
-		border-left-color: rgb(75 85 99);
-		color: rgb(209 213 219);
+		color: var(--color-text-secondary);
 	}
 
 	/* Links */
 	:global(.markdown-content a) {
-		color: rgb(37 99 235);
+		color: var(--color-action-primary);
 		text-decoration: underline;
+		transition: color var(--transition-duration-fast) var(--transition-easing-smooth);
 	}
 
 	:global(.markdown-content a:hover) {
-		color: rgb(29 78 216);
-	}
-
-	:global(.dark .markdown-content a) {
-		color: rgb(96 165 250);
-	}
-
-	:global(.dark .markdown-content a:hover) {
-		color: rgb(147 197 253);
+		color: var(--color-action-primary-hover);
 	}
 
 	/* Tables */
@@ -201,47 +189,29 @@
 	}
 
 	:global(.markdown-content th) {
-		background-color: rgb(249 250 251);
+		background-color: var(--color-surface-secondary);
 		padding: 0.5rem 1rem;
 		text-align: left;
-		font-weight: 500;
-		border-bottom: 1px solid rgb(229 231 235);
-	}
-
-	:global(.dark .markdown-content th) {
-		background-color: rgb(31 41 55);
-		border-bottom-color: rgb(55 65 81);
+		font-weight: var(--font-weight-medium);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	:global(.markdown-content td) {
 		padding: 0.5rem 1rem;
-		border-bottom: 1px solid rgb(229 231 235);
-	}
-
-	:global(.dark .markdown-content td) {
-		border-bottom-color: rgb(55 65 81);
+		border-bottom: 1px solid var(--color-border-light);
 	}
 
 	/* Horizontal rules */
 	:global(.markdown-content hr) {
 		margin: 1rem 0;
 		border: 0;
-		border-top: 1px solid rgb(229 231 235);
-	}
-
-	:global(.dark .markdown-content hr) {
-		border-top-color: rgb(55 65 81);
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	/* Images */
 	:global(.markdown-content img) {
 		max-width: 100%;
 		height: auto;
-		border-radius: 0.375rem;
-	}
-
-	/* Dark mode text */
-	:global(.dark .markdown-content) {
-		color: rgb(243 244 246);
+		border-radius: var(--radius-md);
 	}
 </style>

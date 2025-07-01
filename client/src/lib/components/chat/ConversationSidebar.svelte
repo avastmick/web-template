@@ -233,16 +233,16 @@
 									<Button
 										variant="ghost"
 										size="sm"
-										class="text-text-muted hover:bg-background-tertiary hover:text-text-primary h-8 w-8 p-0 transition-colors"
+										class="text-text-muted hover:bg-background-tertiary hover:text-primary h-8 w-8 p-0 transition-all hover:scale-110"
 										onclick={(e) => archiveConversation(conversation.id, e)}
 										aria-label={$_('chat.sidebar.archive')}
 									>
-										<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path
 												stroke-linecap="round"
 												stroke-linejoin="round"
 												stroke-width="2"
-												d="M5 8l4 4 4-4"
+												d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
 											/>
 										</svg>
 									</Button>
@@ -250,11 +250,11 @@
 									<Button
 										variant="ghost"
 										size="sm"
-										class="text-text-muted hover:bg-status-error h-8 w-8 p-0 transition-colors hover:text-white"
+										class="text-text-muted hover:bg-error hover:text-text-inverse h-8 w-8 p-0 transition-all hover:scale-110"
 										onclick={(e) => deleteConversation(conversation.id, e)}
 										aria-label={$_('chat.sidebar.delete')}
 									>
-										<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path
 												stroke-linecap="round"
 												stroke-linejoin="round"

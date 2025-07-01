@@ -56,7 +56,7 @@
 				class="bg-color-action-primary flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
 			>
 				<svg
-					class="text-text-inverse h-4 w-4"
+					class="text-text-inverse h-6 w-6"
 					fill="none"
 					stroke="currentColor"
 					viewBox="0 0 24 24"
@@ -72,7 +72,9 @@
 
 			<!-- Message content -->
 			<div class="min-w-0 flex-1">
-				<div class="text-text-primary border-border-default bg-bg-secondary rounded-lg border p-4">
+				<div
+					class="border-border-default text-text-secondary bg-surface-primary rounded-lg border p-4"
+				>
 					{#if isStreaming}
 						<!-- Streaming content with cursor (no markdown parsing while streaming) -->
 						<div class="whitespace-pre-wrap">{message.content}</div>
@@ -98,7 +100,7 @@
 							onclick={copyMessage}
 							aria-label={$_('chat.message.copy')}
 						>
-							<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path
 									stroke-linecap="round"
 									stroke-linejoin="round"
@@ -115,7 +117,7 @@
 							onclick={regenerateResponse}
 							aria-label={$_('chat.message.regenerate')}
 						>
-							<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path
 									stroke-linecap="round"
 									stroke-linejoin="round"
@@ -163,7 +165,7 @@
 			{/if}
 
 			<div
-				class="bg-color-action-primary text-text-inverse border-border-light rounded-2xl border px-4 py-2"
+				class="bg-color-action-primary text-text-secondary border-border-light rounded-2xl border px-4 py-2"
 			>
 				<div class="text-sm leading-relaxed whitespace-pre-wrap">
 					{message.content}

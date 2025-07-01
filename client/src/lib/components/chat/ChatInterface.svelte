@@ -77,7 +77,7 @@
 <svelte:window bind:innerWidth={windowWidth} />
 
 <!-- Modern ChatGPT-style layout -->
-<div class="flex h-[calc(100vh-4rem)] overflow-hidden bg-white dark:bg-gray-800">
+<div class="bg-background-primary flex h-[calc(100vh-4rem)] overflow-hidden">
 	<!-- Conversation Sidebar -->
 	<ConversationSidebar />
 
@@ -85,7 +85,7 @@
 	<main class="flex flex-1 flex-col overflow-hidden">
 		<!-- Clean header -->
 		<header
-			class="flex h-14 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-gray-700 dark:bg-gray-800"
+			class="border-border bg-surface-primary flex h-14 flex-shrink-0 items-center justify-between border-b px-4"
 		>
 			<div class="flex items-center gap-3">
 				<!-- Sidebar toggle -->
@@ -93,7 +93,7 @@
 					variant="ghost"
 					size="sm"
 					onclick={toggleSidebar}
-					class="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700"
+					class="hover:bg-background-secondary h-8 w-8 p-0"
 					aria-label={$sidebarOpen ? $_('chat.header.closeSidebar') : $_('chat.header.openSidebar')}
 				>
 					<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,22 +107,22 @@
 				</Button>
 
 				<!-- Model indicator -->
-				<div class="text-sm font-medium text-gray-700 dark:text-gray-300">
+				<div class="text-text-secondary text-sm font-medium">
 					{$_('chat.header.newChat')}
 				</div>
 			</div>
 
 			<!-- Streaming indicator -->
 			{#if $isStreaming}
-				<div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+				<div class="text-text-muted flex items-center gap-2 text-sm">
 					<div class="flex space-x-1">
 						<div
-							class="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.3s]"
+							class="bg-text-muted h-2 w-2 animate-bounce rounded-full [animation-delay:-0.3s]"
 						></div>
 						<div
-							class="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.15s]"
+							class="bg-text-muted h-2 w-2 animate-bounce rounded-full [animation-delay:-0.15s]"
 						></div>
-						<div class="h-2 w-2 animate-bounce rounded-full bg-gray-400"></div>
+						<div class="bg-text-muted h-2 w-2 animate-bounce rounded-full"></div>
 					</div>
 					<span>{$_('chat.header.streaming')}</span>
 				</div>
@@ -131,12 +131,15 @@
 
 		<!-- Error notification -->
 		{#if $error}
-			<div
-				class="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20"
-			>
+			<div class="border-status-error bg-status-error-bg mx-4 mt-4 rounded-lg border p-4">
 				<div class="flex items-center justify-between">
 					<div class="flex items-center gap-2">
-						<svg class="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg
+							class="text-status-error h-4 w-4"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"
@@ -144,7 +147,7 @@
 								d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
 							/>
 						</svg>
-						<p class="text-sm font-medium text-red-800 dark:text-red-200">
+						<p class="text-status-error text-sm font-medium">
 							{$_('chat.error.title')}
 						</p>
 					</div>
@@ -152,7 +155,7 @@
 						variant="ghost"
 						size="sm"
 						onclick={clearError}
-						class="h-6 w-6 p-0 text-red-500 hover:bg-red-100 dark:hover:bg-red-800"
+						class="text-status-error hover:bg-status-error-bg h-6 w-6 p-0"
 						aria-label={$_('chat.error.dismiss')}
 					>
 						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,7 +168,7 @@
 						</svg>
 					</Button>
 				</div>
-				<p class="mt-1 text-sm text-red-700 dark:text-red-300">{$error}</p>
+				<p class="text-status-error mt-1 text-sm">{$error}</p>
 			</div>
 		{/if}
 
@@ -198,10 +201,10 @@
 						<div class="w-full max-w-2xl text-center">
 							<!-- ChatGPT-style logo -->
 							<div
-								class="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20"
+								class="bg-status-success-bg mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full"
 							>
 								<svg
-									class="h-10 w-10 text-green-600 dark:text-green-400"
+									class="text-status-success h-10 w-10"
 									fill="none"
 									stroke="currentColor"
 									viewBox="0 0 24 24"
@@ -216,11 +219,11 @@
 							</div>
 
 							<!-- Welcome title -->
-							<h1 class="mb-4 text-3xl font-semibold text-gray-900 dark:text-white">
+							<h1 class="text-text-primary mb-4 text-3xl font-semibold">
 								{$_('chat.welcome.title')}
 							</h1>
 
-							<p class="mb-8 text-lg text-gray-600 dark:text-gray-300">
+							<p class="text-text-secondary mb-8 text-lg">
 								{$_('chat.welcome.description')}
 							</p>
 
@@ -229,9 +232,9 @@
 								{#each [$_('chat.welcome.suggestions.explain'), $_('chat.welcome.suggestions.help'), $_('chat.welcome.suggestions.create')] as suggestion (suggestion)}
 									<button
 										onclick={() => chatStore.setInputText(suggestion)}
-										class="rounded-xl border border-gray-200 bg-white p-4 text-left transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+										class="border-border bg-surface-primary hover:bg-surface-secondary rounded-xl border p-4 text-left transition-colors"
 									>
-										<div class="text-sm font-medium text-gray-900 dark:text-white">
+										<div class="text-text-primary text-sm font-medium">
 											{suggestion}
 										</div>
 									</button>
@@ -246,9 +249,9 @@
 					<div class="flex items-center justify-center py-12">
 						<div class="text-center">
 							<div
-								class="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"
+								class="border-border border-t-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2"
 							></div>
-							<p class="text-sm text-gray-500 dark:text-gray-400">{$_('chat.loading')}</p>
+							<p class="text-text-muted text-sm">{$_('chat.loading')}</p>
 						</div>
 					</div>
 				{/if}
@@ -260,7 +263,7 @@
 					<Button
 						variant="outline"
 						size="sm"
-						class="h-10 w-10 rounded-full border-gray-200 bg-white p-0 shadow-lg hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+						class="border-border bg-surface-primary hover:bg-surface-secondary h-10 w-10 rounded-full p-0 shadow-lg"
 						onclick={() => scrollToBottom()}
 						aria-label={$_('chat.scrollToBottom')}
 					>
@@ -277,9 +280,7 @@
 			{/if}
 
 			<!-- Modern Chat Input -->
-			<div
-				class="flex-shrink-0 border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
-			>
+			<div class="border-border bg-surface-primary flex-shrink-0 border-t">
 				<ChatInput on:send={handleMessageSend} />
 			</div>
 		</div>

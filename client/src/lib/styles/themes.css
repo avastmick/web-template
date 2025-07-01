@@ -13,9 +13,9 @@
 :root,
 .light {
 	/* Background colors - Indigo-based theme */
-	--color-background-primary: #eef2ff; /* indigo-50 */
-	--color-background-secondary: #e0e7ff; /* indigo-100 */
-	--color-background-tertiary: #c7d2fe; /* indigo-200 */
+	--color-background-primary: #e0e7ff; /* indigo-100 - more visible contrast */
+	--color-background-secondary: #c7d2fe; /* indigo-200 */
+	--color-background-tertiary: #a5b4fc; /* indigo-300 */
 	--color-background-accent: #ddd6fe; /* violet-200 for subtle contrast */
 
 	/* Text colors */
@@ -67,8 +67,8 @@
 .dark {
 	/* Background colors - Indigo-based dark theme */
 	--color-background-primary: #1e1b4b; /* indigo-950 */
-	--color-background-secondary: #312e81; /* indigo-900 */
-	--color-background-tertiary: #3730a3; /* indigo-800 */
+	--color-background-secondary: #312e81; /* indigo-750 */
+	--color-background-tertiary: #3730a3; /* indigo-600 */
 	--color-background-accent: #4c1d95; /* violet-900 for subtle contrast */
 
 	/* Text colors */
@@ -101,9 +101,9 @@
 	--color-info-background: #1e3a8a;
 
 	/* Surface colors */
-	--color-surface-primary: #312e81; /* indigo-900 */
-	--color-surface-secondary: #1e1b4b; /* indigo-950 */
-	--color-surface-raised: #3730a3; /* indigo-800 */
+	--color-surface-primary: #3730a3; /* indigo-900 - LIGHTER than background for contrast */
+	--color-surface-secondary: #3730a3; /* indigo-800 - even lighter */
+	--color-surface-raised: #3730a3; /* indigo-800 - elevated surface */
 	--color-surface-overlay: rgba(129, 140, 248, 0.1); /* indigo-400 with opacity */
 
 	/* Shadows */

@@ -159,7 +159,7 @@
 				</p>
 			</Flex>
 
-			<Card variant="default" padding="lg">
+			<Card variant="raised" padding="lg">
 				<!-- Success Message -->
 				{#if showSuccessMessage}
 					<div class="mb-6">
@@ -208,10 +208,10 @@
 					<!-- OR Divider -->
 					<div class="relative">
 						<div class="absolute inset-0 flex items-center">
-							<div class="border-border-default w-full border-t"></div>
+							<div class="border-border w-full border-t"></div>
 						</div>
 						<div class="relative flex justify-center text-sm">
-							<span class="bg-background-primary text-text-secondary px-3">
+							<span class="bg-surface-raised text-text-secondary px-3">
 								{$_('auth.login.or')}
 							</span>
 						</div>

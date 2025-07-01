@@ -12,6 +12,53 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
+/* Tailwind CSS v4 Theme Configuration - Map CSS variables to Tailwind utilities */
+@theme {
+	/* Background colors */
+	--color-background-primary: var(--color-background-primary);
+	--color-background-secondary: var(--color-background-secondary);
+	--color-background-tertiary: var(--color-background-tertiary);
+	--color-background-accent: var(--color-background-accent);
+
+	/* Surface colors */
+	--color-surface-primary: var(--color-surface-primary);
+	--color-surface-secondary: var(--color-surface-secondary);
+	--color-surface-raised: var(--color-surface-raised);
+	--color-surface-overlay: var(--color-surface-overlay);
+
+	/* Text colors */
+	--color-text-primary: var(--color-text-primary);
+	--color-text-secondary: var(--color-text-secondary);
+	--color-text-muted: var(--color-text-muted);
+	--color-text-accent: var(--color-text-accent);
+	--color-text-inverse: var(--color-text-inverse);
+
+	/* Border colors */
+	--color-border-default: var(--color-border-default);
+	--color-border-light: var(--color-border-light);
+	--color-border-dark: var(--color-border-dark);
+	--color-border-accent: var(--color-border-accent);
+
+	/* Action colors */
+	--color-primary: var(--color-action-primary);
+	--color-primary-hover: var(--color-action-primary-hover);
+	--color-primary-active: var(--color-action-primary-active);
+	--color-primary-disabled: var(--color-action-primary-disabled);
+
+	/* Status colors */
+	--color-success: var(--color-success);
+	--color-success-bg: var(--color-success-background);
+	--color-warning: var(--color-warning);
+	--color-warning-bg: var(--color-warning-background);
+	--color-error: var(--color-error);
+	--color-error-bg: var(--color-error-background);
+	--color-info: var(--color-info);
+	--color-info-bg: var(--color-info-background);
+
+	/* Focus colors */
+	--color-focus-ring: var(--color-focus-ring);
+}
+
 /**
  * Global Styles - Modern Minimalist Design System
  *

@@ -96,7 +96,7 @@
 
 <!-- Modern sidebar -->
 <aside
-	class="fixed top-16 left-0 z-50 flex h-[calc(100vh-4rem)] w-80 flex-col bg-gray-900 text-white transition-transform lg:relative lg:top-0 lg:z-auto lg:h-full lg:translate-x-0 {$sidebarOpen
+	class="bg-background-secondary text-text-primary fixed top-16 left-0 z-50 flex h-[calc(100vh-4rem)] w-80 flex-col transition-transform lg:relative lg:top-0 lg:z-auto lg:h-full lg:translate-x-0 {$sidebarOpen
 		? 'translate-x-0'
 		: '-translate-x-full'}"
 	aria-label={$_('chat.sidebar.label')}
@@ -111,7 +111,7 @@
 		<Button
 			variant="ghost"
 			size="sm"
-			class="h-8 w-8 p-0 text-gray-400 hover:bg-gray-800 hover:text-white lg:hidden"
+			class="text-text-muted hover:bg-background-tertiary hover:text-text-primary h-8 w-8 p-0 lg:hidden"
 			onclick={toggleSidebar}
 			aria-label={$_('chat.sidebar.close')}
 		>
@@ -130,7 +130,7 @@
 	<div class="px-4 pb-4">
 		<Button
 			variant="outline"
-			class="w-full justify-start border-gray-700 bg-transparent text-white hover:bg-gray-800"
+			class="border-border text-text-primary hover:bg-background-tertiary w-full justify-start bg-transparent"
 			onclick={startNewConversation}
 		>
 			<svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,9 +152,9 @@
 			<div class="flex items-center justify-center p-8">
 				<div class="text-center">
 					<div
-						class="mx-auto mb-4 h-6 w-6 animate-spin rounded-full border-2 border-gray-600 border-t-white"
+						class="border-border border-t-text-primary mx-auto mb-4 h-6 w-6 animate-spin rounded-full border-2"
 					></div>
-					<p class="text-sm text-gray-400">{$_('chat.sidebar.loading')}</p>
+					<p class="text-text-muted text-sm">{$_('chat.sidebar.loading')}</p>
 				</div>
 			</div>
 		{:else if $conversations.length === 0}
@@ -162,7 +162,7 @@
 			<div class="flex items-center justify-center p-8">
 				<div class="text-center">
 					<svg
-						class="mx-auto mb-4 h-12 w-12 text-gray-600"
+						class="text-text-muted mx-auto mb-4 h-12 w-12"
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
@@ -174,8 +174,10 @@
 							d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
 						/>
 					</svg>
-					<p class="mb-2 text-sm font-medium text-gray-300">{$_('chat.sidebar.empty.title')}</p>
-					<p class="text-xs text-gray-500">{$_('chat.sidebar.empty.description')}</p>
+					<p class="text-text-secondary mb-2 text-sm font-medium">
+						{$_('chat.sidebar.empty.title')}
+					</p>
+					<p class="text-text-muted text-xs">{$_('chat.sidebar.empty.description')}</p>
 				</div>
 			</div>
 		{:else}
@@ -184,9 +186,9 @@
 				{#each $conversations as conversation (conversation.id)}
 					<div class="group relative">
 						<button
-							class="flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors hover:bg-gray-800 {$currentConversation?.id ===
+							class="hover:bg-background-tertiary flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors {$currentConversation?.id ===
 							conversation.id
-								? 'bg-gray-800'
+								? 'bg-background-tertiary'
 								: ''}"
 							onclick={() => loadConversation(conversation.id)}
 							aria-current={$currentConversation?.id === conversation.id ? 'page' : undefined}
@@ -194,7 +196,7 @@
 							<!-- Chat icon -->
 							<div class="flex-shrink-0">
 								<svg
-									class="h-4 w-4 text-gray-400"
+									class="text-text-muted h-4 w-4"
 									fill="none"
 									stroke="currentColor"
 									viewBox="0 0 24 24"
@@ -210,17 +212,17 @@
 
 							<!-- Conversation content -->
 							<div class="min-w-0 flex-1">
-								<div class="truncate text-sm font-medium text-white">
+								<div class="text-text-primary truncate text-sm font-medium">
 									{getConversationTitle(conversation)}
 								</div>
 
 								{#if conversation.last_message}
-									<div class="mt-1 truncate text-xs text-gray-400">
+									<div class="text-text-secondary mt-1 truncate text-xs">
 										{conversation.last_message.content}
 									</div>
 								{/if}
 
-								<div class="mt-1 text-xs text-gray-500">
+								<div class="text-text-muted mt-1 text-xs">
 									{getRelativeTime(conversation.updated_at)}
 								</div>
 							</div>
@@ -231,7 +233,7 @@
 									<Button
 										variant="ghost"
 										size="sm"
-										class="h-6 w-6 p-0 text-gray-400 hover:bg-gray-700 hover:text-white"
+										class="text-text-muted hover:bg-background-tertiary hover:text-text-primary h-6 w-6 p-0"
 										onclick={(e) => archiveConversation(conversation.id, e)}
 										aria-label={$_('chat.sidebar.archive')}
 									>
@@ -248,7 +250,7 @@
 									<Button
 										variant="ghost"
 										size="sm"
-										class="h-6 w-6 p-0 text-gray-400 hover:bg-red-600 hover:text-white"
+										class="text-text-muted hover:bg-status-error h-6 w-6 p-0 hover:text-white"
 										onclick={(e) => deleteConversation(conversation.id, e)}
 										aria-label={$_('chat.sidebar.delete')}
 									>
@@ -271,8 +273,8 @@
 	</div>
 
 	<!-- Footer -->
-	<div class="border-t border-gray-700 p-4">
-		<div class="text-xs text-gray-500">
+	<div class="border-border border-t p-4">
+		<div class="text-text-muted text-xs">
 			{$_('chat.sidebar.footer', { values: { count: $conversations.length } })}
 		</div>
 	</div>

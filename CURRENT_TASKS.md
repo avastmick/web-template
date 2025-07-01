@@ -59,7 +59,7 @@ Review the current approach to registration and refactor to enable watertight re
 *   **Action:** Review the current approach to the UI and theming. Update UI on client to optimise the user experience and make all components and theming consistent. General colour theme is using tailwindcss `indigo` for background, at either end of scale; use `amber` for highlighting (focus border, hover over links and buttons, etc); contrast colours for ease of viewing.
 *   **Current Issues Analysis (2025-06-30):**
 
-    **1. Hardcoded Colors Found:**
+    **1. Hardcoded Colors Found:** DONE
     *   `client/src/lib/components/chat/MarkdownContent.svelte:17-95` - Hardcoded RGB colors in styles (e.g., `rgb(17 24 39)`, `rgb(243 244 246)`)
     *   `client/src/lib/components/auth/GoogleOAuthButton.svelte:14-30` - Hardcoded SVG fill colors (`#4285F4`, `#34A853`, `#FBBC05`, `#EA4335`)
     *   `client/src/routes/login/+page.svelte:71-73` - Error message uses `bg-red-50`, `border-red-200`, `text-red-800`
@@ -69,7 +69,7 @@ Review the current approach to registration and refactor to enable watertight re
     *   `client/src/lib/components/ui/button.svelte:41` - Destructive variant uses `bg-red-500`
     *   `client/src/lib/components/ui/input.svelte:26-28` - Error state uses `border-red-500`, `bg-red-50`, `text-red-900`
 
-    **2. DRY Principle Violations:**
+    **2. DRY Principle Violations:** DONE
     *   Error display pattern repeated in:
         - `client/src/routes/login/+page.svelte:71-73`
         - `client/src/routes/register/+page.svelte:98-100`
@@ -79,53 +79,53 @@ Review the current approach to registration and refactor to enable watertight re
         - `client/src/routes/payment/+page.svelte:84-86`
     *   Email/password validation duplicated between Login and Register pages
 
-    **3. Navigation Issues:**
+    **3. Navigation Issues:** DONE
     *   `client/src/lib/components/Navigation.svelte:99` - Inline style `style="background-color: var(--color-surface-raised);"`
     *   `client/src/lib/components/Navigation.svelte:96-126` - Desktop dropdown implementation
     *   `client/src/lib/components/Navigation.svelte:137-165` - Separate mobile menu implementation
     *   Missing unified responsive approach
 
-    **4. Tailwind Config Issues:**
+    **4. Tailwind Config Issues:** DONE
     *   `client/tailwind.config.js:50-55` - Inconsistent naming: both `bg-bg-primary` and `bg-background-primary` defined
     *   Missing proper status color utility classes for error/success/warning backgrounds
 
-    **5. Missing Reusable Components:**
+    **5. Missing Reusable Components:** DONE
     *   No Alert/Message component for status messages
     *   No Card component for consistent containers
     *   No FormField component combining label/input/error
 
-    **6. Documentation Issues:**
+    **6. Documentation Issues:** TODO
     *   Two separate UI docs: `UI-UX_SPECIFICATION.md` and `UI_UX_THEME.md` with overlapping content
     *   `UI-UX_SPECIFICATION.md` recommends shadcn-svelte but project doesn't use it
     *   Inconsistent terminology between docs
 
 *   **Phased Implementation Plan:**
 
-    **Phase 1: Create Core Reusable Components**
+    **Phase 1: Create Core Reusable Components** DONE
     *   Create `client/src/lib/components/ui/alert.svelte` - For success/error/warning/info messages
     *   Create `client/src/lib/components/ui/card.svelte` - For consistent container styling
     *   Create `client/src/lib/components/ui/form-field.svelte` - Combines label, input, and error message
     *   Update `client/src/lib/components/ui/index.ts` to export new components
 
-    **Phase 2: Fix Tailwind Configuration**
+    **Phase 2: Fix Tailwind Configuration** DONE
     *   Update `client/tailwind.config.js` to:
         - Remove duplicate color mappings (choose one naming convention)
         - Add proper status color utilities (e.g., `bg-status-error`, `bg-status-success`)
         - Ensure all CSS variables from `tokens.css` are properly mapped
 
-    **Phase 3: Update Base Components**
+    **Phase 3: Update Base Components** DONE
     *   Fix `client/src/lib/components/ui/button.svelte:41` - Replace hardcoded `bg-red-500` with theme variable
     *   Fix `client/src/lib/components/ui/input.svelte:26-28` - Use theme-aware error colors
     *   Add proper focus ring colors using theme variables
 
-    **Phase 4: Refactor Navigation**
+    **Phase 4: Refactor Navigation** DONE
     *   Refactor `client/src/lib/components/Navigation.svelte` to:
         - Remove inline styles (line 99)
         - Combine desktop/mobile into single responsive implementation
         - Use Tailwind classes exclusively
         - Ensure proper ARIA attributes for accessibility
 
-    **Phase 5: Update Authentication Pages**
+    **Phase 5: Update Authentication Pages** NOT WORKING
     *   Update `client/src/routes/login/+page.svelte`:
         - Replace error message (lines 71-73) with Alert component
         - Use FormField component for inputs
@@ -134,13 +134,20 @@ Review the current approach to registration and refactor to enable watertight re
         - Use FormField component for inputs
         - Extract validation logic to shared utility
 
-    **Phase 6: Update Payment Pages**
+    **Phase 6: Update Payment Pages** DONE
     *   Update `client/src/routes/payment/+page.svelte`:
         - Replace all status messages with Alert component
         - Remove hardcoded colors (lines 84, 89, 94)
     *   Update success/cancel pages to use Alert component
 
-    **Phase 7: Fix Remaining Components**
+    **Phase 7: Update Chat Pages** TODO
+    *   Update `client/src/routes/chat/+page.svelte`:
+        - Remove hardcoded colors
+        - Align with other pages
+    *   Update to use Alert component
+    *   Ensure all icons are suitably sized (2x) compared to font text
+
+    **Phase 8: Fix Remaining Components** TODO
     *   Update `client/src/lib/components/chat/MarkdownContent.svelte`:
         - Replace all hardcoded RGB colors with CSS variables
         - Ensure dark/light theme support
@@ -149,13 +156,13 @@ Review the current approach to registration and refactor to enable watertight re
     *   Update `client/src/lib/components/chat/ChatInput.svelte`:
         - Fix hardcoded colors in file upload section
 
-    **Phase 8: Documentation Consolidation**
+    **Phase 9: Documentation Consolidation**
     *   Merge `UI-UX_SPECIFICATION.md` and `UI_UX_THEME.md` into single `UI_GUIDELINES.md`
     *   Remove outdated recommendations
     *   Document the actual implementation approach used
     *   Add component usage examples
 
-    **Phase 9: Testing**
+    **Phase 10: Testing**
     *   Create e2e test `client/e2e/ui-consistency.test.ts` to verify:
         - All pages use consistent theming
         - Dark/light mode switches properly
@@ -177,6 +184,7 @@ Review the current approach to registration and refactor to enable watertight re
     *   Modify: `client/src/routes/payment/+page.svelte`
     *   Modify: `client/src/routes/payment/success/+page.svelte`
     *   Modify: `client/src/routes/payment/cancel/+page.svelte`
+    *   Modify: `client/src/routes/chat/+page.svelte`
     *   Modify: `client/src/lib/components/chat/MarkdownContent.svelte`
     *   Modify: `client/src/lib/components/auth/GoogleOAuthButton.svelte`
     *   Modify: `client/src/lib/components/chat/ChatInput.svelte`
@@ -184,11 +192,13 @@ Review the current approach to registration and refactor to enable watertight re
     *   Delete: `documentation/UI_UX_THEME.md` (after merging)
 
 *   **Implementation Notes:**
+    MUST ENSURE:
     *   Use `tailwindcss` as means of styling. Remove all custom CSS that does not directly use `tailwindcss`.
     *   Ensure navigation bar menu is correctly reactive and scales across all screen sizes.
     *   Ensure all navigation bar components are consistent and share look and feel
     *   Ensure that all components have shared styling and theming and fully reusable
     *   Ensure that the theme is consistent across all pages; create a mechanism that allows the simple addition of pages, ensuring the new pages align with application styling, theming, etc.
+    *   Ensure text colours ALWAYS match the theme
     *   Ensure that the dark/light theming is logical and the base colours are opposites - e.g., if the theme background for 'dark' is `indigo-950`, then by logic the 'light' is `indigo-50`, etc.
     *   Start each phase with `just check-client` and end with `just check-client`
     *   Test UI changes using `playwright` MCP to verify visual consistency

@@ -271,6 +271,30 @@ docker-run: check-env
     @echo "Running Docker container with local environment variables..."
     ./scripts/run-docker.sh
 
+# --- Template Scaffolding ---
+# template-build: Builds the template CLI tool
+# Usage: just template-build
+template-build:
+    @echo "Building template CLI tool..."
+    @cd scripts/create-web-template && cargo build --release
+    @echo "✅ Template CLI built at scripts/create-web-template/target/release/create-web-template"
+
+# template-test: Tests the template scaffolding by creating a test project
+# Usage: just template-test [project_name]
+template-test project_name="test-project":
+    @echo "Testing template scaffolding..."
+    @cd scripts/create-web-template && cargo build --quiet
+    @rm -rf {{project_name}}
+    @./scripts/create-web-template/target/debug/create-web-template new {{project_name}} --path ./{{project_name}} --no-interactive
+    @echo "✅ Template test complete. Project created at ./{{project_name}}"
+
+# template-clean: Cleans up test projects created by template testing
+# Usage: just template-clean
+template-clean:
+    @echo "Cleaning up test projects..."
+    @rm -rf test-project test-project-*
+    @echo "✅ Test projects cleaned"
+
 # logs: View the latest server and client logs
 # Usage: just logs          (shows both)
 #        just logs server   (shows server logs)

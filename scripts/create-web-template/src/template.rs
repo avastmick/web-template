@@ -156,6 +156,14 @@ impl TemplateProcessor {
             r"CLAUDE\.md".to_string(),
             r"INSTRUCTIONS\.md".to_string(),
             r"CURRENT_TASKS\.md".to_string(),
+            // Documentation directory - template-specific
+            r"documentation/.*".to_string(),
+            // Other template-specific files
+            r"scratchpad\.md".to_string(),
+            r"check_auth\.js".to_string(),
+            // Test artifacts
+            r"test-results/.*".to_string(),
+            r"test-project/.*".to_string(),
         ];
 
         // Add feature-specific excludes
@@ -204,9 +212,8 @@ impl TemplateProcessor {
             let should_template = Self::should_template_file(source);
 
             let processed = if should_template {
-                self.tera
-                    .render_str(&file_content, context)
-                    .map_err(TemplateError::Template)?
+                // Use simple variable substitution for all files to avoid Tera parsing issues
+                Self::simple_variable_substitution(&file_content, context)
             } else {
                 file_content
             };
@@ -226,6 +233,16 @@ impl TemplateProcessor {
     }
 
     fn should_template_file(path: &Path) -> bool {
+        // List of file extensions that should NOT be templated
+        let non_template_extensions = vec!["hbs", "handlebars"];
+
+        if let Some(ext) = path.extension() {
+            let ext_str = ext.to_string_lossy().to_lowercase();
+            if non_template_extensions.contains(&ext_str.as_str()) {
+                return false;
+            }
+        }
+
         // List of file extensions that should be templated
         let template_extensions = vec![
             "rs", "toml", "json", "md", "txt", "yml", "yaml", "js", "ts", "jsx", "tsx", "svelte",
@@ -247,5 +264,40 @@ impl TemplateProcessor {
         }
 
         false
+    }
+
+    fn might_contain_template_syntax(content: &str) -> bool {
+        // Check if content contains Handlebars-style templates or other template syntax
+        // that might conflict with Tera
+        content.contains("{{") && content.contains("}}")
+    }
+
+    fn simple_variable_substitution(content: &str, context: &Context) -> String {
+        let mut result = content.to_string();
+
+        // Perform simple variable substitution for common variables
+        // This avoids Tera parsing issues with files containing template syntax
+        if let Some(project_name) = context.get("project_name").and_then(|v| v.as_str()) {
+            result = result.replace("web-template", project_name);
+            result = result.replace("web_template", &project_name.replace('-', "_"));
+        }
+
+        if let Some(description) = context.get("project_description").and_then(|v| v.as_str()) {
+            result = result.replace("A high-performance, secure web application template with Svelte frontend and Rust backend", description);
+        }
+
+        if let Some(author_name) = context.get("author_name").and_then(|v| v.as_str()) {
+            if !author_name.is_empty() {
+                result = result.replace("Your Name", author_name);
+            }
+        }
+
+        if let Some(author_email) = context.get("author_email").and_then(|v| v.as_str()) {
+            if !author_email.is_empty() {
+                result = result.replace("your-email@example.com", author_email);
+            }
+        }
+
+        result
     }
 }

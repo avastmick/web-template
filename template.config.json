@@ -128,26 +128,8 @@
   },
   "file_mappings": [
     {
-      "from": "README.md",
-      "to": "README.md",
-      "template": true,
-      "features": null
-    },
-    {
-      "from": "server/Cargo.toml",
-      "to": "server/Cargo.toml",
-      "template": true,
-      "features": null
-    },
-    {
-      "from": "client/package.json",
-      "to": "client/package.json",
-      "template": true,
-      "features": null
-    },
-    {
-      "from": ".envrc.example",
-      "to": ".envrc.example",
+      "from": "example.envrc",
+      "to": ".envrc",
       "template": true,
       "features": null
     }

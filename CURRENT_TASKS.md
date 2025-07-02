@@ -182,6 +182,74 @@ Review the current approach to registration and refactor to enable watertight re
     *   Integration tests for full workflow
     *   E2E test creating and building a project
 
+*   **Current Status (2025-07-02):**
+    *   ✅ CLI tool structure created
+    *   ✅ Basic template generation working
+    *   ✅ Fixed Tera template parsing issues with Handlebars syntax
+    *   ✅ Added exclude patterns for documentation and template-specific files
+    *   ✅ Created `just` recipes for testing: `template-test`, `template-clean`, `template-build`
+    *   ⚠️ Using simple string replacement instead of full Tera templating due to conflicts
+    *   TODO: Implement interactive wizard
+    *   TODO: Implement update mechanism
+    *   TODO: Add more sophisticated variable substitution
+
+*   **Expected Artifact Tree for Generated Project:**
+    ```
+    test-project/
+    ├── .envrc                    # Generated from example.envrc with substitutions
+    ├── .gitignore               # Standard gitignore
+    ├── Dockerfile               # Docker configuration
+    ├── Procfile                 # Process management
+    ├── README.md                # Project-specific readme
+    ├── docker-compose.yml       # Docker compose setup
+    ├── justfile                 # Task runner commands
+    ├── client/                  # Svelte frontend
+    │   ├── README.md
+    │   ├── bun.lock
+    │   ├── components.json
+    │   ├── e2e/                 # E2E tests
+    │   ├── eslint.config.js
+    │   ├── package.json         # With project name substituted
+    │   ├── playwright.config.ts
+    │   ├── src/                 # All source files
+    │   ├── static/
+    │   ├── svelte.config.js
+    │   ├── tsconfig.json
+    │   └── vite.config.ts
+    ├── data/                    # Data directory
+    │   └── production.sqlite3
+    ├── deploy/                  # Deployment scripts
+    │   └── systemd/
+    ├── scripts/                 # Utility scripts
+    │   ├── build-production.sh
+    │   ├── deploy-local.sh
+    │   ├── docker-entrypoint.sh
+    │   └── run-docker.sh
+    └── server/                  # Rust backend
+        ├── Cargo.lock
+        ├── Cargo.toml           # With project name substituted
+        ├── db/                  # Database files and migrations
+        ├── prompts/             # AI prompt templates
+        ├── src/                 # All source files
+        └── tests/               # Integration tests
+    ```
+
+*   **Files Excluded from Template:**
+    - `documentation/` directory (template-specific docs)
+    - `CLAUDE.md`, `INSTRUCTIONS.md`, `CURRENT_TASKS.md`
+    - `scripts/create-web-template/` (the CLI tool itself)
+    - `template.config.json`
+    - `scratchpad.md`, `check_auth.js`
+    - `test-project/` and other test artifacts
+    - Build artifacts (node_modules, target, .svelte-kit, etc.)
+    - Logs and temporary files
+
+*   **Variable Substitutions Applied:**
+    - `web-template` → project name
+    - `web_template` → project name with underscores
+    - Project description in package.json and Cargo.toml
+    - Author name and email where applicable
+
 ### Task 1.5: Enable workspace 'features'
 *   **Status:** **[ ] TODO**
 *   **Action:** Create a means of enabling/disabling workspace features, such as local auth, Google auth, PostgreSQL, etc.

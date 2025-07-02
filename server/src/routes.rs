@@ -183,7 +183,9 @@ pub async fn create_router(
                         .unwrap_or("http://localhost:8080")
                         .trim();
 
-                    first_origin.parse::<HeaderValue>().unwrap()
+                    first_origin
+                        .parse::<HeaderValue>()
+                        .expect("Invalid header value for origin")
                 })
                 .allow_methods([
                     Method::GET,

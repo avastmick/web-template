@@ -200,7 +200,7 @@ mod tests {
         let pool = SqlitePoolOptions::new()
             .connect("sqlite::memory:")
             .await
-            .unwrap();
+            .expect("Failed to create test database");
 
         // Create the user_invites table
         sqlx::query(
@@ -219,7 +219,7 @@ mod tests {
         )
         .execute(&pool)
         .await
-        .unwrap();
+        .expect("Failed to create user_invites table");
 
         pool
     }
@@ -233,7 +233,7 @@ mod tests {
         let invite = service
             .create_invite("test@example.com", Some("admin".to_string()), None)
             .await
-            .unwrap();
+            .expect("Failed to create invite");
 
         assert_eq!(invite.email, "test@example.com");
         assert_eq!(invite.invited_by, Some("admin".to_string()));
@@ -243,14 +243,14 @@ mod tests {
         let exists = service
             .check_invite_exists("test@example.com")
             .await
-            .unwrap();
+            .expect("Failed to check invite");
         assert!(exists);
 
         // Check with different case
         let exists = service
             .check_invite_exists("TEST@EXAMPLE.COM")
             .await
-            .unwrap();
+            .expect("Failed to check invite with different case");
         assert!(exists);
     }
 
@@ -263,16 +263,19 @@ mod tests {
         service
             .create_invite("test@example.com", None, None)
             .await
-            .unwrap();
+            .expect("Failed to create invite");
 
         // Mark as used
-        service.mark_invite_used("test@example.com").await.unwrap();
+        service
+            .mark_invite_used("test@example.com")
+            .await
+            .expect("Failed to mark invite as used");
 
         // Check invite no longer exists (as valid)
         let exists = service
             .check_invite_exists("test@example.com")
             .await
-            .unwrap();
+            .expect("Failed to check invite after marking as used");
         assert!(!exists);
     }
 
@@ -286,13 +289,13 @@ mod tests {
         service
             .create_invite("test@example.com", None, Some(past_time))
             .await
-            .unwrap();
+            .expect("Failed to create expired invite");
 
         // Check invite does not exist (expired)
         let exists = service
             .check_invite_exists("test@example.com")
             .await
-            .unwrap();
+            .expect("Failed to check expired invite");
         assert!(!exists);
     }
 }

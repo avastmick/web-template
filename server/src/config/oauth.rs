@@ -194,7 +194,7 @@ mod tests {
         let config = OAuthConfig::new();
         assert!(config.is_ok());
 
-        let config = config.unwrap();
+        let config = config.expect("Failed to create OAuthConfig");
         assert_eq!(config.server_url, "http://localhost:8081");
         assert_eq!(config.client_url, "http://localhost:8080");
         assert!(config.github_client_id.is_none());
@@ -245,7 +245,7 @@ mod tests {
             env::remove_var("GITHUB_CLIENT_SECRET");
         }
 
-        let config = OAuthConfig::new().unwrap();
+        let config = OAuthConfig::new().expect("Failed to create OAuthConfig");
         let auth_url = config.get_google_auth_url("test_state");
 
         assert!(auth_url.contains("accounts.google.com"));

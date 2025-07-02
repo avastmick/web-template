@@ -55,7 +55,7 @@ async fn test_oauth_service_creation_missing_config() {
 async fn test_get_google_auth_url() {
     setup_test_env();
     let pool = setup_test_db().await;
-    let service = OAuthService::new(pool.clone()).unwrap();
+    let service = OAuthService::new(pool.clone()).expect("Failed to create OAuthService");
     let auth_url = service.get_google_auth_url("test_state");
 
     assert!(auth_url.contains("accounts.google.com"));
@@ -66,7 +66,7 @@ async fn test_get_google_auth_url() {
 async fn test_get_github_auth_url() {
     setup_test_env();
     let pool = setup_test_db().await;
-    let service = OAuthService::new(pool.clone()).unwrap();
+    let service = OAuthService::new(pool.clone()).expect("Failed to create OAuthService");
     let auth_url = service.get_github_auth_url("test_state");
 
     assert!(auth_url.contains("github.com"));
@@ -77,7 +77,7 @@ async fn test_get_github_auth_url() {
 async fn test_oauth_state_storage_and_validation() {
     setup_test_env();
     let pool = setup_test_db().await;
-    let service = OAuthService::new(pool.clone()).unwrap();
+    let service = OAuthService::new(pool.clone()).expect("Failed to create OAuthService");
 
     let state = "test_state_123";
     let provider = OAuthProvider::Google;
@@ -103,7 +103,7 @@ async fn test_oauth_state_storage_and_validation() {
 async fn test_oauth_state_wrong_provider() {
     setup_test_env();
     let pool = setup_test_db().await;
-    let service = OAuthService::new(pool.clone()).unwrap();
+    let service = OAuthService::new(pool.clone()).expect("Failed to create OAuthService");
 
     let state = "test_state_456";
 
@@ -126,7 +126,7 @@ async fn test_oauth_state_expiration() {
 
     setup_test_env();
     let pool = setup_test_db().await;
-    let service = OAuthService::new(pool.clone()).unwrap();
+    let service = OAuthService::new(pool.clone()).expect("Failed to create OAuthService");
 
     let state = "test_state_789";
 
@@ -161,7 +161,7 @@ async fn test_cleanup_expired_states() {
 
     setup_test_env();
     let pool = setup_test_db().await;
-    let service = OAuthService::new(pool.clone()).unwrap();
+    let service = OAuthService::new(pool.clone()).expect("Failed to create OAuthService");
 
     // Insert some expired and non-expired states
     let now = Utc::now();

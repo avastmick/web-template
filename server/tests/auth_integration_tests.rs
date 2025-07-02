@@ -84,18 +84,20 @@ async fn send_json_request(app: Router, method: Method, uri: &str, body: Value) 
         .method(method)
         .uri(uri)
         .header("content-type", "application/json")
-        .body(Body::from(serde_json::to_string(&body).unwrap()))
-        .unwrap();
+        .body(Body::from(
+            serde_json::to_string(&body).expect("Failed to serialize JSON"),
+        ))
+        .expect("Failed to build request");
 
-    app.oneshot(request).await.unwrap()
+    app.oneshot(request).await.expect("Failed to send request")
 }
 
 /// Helper function to extract JSON response body
 async fn extract_json_response(response: Response<Body>) -> Value {
     let body = axum::body::to_bytes(response.into_body(), usize::MAX)
         .await
-        .unwrap();
-    serde_json::from_slice(&body).unwrap()
+        .expect("Failed to read response body");
+    serde_json::from_slice(&body).expect("Failed to parse JSON response")
 }
 
 /// Helper function to send a request with authorization header
@@ -110,9 +112,9 @@ async fn send_authenticated_request(
         .uri(uri)
         .header(header::AUTHORIZATION, format!("Bearer {token}"))
         .body(Body::empty())
-        .unwrap();
+        .expect("Failed to build authenticated request");
 
-    app.oneshot(request).await.unwrap()
+    app.oneshot(request).await.expect("Failed to send request")
 }
 
 /// Helper function to create an invite in the test database
@@ -173,7 +175,10 @@ async fn register_and_login_user(app: Router, email: &str, password: &str) -> St
     assert_eq!(login_response.status(), StatusCode::OK);
 
     let login_body = extract_json_response(login_response).await;
-    login_body["auth_token"].as_str().unwrap().to_string()
+    login_body["auth_token"]
+        .as_str()
+        .expect("auth_token not found in response")
+        .to_string()
 }
 
 #[tokio::test]
@@ -244,7 +249,7 @@ async fn test_register_user_invalid_email() {
     assert!(
         json_body["error"]
             .as_str()
-            .unwrap()
+            .expect("error field not found")
             .contains("Email must be a valid email address")
     );
 }
@@ -268,7 +273,7 @@ async fn test_register_user_weak_password() {
     assert!(
         json_body["error"]
             .as_str()
-            .unwrap()
+            .expect("error field not found")
             .contains("Password must be at least 12 characters long")
     );
 }
@@ -306,11 +311,11 @@ async fn test_register_user_duplicate_email() {
     assert!(
         json_body["error"]
             .as_str()
-            .unwrap()
+            .expect("error field not found")
             .contains("already exists")
             || json_body["error"]
                 .as_str()
-                .unwrap()
+                .expect("error field not found")
                 .contains("User already exists")
     );
 }
@@ -348,9 +353,9 @@ async fn test_register_user_empty_body() {
         .uri("/api/auth/register")
         .header("content-type", "application/json")
         .body(Body::empty())
-        .unwrap();
+        .expect("Failed to build request");
 
-    let response = app.oneshot(request).await.unwrap();
+    let response = app.oneshot(request).await.expect("Failed to send request");
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
@@ -417,7 +422,7 @@ async fn test_login_user_invalid_email() {
     assert!(
         json_body["error"]
             .as_str()
-            .unwrap()
+            .expect("error field not found")
             .contains("Email must be a valid email address")
     );
 }
@@ -441,7 +446,7 @@ async fn test_login_user_nonexistent_email() {
     assert!(
         json_body["error"]
             .as_str()
-            .unwrap()
+            .expect("error field not found")
             .contains("Invalid email or password")
     );
 }
@@ -485,7 +490,7 @@ async fn test_login_user_wrong_password() {
     assert!(
         json_body["error"]
             .as_str()
-            .unwrap()
+            .expect("error field not found")
             .contains("Invalid email or password")
     );
 }
@@ -532,7 +537,7 @@ async fn test_login_user_empty_password() {
     assert!(
         json_body["error"]
             .as_str()
-            .unwrap()
+            .expect("error field not found")
             .contains("Password is required")
     );
 }
@@ -573,9 +578,9 @@ async fn test_get_current_user_missing_auth_header() {
         .method(Method::GET)
         .uri("/api/users/me")
         .body(Body::empty())
-        .unwrap();
+        .expect("Failed to build request");
 
-    let response = app.oneshot(request).await.unwrap();
+    let response = app.oneshot(request).await.expect("Failed to send request");
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 
@@ -583,7 +588,7 @@ async fn test_get_current_user_missing_auth_header() {
     assert!(
         json_body["error"]
             .as_str()
-            .unwrap()
+            .expect("error field not found")
             .contains("Missing or invalid authorization header")
     );
 }
@@ -601,7 +606,7 @@ async fn test_get_current_user_invalid_token() {
     assert!(
         json_body["error"]
             .as_str()
-            .unwrap()
+            .expect("error field not found")
             .contains("Invalid or expired token")
     );
 }
@@ -619,7 +624,7 @@ async fn test_get_current_user_malformed_token() {
     assert!(
         json_body["error"]
             .as_str()
-            .unwrap()
+            .expect("error field not found")
             .contains("Invalid or expired token")
     );
 }
@@ -633,9 +638,9 @@ async fn test_get_current_user_empty_bearer_token() {
         .uri("/api/users/me")
         .header(header::AUTHORIZATION, "Bearer ")
         .body(Body::empty())
-        .unwrap();
+        .expect("Failed to build request");
 
-    let response = app.oneshot(request).await.unwrap();
+    let response = app.oneshot(request).await.expect("Failed to send request");
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 
@@ -643,7 +648,7 @@ async fn test_get_current_user_empty_bearer_token() {
     assert!(
         json_body["error"]
             .as_str()
-            .unwrap()
+            .expect("error field not found")
             .contains("Invalid or expired token")
     );
 }
@@ -657,9 +662,9 @@ async fn test_get_current_user_wrong_auth_scheme() {
         .uri("/api/users/me")
         .header(header::AUTHORIZATION, "Basic dGVzdDp0ZXN0")
         .body(Body::empty())
-        .unwrap();
+        .expect("Failed to build request");
 
-    let response = app.oneshot(request).await.unwrap();
+    let response = app.oneshot(request).await.expect("Failed to send request");
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 
@@ -667,7 +672,7 @@ async fn test_get_current_user_wrong_auth_scheme() {
     assert!(
         json_body["error"]
             .as_str()
-            .unwrap()
+            .expect("error field not found")
             .contains("Missing or invalid authorization header")
     );
 }

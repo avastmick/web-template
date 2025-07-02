@@ -135,10 +135,12 @@ async fn send_json_request(app: Router, method: Method, uri: &str, body: Value) 
         .method(method)
         .uri(uri)
         .header("content-type", "application/json")
-        .body(Body::from(serde_json::to_string(&body).unwrap()))
-        .unwrap();
+        .body(Body::from(
+            serde_json::to_string(&body).expect("Failed to serialize JSON body"),
+        ))
+        .expect("Failed to build request");
 
-    let response = app.oneshot(request).await.unwrap();
+    let response = app.oneshot(request).await.expect("Failed to send request");
 
     if is_verbose() {
         info!("📥 Response status: {}", response.status());
@@ -151,8 +153,8 @@ async fn send_json_request(app: Router, method: Method, uri: &str, body: Value) 
 async fn extract_json_response(response: Response<Body>) -> Value {
     let body = axum::body::to_bytes(response.into_body(), usize::MAX)
         .await
-        .unwrap();
-    let json_value: Value = serde_json::from_slice(&body).unwrap();
+        .expect("Failed to read response body");
+    let json_value: Value = serde_json::from_slice(&body).expect("Failed to parse JSON response");
 
     if is_verbose() {
         debug!(
@@ -190,13 +192,17 @@ async fn send_authenticated_request(
     let request = if let Some(body_data) = body {
         request_builder = request_builder.header("content-type", "application/json");
         request_builder
-            .body(Body::from(serde_json::to_string(&body_data).unwrap()))
-            .unwrap()
+            .body(Body::from(
+                serde_json::to_string(&body_data).expect("Failed to serialize JSON body"),
+            ))
+            .expect("Failed to build authenticated request")
     } else {
-        request_builder.body(Body::empty()).unwrap()
+        request_builder
+            .body(Body::empty())
+            .expect("Failed to build authenticated request")
     };
 
-    let response = app.oneshot(request).await.unwrap();
+    let response = app.oneshot(request).await.expect("Failed to send request");
 
     if is_verbose() {
         info!("📥 Authenticated response status: {}", response.status());
@@ -338,7 +344,10 @@ async fn register_and_login_user(pool: Pool<Sqlite>, email: &str, password: &str
     assert_eq!(login_response.status(), StatusCode::OK);
 
     let login_body = extract_json_response(login_response).await;
-    login_body["auth_token"].as_str().unwrap().to_string()
+    login_body["auth_token"]
+        .as_str()
+        .expect("Auth token not found in login response")
+        .to_string()
 }
 
 #[tokio::test]
@@ -351,9 +360,9 @@ async fn test_ai_info_endpoint() {
         .method(Method::GET)
         .uri("/api/ai/info")
         .body(Body::empty())
-        .unwrap();
+        .expect("Failed to build request");
 
-    let response = app.oneshot(request).await.unwrap();
+    let response = app.oneshot(request).await.expect("Failed to send request");
 
     // This will likely fail due to missing API key, but we can test the endpoint structure
     if response.status() == StatusCode::OK {
@@ -484,9 +493,9 @@ async fn test_chat_websocket_endpoint() {
         .header("sec-websocket-key", "test-key")
         .header("sec-websocket-version", "13")
         .body(Body::empty())
-        .unwrap();
+        .expect("Failed to build request");
 
-    let response = app.oneshot(request).await.unwrap();
+    let response = app.oneshot(request).await.expect("Failed to send request");
 
     // Should not be an auth error (either upgrades or fails for other reasons)
     assert_ne!(response.status(), StatusCode::UNAUTHORIZED);
@@ -540,7 +549,9 @@ async fn test_simple_chat_request_response_flow() {
         assert_eq!(json_body["message"]["role"], "assistant");
 
         // Verify database persistence - check conversation was created
-        let conversation_id = json_body["conversation_id"].as_str().unwrap();
+        let conversation_id = json_body["conversation_id"]
+            .as_str()
+            .expect("Conversation ID not found in response");
         let conversation_exists = sqlx::query_scalar!(
             "SELECT COUNT(*) FROM ai_conversations WHERE id = ?",
             conversation_id
@@ -756,7 +767,9 @@ async fn test_conversation_persistence_and_retrieval() {
 
     if response1.status() == StatusCode::OK {
         let json_body1 = extract_json_response(response1).await;
-        let conversation_id = json_body1["conversation_id"].as_str().unwrap();
+        let conversation_id = json_body1["conversation_id"]
+            .as_str()
+            .expect("Conversation ID not found in response");
 
         // Test retrieving conversations list
         let conversations_response = send_authenticated_request(
@@ -772,7 +785,9 @@ async fn test_conversation_persistence_and_retrieval() {
         let conversations_list = extract_json_response(conversations_response).await;
         assert!(conversations_list["conversations"].is_array());
 
-        let conversations = conversations_list["conversations"].as_array().unwrap();
+        let conversations = conversations_list["conversations"]
+            .as_array()
+            .expect("Conversations should be an array");
         assert!(!conversations.is_empty());
 
         // Find our conversation in the list
@@ -800,7 +815,9 @@ async fn test_conversation_persistence_and_retrieval() {
         assert_eq!(conversation_detail["conversation"]["id"], conversation_id);
         assert!(conversation_detail["messages"].is_array());
 
-        let messages = conversation_detail["messages"].as_array().unwrap();
+        let messages = conversation_detail["messages"]
+            .as_array()
+            .expect("Messages should be an array");
         assert_eq!(messages.len(), 2); // User message + AI response
 
         // Verify message order and content
@@ -843,7 +860,9 @@ async fn test_conversation_archival() {
 
     if response.status() == StatusCode::OK {
         let json_body = extract_json_response(response).await;
-        let conversation_id = json_body["conversation_id"].as_str().unwrap();
+        let conversation_id = json_body["conversation_id"]
+            .as_str()
+            .expect("Conversation ID not found in response");
 
         // Archive the conversation
         let archive_response = send_authenticated_request(
@@ -881,7 +900,9 @@ async fn test_conversation_archival() {
         assert_eq!(conversations_response.status(), StatusCode::OK);
         let conversations_list = extract_json_response(conversations_response).await;
 
-        let conversations = conversations_list["conversations"].as_array().unwrap();
+        let conversations = conversations_list["conversations"]
+            .as_array()
+            .expect("Conversations should be an array");
         let archived_conversation = conversations
             .iter()
             .find(|conv| conv["id"].as_str() == Some(conversation_id));
@@ -950,7 +971,9 @@ async fn test_usage_statistics_tracking() {
         assert!(usage_stats["total_cost_cents"].is_number());
         assert!(usage_stats["requests_by_model"].is_object());
 
-        let total_requests = usage_stats["total_requests"].as_i64().unwrap();
+        let total_requests = usage_stats["total_requests"]
+            .as_i64()
+            .expect("Total requests should be a number");
         assert!(total_requests > 0);
 
         // Verify database contains usage record
@@ -1138,7 +1161,9 @@ async fn test_user_isolation_and_authorization() {
 
     if response1.status() == StatusCode::OK {
         let json_body1 = extract_json_response(response1).await;
-        let conversation_id = json_body1["conversation_id"].as_str().unwrap();
+        let conversation_id = json_body1["conversation_id"]
+            .as_str()
+            .expect("Conversation ID not found in response");
 
         // User 2 tries to access User 1's conversation
         let unauthorized_access = send_authenticated_request(
@@ -1168,7 +1193,9 @@ async fn test_user_isolation_and_authorization() {
 
         assert_eq!(user2_conversations.status(), StatusCode::OK);
         let conversations_list = extract_json_response(user2_conversations).await;
-        let conversations = conversations_list["conversations"].as_array().unwrap();
+        let conversations = conversations_list["conversations"]
+            .as_array()
+            .expect("Conversations should be an array");
 
         // User 2 should not see User 1's conversations
         let user1_conversation = conversations

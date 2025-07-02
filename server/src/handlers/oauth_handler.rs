@@ -394,7 +394,7 @@ mod tests {
     #[test]
     fn test_oauth_init_request_parsing() {
         let json = r#"{"state": "test_state"}"#;
-        let req: OAuthInitRequest = serde_json::from_str(json).unwrap();
+        let req: OAuthInitRequest = serde_json::from_str(json).expect("Failed to parse JSON");
         assert_eq!(req.state, Some("test_state".to_string()));
     }
 

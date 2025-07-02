@@ -64,7 +64,9 @@ impl SchemaValidator {
 
                     // Validate required properties
                     if let Some(required) = schema.get("required").and_then(Value::as_array) {
-                        let obj = value.as_object().unwrap();
+                        let obj = value.as_object().ok_or_else(|| {
+                            AiError::SchemaValidation("Expected object".to_string())
+                        })?;
                         for req in required {
                             if let Some(req_name) = req.as_str() {
                                 if !obj.contains_key(req_name) {
@@ -78,7 +80,9 @@ impl SchemaValidator {
 
                     // Validate properties
                     if let Some(properties) = schema.get("properties").and_then(Value::as_object) {
-                        let obj = value.as_object().unwrap();
+                        let obj = value.as_object().ok_or_else(|| {
+                            AiError::SchemaValidation("Expected object".to_string())
+                        })?;
                         for (key, val) in obj {
                             if let Some(prop_schema) = properties.get(key) {
                                 self.validate_against_schema(val, prop_schema)?;
@@ -93,7 +97,9 @@ impl SchemaValidator {
 
                     // Validate items
                     if let Some(items_schema) = schema.get("items") {
-                        let arr = value.as_array().unwrap();
+                        let arr = value.as_array().ok_or_else(|| {
+                            AiError::SchemaValidation("Expected array".to_string())
+                        })?;
                         for item in arr {
                             self.validate_against_schema(item, items_schema)?;
                         }
@@ -242,7 +248,9 @@ mod tests {
             }
         });
 
-        validator.register_schema("person", schema).unwrap();
+        validator
+            .register_schema("person", schema)
+            .expect("Failed to register schema");
 
         // Valid object
         let valid = json!({

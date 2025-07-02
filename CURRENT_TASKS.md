@@ -59,7 +59,130 @@ Review the current approach to registration and refactor to enable watertight re
 *   **Action:** Review the current approach to the UI and theming. Update UI on client to optimise the user experience and make all components and theming consistent. General colour theme is using tailwindcss `indigo` for background, at either end of scale; use `amber` for highlighting (focus border, hover over links and buttons, etc); contrast colours for ease of viewing.
 *   **Details:**
 
-### Task 1.4: Enable workspace 'features'
+### Task 1.4: Developer Experience - Template Scaffolding
+*   **Status:** **[ ] TODO** - IN PROGRESS (2025-07-02)
+*   **Action:** Create scaffolding tools for new projects using this template. The goal is to have a simple mechanism that will set up a new project with the contents of the template, so the new project can build on top of the template.
+*   **Details:**
+    *   Create CLI tool for project initialization in Rust
+    *   Implement interactive project setup wizard
+    *   Add template customization options (features to include/exclude)
+    *   Create project renaming and rebranding automation
+    *   Add development environment setup automation
+    *   Implement feature flag system for optional components
+    *   Create update mechanism for template improvements
+
+*   **Detailed Implementation Plan:**
+
+    **Phase 1: Create Rust CLI Binary Structure**
+    1. Create a new Rust binary crate at `scripts/create-web-template/`
+       - Use `cargo new scripts/create-web-template --bin`
+       - Add dependencies: `clap` (CLI args), `dialoguer` (interactive prompts), `serde`/`serde_json` (config), `tokio` (async), `tera` (templating), `console` (colored output), `indicatif` (progress bars)
+       - Set up basic CLI structure with subcommands: `new`, `update`, `config`
+
+    2. Create core modules structure:
+       - `src/main.rs` - CLI entry point and command routing
+       - `src/cli.rs` - CLI argument definitions using clap
+       - `src/wizard.rs` - Interactive setup wizard logic
+       - `src/template.rs` - Template file processing and variable substitution
+       - `src/config.rs` - Configuration management
+       - `src/git.rs` - Git operations (init, cleanup)
+       - `src/utils.rs` - Utility functions (file copying, path handling)
+       - `src/errors.rs` - Custom error types
+
+    **Phase 2: Template Configuration System**
+    1. Create `template.config.json` at project root defining:
+       - Template metadata (name, version, description)
+       - Variable definitions (project_name, description, author, etc.)
+       - Feature flags (local_auth, oauth providers, database, payment, chat)
+       - File exclusion patterns based on features
+       - Post-processing scripts
+
+    2. Implement configuration reader in `src/config.rs`:
+       - Parse and validate template.config.json
+       - Handle feature dependencies and conflicts
+       - Provide defaults for optional values
+
+    **Phase 3: Interactive Setup Wizard**
+    1. Implement wizard flow in `src/wizard.rs`:
+       - Project name validation (valid Rust/npm package name)
+       - Project description
+       - Author information
+       - Feature selection with descriptions
+       - Database choice (SQLite vs PostgreSQL)
+       - OAuth provider selection
+       - Payment integration (Stripe on/off)
+       - Environment setup options
+
+    2. Add validation logic:
+       - Check target directory doesn't exist or is empty
+       - Validate project name follows naming conventions
+       - Ensure selected features are compatible
+
+    **Phase 4: Template Processing Engine**
+    1. Implement file processing in `src/template.rs`:
+       - Copy template files to target directory
+       - Variable substitution in files (using Tera templating)
+       - Feature-based file filtering
+       - Binary file handling (images, fonts)
+       - Preserve file permissions
+
+    2. Variable substitution targets:
+       - `Cargo.toml` files (package name, dependencies)
+       - `package.json` (name, description)
+       - `.envrc.example` (feature-specific variables)
+       - Documentation files
+       - Source code imports/module names
+
+    **Phase 5: Post-Processing**
+    1. Git initialization (`src/git.rs`):
+       - Initialize new git repository
+       - Clean up template-specific files
+       - Create initial commit
+
+    2. Environment setup automation:
+       - Generate `.envrc` from `.envrc.example`
+       - Create required directories
+       - Set up database (if SQLite selected)
+       - Install dependencies (optional)
+
+    **Phase 6: Update Mechanism**
+    1. Implement update command:
+       - Fetch latest template version
+       - Diff current project with template
+       - Selective update of template files
+       - Preserve user modifications
+
+*   **Files to Create:**
+    *   `scripts/create-web-template/Cargo.toml` (CLI crate manifest)
+    *   `scripts/create-web-template/src/main.rs` (CLI entry point)
+    *   `scripts/create-web-template/src/cli.rs` (command definitions)
+    *   `scripts/create-web-template/src/wizard.rs` (interactive setup)
+    *   `scripts/create-web-template/src/template.rs` (file processing)
+    *   `scripts/create-web-template/src/config.rs` (configuration)
+    *   `scripts/create-web-template/src/git.rs` (git operations)
+    *   `scripts/create-web-template/src/utils.rs` (utilities)
+    *   `scripts/create-web-template/src/errors.rs` (error types)
+    *   `template.config.json` (template configuration)
+    *   `documentation/TEMPLATE_USAGE.md` (usage guide)
+
+*   **Implementation Notes:**
+    *   Use Cargo for cross-platform compatibility
+    *   Implement file templating with variable substitution using Tera
+    *   Add Git repository initialization and cleanup
+    *   Support different database options during setup
+    *   Use async/await for file operations
+    *   Provide verbose output option for debugging
+    *   Add dry-run mode to preview changes
+
+*   **Quality Checks:**
+    *   Test project creation on different operating systems
+    *   Verify generated projects build and run correctly
+    *   Test with different configuration combinations
+    *   Unit tests for each module
+    *   Integration tests for full workflow
+    *   E2E test creating and building a project
+
+### Task 1.5: Enable workspace 'features'
 *   **Status:** **[ ] TODO**
 *   **Action:** Create a means of enabling/disabling workspace features, such as local auth, Google auth, PostgreSQL, etc.
 *   **Details:**
@@ -165,7 +288,7 @@ Review the current approach to registration and refactor to enable watertight re
     *   Ensure no runtime errors when features are disabled
     *   Document troubleshooting common issues
 
-### Task 1.5: Deployment Guides and tools
+### Task 1.6: Deployment Guides and tools
 *   **Status:** **[ ] TODO**
 *   **Action:** Create comprehensive deployment guides for major cloud platforms
 *   **Details:**
@@ -193,35 +316,3 @@ Review the current approach to registration and refactor to enable watertight re
     *   Test deployment guides on actual platforms
     *   Verify all environment variables and configurations
     *   Document troubleshooting common issues
-
-### Task 1.6: Developer Experience - Template Scaffolding
-*   **Status:** **[ ] TODO**
-*   **Action:** Create scaffolding tools for new projects using this template
-*   **Details:**
-    *   Create CLI tool for project initialization
-    *   Implement interactive project setup wizard
-    *   Add template customization options (features to include/exclude)
-    *   Create project renaming and rebranding automation
-    *   Add development environment setup automation
-    *   Implement feature flag system for optional components
-    *   Create update mechanism for template improvements
-*   **Files to Create:**
-    *   `scripts/create-project.rs` (project scaffolding script)
-    *   `scripts/setup-wizard.rs` (interactive setup)
-    *   `scripts/update-template.rs` (template update utility)
-    *   `template.config.json` (template configuration)
-    *   `documentation/template-usage.md` (usage guide)
-*   **Implementation Notes:**
-    *   Use Cargo for cross-platform compatibility
-    *   Implement file templating with variable substitution
-    *   Add Git repository initialization and cleanup
-    *   Support different database options during setup
-*   **Quality Checks:**
-    *   Test project creation on different operating systems
-    *   Verify generated projects build and run correctly
-    *   Test with different configuration combinations
-
-## **Note on Testing:**
-*   **Server:** Unit tests for individual functions/modules. Integration tests for API endpoints (testing request/response, database interaction). Use `cargo test`.
-*   **Client:** Unit tests for Svelte components, stores, and services (using Vitest or Jest). E2E tests for user flows (using Playwright). Use `bun test` with `just test` wrappers.
-*   All tests should be runnable via `just` commands (e.g., `just server-test`, `just client-test`, `just test-e2e`).

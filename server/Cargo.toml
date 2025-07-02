@@ -37,3 +37,14 @@ validator = { version = "0.20.0", features = ["derive"] }
 
 [dev-dependencies]
 tempfile = "3.20.0"
+
+[lints.rust]
+# unsafe_code = "forbid"
+
+[lints.clippy]
+# Elevate default Clippy warnings to errors.
+# This will make sure `cargo clippy` fails on any warnings from these groups.
+all = "deny"           # Denies all lints in the default `clippy::all` group (correctness, suspicious, complexity, perf, style).
+pedantic = "warn"      # Denies all lints in `clippy::pedantic`. Be prepared for many `#[allow]`s.
+# restriction = "warn"   # Denies all lints in `clippy::restriction`. Extremely strict, often requires many `#[allow]`s.
+# cargo = "deny"         # Denies lints for `Cargo.toml` improvements.

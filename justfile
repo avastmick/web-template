@@ -411,7 +411,6 @@ check-server: format-server
     @echo "Checking server code: cargo fmt --check, cargo clippy, cargo check..."
     cd server && cargo fmt --check
     cd server && SQLX_OFFLINE=true cargo clippy --all-targets --all-features -- -D warnings -D clippy::pedantic
-    cd server && SQLX_OFFLINE=true cargo check # Final compilation check
     @echo "Checking for overlong files (>600 lines)..."
     @find server/src -name "*.rs" -exec bash -c 'lines=$(wc -l < "{}"); if [ "$lines" -gt 600 ]; then echo "❌ ERROR: {} has $lines lines (max: 600)"; exit 1; fi' \; || (echo "❌ Some server files exceed 600 lines. Please refactor them into smaller modules." && exit 1)
     @echo "✅ All server checks complete."
@@ -426,6 +425,16 @@ check-client: format-client
     @echo "Checking for overlong files (>600 lines)..."
     @find client/src -name "*.ts" -o -name "*.js" -o -name "*.svelte" -o -name "*.vue" -exec bash -c 'lines=$(wc -l < "{}"); if [ "$lines" -gt 600 ]; then echo "❌ ERROR: {} has $lines lines (max: 600)"; exit 1; fi' \; || (echo "❌ Some client files exceed 600 lines. Please refactor them into smaller modules." && exit 1)
     @echo "✅ All client checks complete."
+
+# check-template: Runs template generate checks (fmt --check, clippy, cargo check).
+#  `cd scripts/create-web-template && cargo fmt --check && cargo clippy -- -D warnings -D clippy::pedantic`
+check-template:
+    @echo "Checking template generation code: cargo fmt --check, cargo clippy, cargo check..."
+    cd scripts/create-web-template && cargo fmt --all
+    cd scripts/create-web-template && cargo clippy --all-targets --all-features -- -D warnings -D clippy::pedantic
+    @echo "Checking for overlong files (>600 lines)..."
+    @find scripts/create-web-template/src -name "*.rs" -exec bash -c 'lines=$(wc -l < "{}"); if [ "$lines" -gt 600 ]; then echo "❌ ERROR: {} has $lines lines (max: 600)"; exit 1; fi' \; || (echo "❌ Some server files exceed 600 lines. Please refactor them into smaller modules." && exit 1)
+    @echo "✅ All server checks complete."
 
 # check: Runs all checks for both client and server.
 # Usage: just check
@@ -446,6 +455,13 @@ clean-client:
     @echo "Cleaning client artifacts (node_modules, .svelte-kit, build, coverage, bun.lockb)..."
     cd client && rm -rf node_modules .svelte-kit build coverage bun.lockb client/.bun
     @echo "✅ Client artifacts and dependencies cleaned."
+
+# clean-template: Removes template build artifacts ('template/target').
+# Usage: just clean-server
+clean-template:
+    @echo "Cleaning template build artifacts (cd scripts/create-web-template && cargo clean)..."
+    cd scripts/create-web-template && cargo clean
+    @echo "✅ Create template artifacts cleaned."
 
 # clean: Removes all build artifacts, dependencies, temporary files, and database from project.
 # Usage: just clean

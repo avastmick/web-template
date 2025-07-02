@@ -1,0 +1,172 @@
+{
+  "template": {
+    "name": "web-template",
+    "version": "0.1.0",
+    "description": "A high-performance, secure web application template with Svelte frontend and Rust backend",
+    "repository": "https://github.com/your-org/web-template",
+    "license": "MIT"
+  },
+  "variables": {
+    "project_name": {
+      "description": "Name of your project",
+      "required": true,
+      "validation": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+    },
+    "project_description": {
+      "description": "Short description of your project",
+      "required": false,
+      "default": "A web application built with web-template"
+    },
+    "author_name": {
+      "description": "Author name",
+      "required": false,
+      "default": ""
+    },
+    "author_email": {
+      "description": "Author email",
+      "required": false,
+      "default": ""
+    },
+    "database_url": {
+      "description": "Database connection URL",
+      "required": false,
+      "default": "sqlite://data/app.db"
+    }
+  },
+  "features": {
+    "local_auth": {
+      "description": "Enable email/password authentication",
+      "default": true,
+      "depends_on": [],
+      "conflicts_with": [],
+      "includes": [
+        "server/src/handlers/auth_handler.rs",
+        "client/src/routes/login/",
+        "client/src/routes/register/"
+      ],
+      "excludes": [],
+      "variables": {}
+    },
+    "google_auth": {
+      "description": "Enable Google OAuth authentication",
+      "default": true,
+      "depends_on": [],
+      "conflicts_with": [],
+      "includes": [
+        "server/src/handlers/oauth_handler.rs"
+      ],
+      "excludes": [],
+      "variables": {
+        "GOOGLE_CLIENT_ID": "",
+        "GOOGLE_CLIENT_SECRET": ""
+      }
+    },
+    "github_auth": {
+      "description": "Enable GitHub OAuth authentication",
+      "default": true,
+      "depends_on": [],
+      "conflicts_with": [],
+      "includes": [
+        "server/src/handlers/oauth_handler.rs"
+      ],
+      "excludes": [],
+      "variables": {
+        "GITHUB_CLIENT_ID": "",
+        "GITHUB_CLIENT_SECRET": ""
+      }
+    },
+    "stripe_payment": {
+      "description": "Enable Stripe payment integration",
+      "default": true,
+      "depends_on": [],
+      "conflicts_with": [],
+      "includes": [
+        "server/src/handlers/payment_handler.rs",
+        "server/src/services/payment_service.rs",
+        "client/src/routes/payment/"
+      ],
+      "excludes": [],
+      "variables": {
+        "STRIPE_SECRET_KEY": "",
+        "STRIPE_WEBHOOK_SECRET": ""
+      }
+    },
+    "chat": {
+      "description": "Enable chat functionality",
+      "default": true,
+      "depends_on": [],
+      "conflicts_with": [],
+      "includes": [
+        "server/src/handlers/chat_handler.rs",
+        "client/src/routes/chat/"
+      ],
+      "excludes": [],
+      "variables": {}
+    },
+    "db_pg": {
+      "description": "Use PostgreSQL instead of SQLite",
+      "default": false,
+      "depends_on": [],
+      "conflicts_with": ["db_sqlite"],
+      "includes": [],
+      "excludes": [],
+      "variables": {
+        "DATABASE_URL": "postgresql://user:password@localhost/dbname"
+      }
+    },
+    "db_sqlite": {
+      "description": "Use SQLite database (default)",
+      "default": true,
+      "depends_on": [],
+      "conflicts_with": ["db_pg"],
+      "includes": [],
+      "excludes": [],
+      "variables": {
+        "DATABASE_URL": "sqlite://data/app.db"
+      }
+    }
+  },
+  "file_mappings": [
+    {
+      "from": "README.md",
+      "to": "README.md",
+      "template": true,
+      "features": null
+    },
+    {
+      "from": "server/Cargo.toml",
+      "to": "server/Cargo.toml",
+      "template": true,
+      "features": null
+    },
+    {
+      "from": "client/package.json",
+      "to": "client/package.json",
+      "template": true,
+      "features": null
+    },
+    {
+      "from": ".envrc.example",
+      "to": ".envrc.example",
+      "template": true,
+      "features": null
+    }
+  ],
+  "post_processing": [
+    {
+      "type": "RemoveFiles",
+      "patterns": [
+        "CLAUDE.md",
+        "INSTRUCTIONS.md",
+        "CURRENT_TASKS.md",
+        "scripts/create-web-template",
+        "template.config.json"
+      ]
+    },
+    {
+      "type": "GitInit",
+      "initial_commit": true,
+      "message": "Initial commit from web-template"
+    }
+  ]
+}

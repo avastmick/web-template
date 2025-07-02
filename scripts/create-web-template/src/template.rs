@@ -1,27 +1,22 @@
 use crate::config::{FileMapping, TemplateConfig};
-use crate::errors::{Result, TemplateError};
+use crate::errors::Result;
 use crate::utils::{ensure_directory, is_binary_file, print_info};
 use crate::wizard::ProjectConfig;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::fs;
 use std::path::{Path, PathBuf};
-use tera::{Context, Tera};
+use tera::Context;
 use walkdir::WalkDir;
 
 pub struct TemplateProcessor {
     template_config: TemplateConfig,
-    tera: Tera,
     source_path: PathBuf,
 }
 
 impl TemplateProcessor {
     pub fn new(template_config: TemplateConfig, source_path: PathBuf) -> Self {
-        let mut tera = Tera::default();
-        tera.autoescape_on(vec![]);
-
         Self {
             template_config,
-            tera,
             source_path,
         }
     }
@@ -194,6 +189,7 @@ impl TemplateProcessor {
             .find(|m| m.from == path)
     }
 
+    #[allow(clippy::unused_self)]
     fn process_file(&mut self, source: &Path, target: &Path, context: &Context) -> Result<()> {
         // Ensure target directory exists
         if let Some(parent) = target.parent() {
@@ -266,33 +262,28 @@ impl TemplateProcessor {
         false
     }
 
-    fn might_contain_template_syntax(content: &str) -> bool {
-        // Check if content contains Handlebars-style templates or other template syntax
-        // that might conflict with Tera
-        content.contains("{{") && content.contains("}}")
-    }
 
-    fn simple_variable_substitution(content: &str, context: &Context) -> String {
+    fn simple_variable_substitution(content: &str, ctx: &Context) -> String {
         let mut result = content.to_string();
 
         // Perform simple variable substitution for common variables
         // This avoids Tera parsing issues with files containing template syntax
-        if let Some(project_name) = context.get("project_name").and_then(|v| v.as_str()) {
+        if let Some(project_name) = ctx.get("project_name").and_then(|v| v.as_str()) {
             result = result.replace("web-template", project_name);
             result = result.replace("web_template", &project_name.replace('-', "_"));
         }
 
-        if let Some(description) = context.get("project_description").and_then(|v| v.as_str()) {
+        if let Some(description) = ctx.get("project_description").and_then(|v| v.as_str()) {
             result = result.replace("A high-performance, secure web application template with Svelte frontend and Rust backend", description);
         }
 
-        if let Some(author_name) = context.get("author_name").and_then(|v| v.as_str()) {
+        if let Some(author_name) = ctx.get("author_name").and_then(|v| v.as_str()) {
             if !author_name.is_empty() {
                 result = result.replace("Your Name", author_name);
             }
         }
 
-        if let Some(author_email) = context.get("author_email").and_then(|v| v.as_str()) {
+        if let Some(author_email) = ctx.get("author_email").and_then(|v| v.as_str()) {
             if !author_email.is_empty() {
                 result = result.replace("your-email@example.com", author_email);
             }

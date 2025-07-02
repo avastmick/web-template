@@ -3,6 +3,7 @@ mod config;
 mod errors;
 mod git;
 mod template;
+mod update;
 mod utils;
 mod wizard;
 
@@ -14,6 +15,7 @@ use git::GitOperations;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use template::TemplateProcessor;
+use update::{ProjectMetadata, UpdateManager};
 use utils::{find_project_root, print_error, print_info, print_success, print_warning};
 use wizard::{ProjectConfig, SetupWizard};
 
@@ -59,15 +61,12 @@ async fn run() -> Result<()> {
         }
 
         Commands::Update {
-            path: _,
-            force: _,
-            only: _,
-            exclude: _,
+            path,
+            force,
+            only,
+            exclude,
         } => {
-            print_info("Updating project from template...");
-
-            // TODO: Implement update logic
-            print_warning("Update command not yet implemented");
+            update_project(path, force, only, exclude, cli.dry_run, cli.verbose).await?;
         }
 
         Commands::Config { action } => {
@@ -143,6 +142,9 @@ async fn create_project(options: CreateProjectOptions) -> Result<()> {
                 }
             }
         }
+
+        // Save project metadata
+        save_project_metadata(&project_config, &template_config)?;
 
         // Install dependencies
         install_dependencies(&project_config.path, options.verbose).await?;
@@ -284,6 +286,63 @@ fn handle_config_command(action: Option<ConfigAction>) -> Result<()> {
             print_success("Configuration is valid!");
         }
     }
+
+    Ok(())
+}
+
+fn save_project_metadata(
+    project_config: &ProjectConfig,
+    template_config: &TemplateConfig,
+) -> Result<()> {
+    let metadata_path = project_config.path.join(".web-template.json");
+
+    let metadata = ProjectMetadata {
+        template_version: template_config.template.version.clone(),
+        project_name: project_config.name.clone(),
+        features: project_config.features.clone(),
+        database: project_config.database.clone(),
+        created_at: chrono::Utc::now().to_rfc3339(),
+        last_updated: chrono::Utc::now().to_rfc3339(),
+    };
+
+    let content = serde_json::to_string_pretty(&metadata)?;
+    std::fs::write(metadata_path, content)?;
+
+    Ok(())
+}
+
+async fn update_project(
+    path: Option<PathBuf>,
+    force: bool,
+    only: Option<Vec<String>>,
+    exclude: Option<Vec<String>>,
+    dry_run: bool,
+    verbose: bool,
+) -> Result<()> {
+    // Get project path (default to current directory)
+    let project_path = path.unwrap_or_else(|| std::env::current_dir().unwrap());
+
+    // Validate it's a valid project directory
+    if !project_path.join("justfile").exists() {
+        return Err(TemplateError::Config(
+            "Not a valid web-template project directory (justfile not found)".to_string(),
+        ));
+    }
+
+    // Find template root
+    let template_root = find_project_root()
+        .ok_or_else(|| TemplateError::Config("Could not find template root. Run from within the template directory or specify --template".to_string()))?;
+
+    if verbose {
+        print_info(&format!("Template root: {}", template_root.display()));
+        print_info(&format!("Project path: {}", project_path.display()));
+    }
+
+    // Create update manager
+    let update_manager = UpdateManager::new(template_root, project_path)?;
+
+    // Run update
+    update_manager.update(force, only, exclude, dry_run)?;
 
     Ok(())
 }

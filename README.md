@@ -132,6 +132,27 @@ Key command categories include:
 
 Refer to `CLAUDE.md` for detailed guidelines on development practices, code style, and contributing to this project.
 
+### Creating New Projects from This Template
+
+This template includes a CLI tool for scaffolding new projects:
+
+```bash
+# Build the template CLI tool
+just template-build
+
+# Create a new project interactively
+./scripts/create-web-template/target/release/create-web-template new my-project
+
+# Create a project with specific features
+./scripts/create-web-template/target/release/create-web-template new my-project \
+  --features local_auth,stripe_payment,chat
+
+# Update an existing project with latest template changes
+./scripts/create-web-template/target/release/create-web-template update
+```
+
+See the [template usage documentation](documentation/TEMPLATE_USAGE.md) for detailed instructions.
+
 ### Code Quality and Standards
 
 This project enforces high code quality through several mechanisms:

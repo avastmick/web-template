@@ -85,7 +85,7 @@ For detailed information about the project:
     cd <repository-name>/web-template # Replace <repository-name>
     ```
 3.  **Setup Environment:**
-    *   If it doesn't exist, copy `web-template/.envrc.example` to `web-template/.envrc`.
+    *   If it doesn't exist, copy `web-template/example.envrc` to `web-template/.envrc`.
         ```bash
         cp .envrc.example .envrc
         ```

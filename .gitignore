@@ -28,6 +28,7 @@ vite.config.ts.timestamp-*
 /output/
 **.log
 /logs/
+test-project
 
 # scratchpad
 scratchpad.*

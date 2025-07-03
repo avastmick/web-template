@@ -4,253 +4,92 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 
 ## Status Summary
 
-### Task 1.1: Server & Client - Stripe Payment Integration
-*   **Status:** **[x] DONE
-*   **Action:** Integrate Stripe for subscription and one-time payment processing for users that do not have an 'invite'. Once registered, non-invited users will be presented with a Stripe payment request. All payment will be handled by Stripe, only the current status of the user's payment is needed to be held - i.e. `has_paid`, `is_current`, or similar.
-*   **Current Payment Flow Issues to Fix:**
-    *   OAuth registration for non-invited users shows error instead of redirecting to payment page
-    *   Payment page shows Stripe initialization error (needs authentication)
-    *   OAuth callback redirect should go to `/` instead of old `/profile` route
+### Task 1.1: Achieve 90% Server Code Coverage
+*   **Status:** **[ ] TODO**
+*   **Action:** Implement comprehensive test coverage for all server code
 *   **Details:**
-    *   Document how to integrate Stripe and which API keys, etc are required and how to get it setup
-    *   Set up Stripe webhook handling for payment events
-    *   Add one-time payment processing
+    *   Install and configure cargo-tarpaulin for coverage reporting
+    *   Write unit tests to achieve 90% coverage for all services
+    *   Write unit tests for all models and utilities
+    *   Create test helpers and fixtures for common scenarios
+    *   Add property-based tests for complex business logic
+    *   Configure CI to enforce 90% minimum coverage
+    *   Add new just commands for testing:
+        - just coverage: Run tests with coverage reporting
+        - just coverage-html: Generate HTML coverage report
 *   **Files to Create/Modify:**
-    *   `server/src/services/payment_service.rs` (Stripe integration)
-    *   `server/src/handlers/payment_handler.rs` (payment endpoints)
-    *   `server/src/models/payment.rs` (payment data models)
-    *   `server/src/middleware/stripe_webhook.rs` (webhook verification)
-    *   `client/src/lib/components/payments/` (payment UI components)
-    *   `client/src/lib/services/payments.ts` (payment API client)
-    *   `client/src/routes/payment/` (payment routes)
+    *   `server/src/**/*.rs` (add #[cfg(test)] modules)
+    *   `server/.tarpaulin.toml` (coverage configuration)
+    *   `justfile` (add coverage commands)
 *   **Implementation Notes:**
-    *   Use Stripe's official Rust SDK
-    *   Implement idempotency for payment operations
-    *   Add comprehensive webhook event handling
-    *   Ensure PCI compliance best practices - Stripe will handle all payment, card, etc. nothing stored in application
+    *   Use cargo-tarpaulin for coverage measurement
+    *   Focus on business logic and edge cases
+    *   Test error paths thoroughly
+    *   Use property testing for issue sizing logic
+    *   Mock only external services (AI providers)
 *   **Quality Checks:**
-    *   Test with Stripe test mode and webhook testing
-    *   Security audit for payment data handling
-    *   Integration tests for payment flows
+    *   Run `cargo tarpaulin --out Html` for coverage report
+    *   Verify 90%+ coverage achieved
+    *   All tests pass reliably (no flaky tests)
+    *   Tests complete in under 30 seconds
 
-### Task 1.2: Registration, Authn, Payment/Invite flow refactor
-*   **Status:** **[x] DONE - Server and Client Complete (2024-06-30)
-*   **Action:** The whole registration/authentication/payment/authorization flow needs to be heavily refactored.
-Review the current approach to registration and refactor to enable watertight registration/authn/payment/invite handling
+### Task 1.2: Create Integration Tests for ALL Endpoints
+*   **Status:** **[ ] TODO**
+*   **Action:** Write comprehensive integration tests for every API endpoint
 *   **Details:**
-    *   You need to refactor to align with industry best practice and NOT implement tactical point solutions that may vary from client route to route. The new solution MUST be watertight and provably robust. There MUST be e2e tests to prove the flow and the expected outcomes.
-    *   full flow:
-        Registration:
-        1. User registers using either oauth or email/password
-        2. The server checks the user email for duplicate - fails registration if existing email found
-        3. The server checks if the user email exists in the 'user_invites' table - if it does there is no need for payment
-        4. The server registers the user - the server returns a set of data: `auth_user` and `auth_token` and `payment_user`. The first two holds the user's auth state and JWT token for API use. The latter holds their payment status and its expiry date (both user_invites AND payments MUST have expiry dates - the database migration script needs to be updated, as will the server code)
-
-        Login:
-        1. They can use email/password, or oauth. The existing server flow for each is used, but with updated handling for payment/invite. If authn is successful:
-        2. The server provides `auth_user` and `auth_token` and `payment_user` information.
-        3. The client stores the `auth_user` and `auth_token` in `localStorage` and `payment_user` details in `sessionStorage`
-        4. If the `payment_user` has `payment_or_invite_exists` == false OR `payment_or_invite_status_expires` is <= `today()` then the user is directed to the `/payment` route to pay, else they are directed to `/` home
-        5. If the user starts a new session, or the `payment_user` is stale, the client MUST fetch a new `payment_user` object and store it appropriately. If the payment has expired go to '4'.
-        6. A successfully authn'd user with a valid payment/invite will be redirected to `/chat` (should be configurable in ONE place).
-
-### Task 1.3: Client - UI overhaul, optimisation and refinement
-*   **Status:** **[x] DONE - All phases complete including documentation consolidation and test updates (2025-07-01)
-*   **Action:** Review the current approach to the UI and theming. Update UI on client to optimise the user experience and make all components and theming consistent. General colour theme is using tailwindcss `indigo` for background, at either end of scale; use `amber` for highlighting (focus border, hover over links and buttons, etc); contrast colours for ease of viewing.
-*   **Details:**
-
-### Task 1.4: Developer Experience - Template Scaffolding
-*   **Status:** **[ ] TODO** - IN PROGRESS (2025-07-02)
-*   **Action:** Create scaffolding tools for new projects using this template. The goal is to have a simple mechanism that will set up a new project with the contents of the template, so the new project can build on top of the template.
-*   **Details:**
-    *   Create CLI tool for project initialization in Rust
-    *   Implement interactive project setup wizard
-    *   Add template customization options (features to include/exclude)
-    *   Create project renaming and rebranding automation
-    *   Add development environment setup automation
-    *   Implement feature flag system for optional components
-    *   Create update mechanism for template improvements
-
-*   **Detailed Implementation Plan:**
-
-    **Phase 1: Create Rust CLI Binary Structure**
-    1. Create a new Rust binary crate at `scripts/create-web-template/`
-       - Use `cargo new scripts/create-web-template --bin`
-       - Add dependencies: `clap` (CLI args), `dialoguer` (interactive prompts), `serde`/`serde_json` (config), `tokio` (async), `tera` (templating), `console` (colored output), `indicatif` (progress bars)
-       - Set up basic CLI structure with subcommands: `new`, `update`, `config`
-
-    2. Create core modules structure:
-       - `src/main.rs` - CLI entry point and command routing
-       - `src/cli.rs` - CLI argument definitions using clap
-       - `src/wizard.rs` - Interactive setup wizard logic
-       - `src/template.rs` - Template file processing and variable substitution
-       - `src/config.rs` - Configuration management
-       - `src/git.rs` - Git operations (init, cleanup)
-       - `src/utils.rs` - Utility functions (file copying, path handling)
-       - `src/errors.rs` - Custom error types
-
-    **Phase 2: Template Configuration System**
-    1. Create `template.config.json` at project root defining:
-       - Template metadata (name, version, description)
-       - Variable definitions (project_name, description, author, etc.)
-       - Feature flags (local_auth, oauth providers, database, payment, chat)
-       - File exclusion patterns based on features
-       - Post-processing scripts
-
-    2. Implement configuration reader in `src/config.rs`:
-       - Parse and validate template.config.json
-       - Handle feature dependencies and conflicts
-       - Provide defaults for optional values
-
-    **Phase 3: Interactive Setup Wizard**
-    1. Implement wizard flow in `src/wizard.rs`:
-       - Project name validation (valid Rust/npm package name)
-       - Project description
-       - Author information
-       - Feature selection with descriptions
-       - Database choice (SQLite vs PostgreSQL)
-       - OAuth provider selection
-       - Payment integration (Stripe on/off)
-       - Environment setup options
-
-    2. Add validation logic:
-       - Check target directory doesn't exist or is empty
-       - Validate project name follows naming conventions
-       - Ensure selected features are compatible
-
-    **Phase 4: Template Processing Engine**
-    1. Implement file processing in `src/template.rs`:
-       - Copy template files to target directory
-       - Variable substitution in files (using Tera templating)
-       - Feature-based file filtering
-       - Binary file handling (images, fonts)
-       - Preserve file permissions
-
-    2. Variable substitution targets:
-       - `Cargo.toml` files (package name, dependencies)
-       - `package.json` (name, description)
-       - `.envrc.example` (feature-specific variables)
-       - Documentation files
-       - Source code imports/module names
-
-    **Phase 5: Post-Processing**
-    1. Git initialization (`src/git.rs`):
-       - Initialize new git repository
-       - Clean up template-specific files
-       - Create initial commit
-
-    2. Environment setup automation:
-       - Generate `.envrc` from `.envrc.example`
-       - Create required directories
-       - Set up database (if SQLite selected)
-       - Install dependencies (optional)
-
-    **Phase 6: Update Mechanism**
-    1. Implement update command:
-       - Fetch latest template version
-       - Diff current project with template
-       - Selective update of template files
-       - Preserve user modifications
-
-*   **Files to Create:**
-    *   `scripts/create-web-template/Cargo.toml` (CLI crate manifest)
-    *   `scripts/create-web-template/src/main.rs` (CLI entry point)
-    *   `scripts/create-web-template/src/cli.rs` (command definitions)
-    *   `scripts/create-web-template/src/wizard.rs` (interactive setup)
-    *   `scripts/create-web-template/src/template.rs` (file processing)
-    *   `scripts/create-web-template/src/config.rs` (configuration)
-    *   `scripts/create-web-template/src/git.rs` (git operations)
-    *   `scripts/create-web-template/src/utils.rs` (utilities)
-    *   `scripts/create-web-template/src/errors.rs` (error types)
-    *   `template.config.json` (template configuration)
-    *   `documentation/TEMPLATE_USAGE.md` (usage guide)
-
+    *   Create test infrastructure for spawning real server instances
+    *   Implement database setup/teardown for each test
+    *   Write tests for authentication endpoints
+    *   Write tests for AI endpoints
+    *   Test error scenarios (401, 403, 404, 422, 500)
+    *   Test pagination, filtering, and sorting
+    *   Verify response times <100ms
+*   **Files to Create/Modify:**
+    *   `server/tests/common/mod.rs` (test helpers)
+    *   `server/tests/integration/auth_endpoints.rs`
+    *   `server/tests/integration/ai_endpoints.rs`
+    *   `server/tests/integration/performance.rs`
 *   **Implementation Notes:**
-    *   Use Cargo for cross-platform compatibility
-    *   Implement file templating with variable substitution using Tera
-    *   Add Git repository initialization and cleanup
-    *   Support different database options during setup
-    *   Use async/await for file operations
-    *   Provide verbose output option for debugging
-    *   Add dry-run mode to preview changes
+    *   NO MOCKS - tests run against real server
+    *   Use reqwest for HTTP client
+    *   Create test data factories
+    *   Each test gets fresh database
+    *   Test authorization boundaries
+    *   Include timing assertions
+*   **Test Structure Example:**
+    ```rust
+    #[tokio::test]
+    async fn test_list_issues_with_filters() {
+        // Setup
+        let app = TestApp::spawn().await;
+        let user = app.create_test_user().await;
+        let board = app.create_board(&user).await;
+        let issues = app.create_issues(&board, 20).await;
 
+        // Execute
+        let response = app.client
+            .get(&format!("{}/api/issues?status=doing&page=2", app.address))
+            .bearer_auth(&user.token)
+            .send()
+            .await
+            .expect("Failed to execute request");
+
+        // Assert
+        assert_eq!(response.status(), 200);
+        let body: ListIssuesResponse = response.json().await.unwrap();
+        assert!(body.issues.len() <= 10); // page size
+        assert!(response.elapsed() < Duration::from_millis(100));
+    }
+    ```
 *   **Quality Checks:**
-    *   Test project creation on different operating systems
-    *   Verify generated projects build and run correctly
-    *   Test with different configuration combinations
-    *   Unit tests for each module
-    *   Integration tests for full workflow
-    *   E2E test creating and building a project
+    *   Every endpoint has success case tests
+    *   Every endpoint has auth failure tests
+    *   Every endpoint has validation tests
+    *   Performance assertions pass
+    *   No test pollution between runs
 
-*   **Current Status (2025-07-02):**
-    *   ✅ CLI tool structure created
-    *   ✅ Basic template generation working
-    *   ✅ Fixed Tera template parsing issues with Handlebars syntax
-    *   ✅ Added exclude patterns for documentation and template-specific files
-    *   ✅ Created `just` recipes for testing: `template-test`, `template-clean`, `template-build`
-    *   ⚠️ Using simple string replacement instead of full Tera templating due to conflicts
-    *   TODO: Implement interactive wizard
-    *   TODO: Implement update mechanism
-    *   TODO: Add more sophisticated variable substitution
 
-*   **Expected Artifact Tree for Generated Project:**
-    ```
-    test-project/
-    ├── .envrc                    # Generated from example.envrc with substitutions
-    ├── .gitignore               # Standard gitignore
-    ├── Dockerfile               # Docker configuration
-    ├── Procfile                 # Process management
-    ├── README.md                # Project-specific readme
-    ├── docker-compose.yml       # Docker compose setup
-    ├── justfile                 # Task runner commands
-    ├── client/                  # Svelte frontend
-    │   ├── README.md
-    │   ├── bun.lock
-    │   ├── components.json
-    │   ├── e2e/                 # E2E tests
-    │   ├── eslint.config.js
-    │   ├── package.json         # With project name substituted
-    │   ├── playwright.config.ts
-    │   ├── src/                 # All source files
-    │   ├── static/
-    │   ├── svelte.config.js
-    │   ├── tsconfig.json
-    │   └── vite.config.ts
-    ├── data/                    # Data directory
-    │   └── production.sqlite3
-    ├── deploy/                  # Deployment scripts
-    │   └── systemd/
-    ├── scripts/                 # Utility scripts
-    │   ├── build-production.sh
-    │   ├── deploy-local.sh
-    │   ├── docker-entrypoint.sh
-    │   └── run-docker.sh
-    └── server/                  # Rust backend
-        ├── Cargo.lock
-        ├── Cargo.toml           # With project name substituted
-        ├── db/                  # Database files and migrations
-        ├── prompts/             # AI prompt templates
-        ├── src/                 # All source files
-        └── tests/               # Integration tests
-    ```
-
-*   **Files Excluded from Template:**
-    - `documentation/` directory (template-specific docs)
-    - `CLAUDE.md`, `INSTRUCTIONS.md`, `CURRENT_TASKS.md`
-    - `scripts/create-web-template/` (the CLI tool itself)
-    - `template.config.json`
-    - `scratchpad.md`, `check_auth.js`
-    - `test-project/` and other test artifacts
-    - Build artifacts (node_modules, target, .svelte-kit, etc.)
-    - Logs and temporary files
-
-*   **Variable Substitutions Applied:**
-    - `web-template` → project name
-    - `web_template` → project name with underscores
-    - Project description in package.json and Cargo.toml
-    - Author name and email where applicable
-
-### Task 1.5: Enable workspace 'features'
+### Task 1.3: Enable workspace 'features'
 *   **Status:** **[ ] TODO**
 *   **Action:** Create a means of enabling/disabling workspace features, such as local auth, Google auth, PostgreSQL, etc.
 *   **Details:**
@@ -356,7 +195,7 @@ Review the current approach to registration and refactor to enable watertight re
     *   Ensure no runtime errors when features are disabled
     *   Document troubleshooting common issues
 
-### Task 1.6: Deployment Guides and tools
+### Task 1.4: Deployment Guides and tools
 *   **Status:** **[ ] TODO**
 *   **Action:** Create comprehensive deployment guides for major cloud platforms
 *   **Details:**

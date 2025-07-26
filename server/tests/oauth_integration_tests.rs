@@ -11,6 +11,7 @@ async fn setup_test_db() -> SqlitePool {
 }
 
 fn setup_test_env() {
+    #[allow(unsafe_code)]
     unsafe {
         env::set_var("CLIENT_URL", "http://localhost:8080");
         env::set_var("GOOGLE_CLIENT_ID", "test_google_client_id");
@@ -39,6 +40,7 @@ async fn test_oauth_service_creation() {
 #[tokio::test]
 async fn test_oauth_service_creation_missing_config() {
     // Clear all OAuth env vars
+    #[allow(unsafe_code)]
     unsafe {
         env::remove_var("GOOGLE_CLIENT_ID");
         env::remove_var("GOOGLE_CLIENT_SECRET");

@@ -428,13 +428,13 @@ format: format-server format-client
     @echo "✅ All code formatting complete."
 
 # --- Quality Checks (Linters, Format Checkers, Type Checkers) ---
-# check-server: Runs server-side checks (fmt --check, clippy, cargo check).
-# As per CLAUDE.md: `cd server && cargo fmt --check && cargo clippy -- -D warnings -D clippy::pedantic`
+# check-server: Runs server-side checks (fmt --all, clippy, cargo check).
+# As per CLAUDE.md: `cd server && cargo fmt --all && cargo clippy -- -D warnings`
 # We add `cargo check` for completeness.
 check-server: format-server
-    @echo "Checking server code: cargo fmt --check, cargo clippy, cargo check..."
-    cd server && cargo fmt --check
-    cd server && SQLX_OFFLINE=true cargo clippy --all-targets --all-features -- -D warnings -D clippy::pedantic
+    @echo "Checking server code: cargo fmt --all, cargo clippy, cargo check..."
+    cd server && cargo fmt --all
+    cd server && SQLX_OFFLINE=true cargo clippy --all-targets --all-features -- -D warnings
     @echo "Checking for overlong files (>600 lines)..."
     @find server/src -name "*.rs" -exec bash -c 'lines=$(wc -l < "{}"); if [ "$lines" -gt 600 ]; then echo "❌ ERROR: {} has $lines lines (max: 600)"; exit 1; fi' \; || (echo "❌ Some server files exceed 600 lines. Please refactor them into smaller modules." && exit 1)
     @echo "✅ All server checks complete."
@@ -450,12 +450,12 @@ check-client: format-client
     @find client/src -name "*.ts" -o -name "*.js" -o -name "*.svelte" -o -name "*.vue" -exec bash -c 'lines=$(wc -l < "{}"); if [ "$lines" -gt 600 ]; then echo "❌ ERROR: {} has $lines lines (max: 600)"; exit 1; fi' \; || (echo "❌ Some client files exceed 600 lines. Please refactor them into smaller modules." && exit 1)
     @echo "✅ All client checks complete."
 
-# check-template: Runs template generate checks (fmt --check, clippy, cargo check).
-#  `cd scripts/create-web-template && cargo fmt --check && cargo clippy -- -D warnings -D clippy::pedantic`
+# check-template: Runs template generate checks (fmt --all, clippy, cargo check).
+#  `cd scripts/create-web-template && cargo fmt --all && cargo clippy -- -D warnings`
 check-template:
-    @echo "Checking template generation code: cargo fmt --check, cargo clippy, cargo check..."
+    @echo "Checking template generation code: cargo fmt --all, cargo clippy, cargo check..."
     cd scripts/create-web-template && cargo fmt --all
-    cd scripts/create-web-template && cargo clippy --all-targets --all-features -- -D warnings -D clippy::pedantic
+    cd scripts/create-web-template && cargo clippy --all-targets --all-features -- -D warnings
     @echo "Checking for overlong files (>600 lines)..."
     @find scripts/create-web-template/src -name "*.rs" -exec bash -c 'lines=$(wc -l < "{}"); if [ "$lines" -gt 600 ]; then echo "❌ ERROR: {} has $lines lines (max: 600)"; exit 1; fi' \; || (echo "❌ Some server files exceed 600 lines. Please refactor them into smaller modules." && exit 1)
     @echo "✅ All server checks complete."

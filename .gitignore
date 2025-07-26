@@ -30,11 +30,13 @@ vite.config.ts.timestamp-*
 /logs/
 test-project
 
-# scratchpad
-scratchpad.*
+# Test coverage
+tarpaulin-report.html
+lcov.info
 
 # Sensitive or environment-specific data
 .env*
+!.envrc.example
 .direnv
 
 # OS or Editor folders

@@ -127,6 +127,7 @@ mod tests {
     use std::env;
 
     fn setup_test_env() {
+        #[allow(unsafe_code)]
         unsafe {
             env::set_var(
                 "JWT_SECRET",
@@ -144,6 +145,7 @@ mod tests {
 
     #[test]
     fn test_auth_service_creation_missing_secret() {
+        #[allow(unsafe_code)]
         unsafe {
             env::remove_var("JWT_SECRET");
         }
@@ -153,6 +155,7 @@ mod tests {
 
     #[test]
     fn test_auth_service_creation_short_secret() {
+        #[allow(unsafe_code)]
         unsafe {
             env::set_var("JWT_SECRET", "short");
         }

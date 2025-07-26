@@ -181,6 +181,7 @@ mod tests {
     #[test]
     fn test_oauth_config_creation_success() {
         // Set up test environment variables - ensure all required vars are set
+        #[allow(unsafe_code)]
         unsafe {
             env::set_var("GOOGLE_CLIENT_ID", "test_client_id");
             env::set_var("GOOGLE_CLIENT_SECRET", "test_client_secret");
@@ -203,6 +204,7 @@ mod tests {
 
     #[test]
     fn test_oauth_config_missing_client_id() {
+        #[allow(unsafe_code)]
         unsafe {
             env::remove_var("GOOGLE_CLIENT_ID");
             env::set_var("GOOGLE_CLIENT_SECRET", "test_client_secret");
@@ -221,6 +223,7 @@ mod tests {
 
     #[test]
     fn test_oauth_config_missing_client_secret() {
+        #[allow(unsafe_code)]
         unsafe {
             env::set_var("GOOGLE_CLIENT_ID", "test_client_id");
             env::remove_var("GOOGLE_CLIENT_SECRET");
@@ -236,6 +239,7 @@ mod tests {
 
     #[test]
     fn test_get_google_auth_url() {
+        #[allow(unsafe_code)]
         unsafe {
             env::set_var("GOOGLE_CLIENT_ID", "test_client_id");
             env::set_var("GOOGLE_CLIENT_SECRET", "test_client_secret");

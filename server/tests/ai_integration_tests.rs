@@ -79,6 +79,7 @@ async fn create_test_db() -> Pool<Sqlite> {
 /// Helper function to create the test app with a specific database pool
 async fn create_test_app_with_pool(pool: Pool<Sqlite>) -> Router {
     // Set up environment variables for testing
+    #[allow(unsafe_code)]
     unsafe {
         std::env::set_var(
             "JWT_SECRET",

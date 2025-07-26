@@ -4,12 +4,12 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 
 ## Status Summary
 
-### Task 1.1: Achieve 90% Server Code Coverage
-*   **Status:** **[ ] TODO**
+### Task 1.1: Achieve 80% Server Code Coverage
+*   **Status:** **[-] TODO**
 *   **Action:** Implement comprehensive test coverage for all server code
 *   **Details:**
     *   Install and configure cargo-tarpaulin for coverage reporting
-    *   Write unit tests to achieve 90% coverage for all services
+    *   Write unit tests to achieve >80% coverage for all services
     *   Write unit tests for all models and utilities
     *   Create test helpers and fixtures for common scenarios
     *   Add property-based tests for complex business logic

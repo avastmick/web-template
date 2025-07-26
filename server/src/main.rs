@@ -1,5 +1,3 @@
-// web-template/server/src/main.rs
-
 use axum::serve;
 use sqlx::sqlite::SqlitePoolOptions;
 use std::{env, net::SocketAddr, sync::Arc};

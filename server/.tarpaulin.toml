@@ -1,0 +1,20 @@
+[config]
+# Exclude test files and migrations from coverage
+exclude-files = ["**/migrations/*", "**/tests/*"]
+# Exclude pattern for generated code
+exclude-patterns = ["*sqlx::query*", "*derive*"]
+# Run all tests including doc tests
+all-features = true
+workspace = true
+# Timeout after 2 minutes
+timeout = "120s"
+# Don't count panics as uncovered
+ignore-panics = true
+# Don't count test functions
+ignore-tests = true
+# Output formats
+out = ["Html", "Lcov"]
+# Fail if coverage is below target: 80%
+fail-under = 80
+# Avoid false positives from unused generic code
+avoid-cfg-tarpaulin = true

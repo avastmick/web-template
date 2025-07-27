@@ -143,3 +143,111 @@ pub async fn delete_conversation_handler(
         "message": "Conversation deleted successfully"
     })))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_helpers::create_test_app_state;
+    use sqlx::SqlitePool;
+
+    #[sqlx::test]
+    async fn test_get_conversations_handler_unauthorized(pool: SqlitePool) {
+        let state = create_test_app_state(&pool);
+
+        // Create invalid auth header
+        let auth_header = TypedHeader(
+            Authorization::bearer("invalid_token").expect("Failed to create auth header"),
+        );
+
+        let result = get_conversations_handler(State(state), auth_header).await;
+
+        assert!(result.is_err());
+        match result.expect_err("Expected error but got Ok") {
+            AppError::Unauthorized(_) => {}
+            _ => panic!("Expected Unauthorized error"),
+        }
+    }
+
+    #[sqlx::test]
+    async fn test_get_conversation_handler_unauthorized(pool: SqlitePool) {
+        let state = create_test_app_state(&pool);
+
+        let auth_header = TypedHeader(
+            Authorization::bearer("invalid_token").expect("Failed to create auth header"),
+        );
+
+        let result = get_conversation_handler(
+            State(state),
+            auth_header,
+            axum::extract::Path("conv-123".to_string()),
+        )
+        .await;
+
+        assert!(result.is_err());
+        match result.expect_err("Expected error but got Ok") {
+            AppError::Unauthorized(_) => {}
+            _ => panic!("Expected Unauthorized error"),
+        }
+    }
+
+    #[sqlx::test]
+    async fn test_get_usage_stats_handler_unauthorized(pool: SqlitePool) {
+        let state = create_test_app_state(&pool);
+
+        let auth_header = TypedHeader(
+            Authorization::bearer("invalid_token").expect("Failed to create auth header"),
+        );
+
+        let result = get_usage_stats_handler(State(state), auth_header).await;
+
+        assert!(result.is_err());
+        match result.expect_err("Expected error but got Ok") {
+            AppError::Unauthorized(_) => {}
+            _ => panic!("Expected Unauthorized error"),
+        }
+    }
+
+    #[sqlx::test]
+    async fn test_archive_conversation_handler_unauthorized(pool: SqlitePool) {
+        let state = create_test_app_state(&pool);
+
+        let auth_header = TypedHeader(
+            Authorization::bearer("invalid_token").expect("Failed to create auth header"),
+        );
+
+        let result = archive_conversation_handler(
+            State(state),
+            auth_header,
+            axum::extract::Path("conv-123".to_string()),
+        )
+        .await;
+
+        assert!(result.is_err());
+        match result.expect_err("Expected error but got Ok") {
+            AppError::Unauthorized(_) => {}
+            _ => panic!("Expected Unauthorized error"),
+        }
+    }
+
+    #[sqlx::test]
+    async fn test_delete_conversation_handler_unauthorized(pool: SqlitePool) {
+        let state = create_test_app_state(&pool);
+
+        let auth_header = TypedHeader(
+            Authorization::bearer("invalid_token").expect("Failed to create auth header"),
+        );
+
+        let result = delete_conversation_handler(
+            State(state),
+            auth_header,
+            axum::extract::Path("conv-123".to_string()),
+        )
+        .await;
+
+        assert!(result.is_err());
+        match result.expect_err("Expected error but got Ok") {
+            AppError::Unauthorized(_) => {}
+            _ => panic!("Expected Unauthorized error"),
+        }
+    }
+}

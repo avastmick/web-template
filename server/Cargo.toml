@@ -21,15 +21,15 @@ handlebars = "6.3.2"
 jsonwebtoken = "9.3.1"
 lopdf = "0.36.0"
 oauth2 = { version = "5.0.0", features = ["rustls-tls", "reqwest"], default-features = false }
-openai-api-rs = "6.0.6"
+openai-api-rs = "6.0.8"
 rand_core = { version = "0.9.3", features = ["std"] }
-reqwest = { version = "0.12.20", features = ["json", "rustls-tls"], default-features = false }
+reqwest = { version = "0.12.22", features = ["json", "rustls-tls"], default-features = false }
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = { version = "1.0.140", features = ["preserve_order"] }
+serde_json = { version = "1.0.141", features = ["preserve_order"] }
 sha2 = "0.10.9"
 sqlx = { version = "0.8.6", features = ["sqlite", "runtime-tokio-rustls", "macros", "uuid", "chrono", "migrate"] }
 thiserror = "2.0.12"
-tokio = { version = "1.45.1", features = ["full"] }
+tokio = { version = "1.47.0", features = ["full"] }
 tokio-cron-scheduler = "0.14.0"
 tokio-stream = "0.1.17"
 tower = "0.5.2"

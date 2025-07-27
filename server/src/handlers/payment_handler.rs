@@ -20,7 +20,7 @@ pub async fn get_payment_status_handler(
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     let status = app_state
-        .payment_service
+        .payment
         .get_user_payment_status(auth.user.user_id)
         .await
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
@@ -39,7 +39,7 @@ pub async fn create_payment_intent_handler(
     Json(request): Json<CreatePaymentIntentRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let response = app_state
-        .payment_service
+        .payment
         .create_payment_intent(auth.user.user_id, &auth.user.email, request)
         .await
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
@@ -66,7 +66,7 @@ pub async fn stripe_webhook_handler(
     // Process webhook event
     Box::pin(
         app_state
-            .payment_service
+            .payment
             .process_webhook_event(&body, stripe_signature),
     )
     .await

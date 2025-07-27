@@ -1,6 +1,6 @@
 [config]
 # Exclude test files and migrations from coverage
-exclude-files = ["**/migrations/*", "**/tests/*"]
+exclude-files = ["**/migrations/*", "**/tests/*", "src/main.rs"]
 # Exclude pattern for generated code
 exclude-patterns = ["*sqlx::query*", "*derive*"]
 # Run all tests including doc tests

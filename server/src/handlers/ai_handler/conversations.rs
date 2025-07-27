@@ -20,13 +20,10 @@ pub async fn get_conversations_handler(
 ) -> AppResult<Json<serde_json::Value>> {
     // Verify JWT token and get user
     let token = auth.token();
-    let user_id = state
-        .auth_service
-        .get_user_id_from_token(token)?
-        .to_string();
+    let user_id = state.auth.get_user_id_from_token(token)?.to_string();
 
     let conversations = state
-        .ai_data_service
+        .ai_data
         .get_user_conversations(&user_id, Some(50), Some(0)) // limit 50, offset 0
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to get conversations: {e}")))?;
@@ -48,12 +45,9 @@ pub async fn get_conversation_handler(
 ) -> AppResult<Json<serde_json::Value>> {
     // Verify JWT token and get user
     let token = auth.token();
-    let user_id = state
-        .auth_service
-        .get_user_id_from_token(token)?
-        .to_string();
+    let user_id = state.auth.get_user_id_from_token(token)?.to_string();
     let conversation_with_messages = state
-        .ai_data_service
+        .ai_data
         .get_conversation_with_messages(&conversation_id, &user_id)
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to get conversation: {e}")))?;
@@ -72,13 +66,10 @@ pub async fn get_usage_stats_handler(
 ) -> AppResult<Json<serde_json::Value>> {
     // Verify JWT token and get user
     let token = auth.token();
-    let user_id = state
-        .auth_service
-        .get_user_id_from_token(token)?
-        .to_string();
+    let user_id = state.auth.get_user_id_from_token(token)?.to_string();
 
     let usage_stats = state
-        .ai_data_service
+        .ai_data
         .get_user_usage_stats(&user_id)
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to get usage stats: {e}")))?;
@@ -98,10 +89,7 @@ pub async fn archive_conversation_handler(
 ) -> AppResult<Json<serde_json::Value>> {
     // Verify JWT token and get user
     let token = auth.token();
-    let user_id = state
-        .auth_service
-        .get_user_id_from_token(token)?
-        .to_string();
+    let user_id = state.auth.get_user_id_from_token(token)?.to_string();
 
     // Demonstrate usage of archive and update_timestamp methods
     let mut conversation =
@@ -116,7 +104,7 @@ pub async fn archive_conversation_handler(
     );
 
     state
-        .ai_data_service
+        .ai_data
         .archive_conversation(&conversation_id, &user_id)
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to archive conversation: {e}")))?;
@@ -140,15 +128,12 @@ pub async fn delete_conversation_handler(
 ) -> AppResult<Json<serde_json::Value>> {
     // Verify JWT token and get user
     let token = auth.token();
-    let user_id = state
-        .auth_service
-        .get_user_id_from_token(token)?
-        .to_string();
+    let user_id = state.auth.get_user_id_from_token(token)?.to_string();
 
     // For now, we'll archive the conversation instead of deleting it
     // In the future, this could be a hard delete operation
     state
-        .ai_data_service
+        .ai_data
         .archive_conversation(&conversation_id, &user_id)
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to delete conversation: {e}")))?;

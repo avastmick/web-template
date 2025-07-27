@@ -1,4 +1,4 @@
-// web-template/server/src/lib.rs
+// kanbain/server/src/lib.rs
 
 //! Server library crate
 //!
@@ -14,3 +14,7 @@ pub mod middleware;
 pub mod models;
 pub mod routes;
 pub mod services;
+
+// Test helpers are available for both unit tests and integration tests
+#[cfg(any(test, feature = "test-utils"))]
+pub mod test_helpers;

@@ -1,4 +1,4 @@
-// web-template/server/src/handlers/auth_handler.rs
+// kanbain/server/src/handlers/auth_handler.rs
 
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 use serde::Deserialize;
@@ -75,10 +75,7 @@ pub async fn register_user_handler(
     );
 
     // 2. Check if user has a valid invite and get the invite details
-    let invite = state
-        .invite_service
-        .get_valid_invite(&payload.email)
-        .await?;
+    let invite = state.invite.get_valid_invite(&payload.email).await?;
 
     // For MVP, we allow registration without invite but flag that payment is required
     if invite.is_some() {
@@ -91,12 +88,12 @@ pub async fn register_user_handler(
     }
 
     // 3. Call the user service to attempt user creation
-    match state.user_service.create_user(&payload).await {
+    match state.user.create_user(&payload).await {
         Ok(created_user) => {
             // Mark invite as used
             // FIXME: should check state and log as info if INVITENOTFOUND, only log error if not
             // that
-            if let Err(e) = state.invite_service.mark_invite_used(&payload.email).await {
+            if let Err(e) = state.invite.mark_invite_used(&payload.email).await {
                 tracing::error!(
                     "Failed to mark invite as used for email {}: {:?}",
                     payload.email,
@@ -107,7 +104,7 @@ pub async fn register_user_handler(
 
             // Generate JWT token for immediate login (matches OAuth behavior)
             let token = state
-                .auth_service
+                .auth
                 .generate_token(created_user.id, &created_user.email)
                 .map_err(|e| {
                     tracing::error!(
@@ -172,7 +169,7 @@ pub async fn login_user_handler(
     tracing::info!("Login attempt for email: {}", payload.email);
 
     // 2. Find user by email
-    let user = match state.user_service.find_by_email(&payload.email).await {
+    let user = match state.user.find_by_email(&payload.email).await {
         Ok(user) => user,
         Err(AppError::UserNotFound) => {
             tracing::warn!("Login attempt with non-existent email: {}", payload.email);
@@ -193,7 +190,7 @@ pub async fn login_user_handler(
 
     // 4. Generate JWT token
     let token = state
-        .auth_service
+        .auth
         .generate_token(user.id, &user.email)
         .map_err(|e| {
             tracing::error!("Failed to generate token for user {}: {:?}", user.email, e);

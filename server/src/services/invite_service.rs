@@ -1,5 +1,3 @@
-#![allow(clippy::missing_errors_doc)]
-
 use crate::errors::AppError;
 use crate::models::UserInvite;
 use chrono::{DateTime, Utc};
@@ -16,6 +14,10 @@ impl InviteService {
     }
 
     /// Check if a valid invite exists for the given email
+    ///
+    /// # Errors
+    ///
+    /// Returns `AppError` if database connection fails
     pub async fn check_invite_exists(&self, email: &str) -> Result<bool, AppError> {
         let email_lower = email.to_lowercase();
 
@@ -37,6 +39,10 @@ impl InviteService {
     }
 
     /// Get a valid invite by email
+    ///
+    /// # Errors
+    ///
+    /// Returns `AppError` if database connection fails
     pub async fn get_valid_invite(&self, email: &str) -> Result<Option<UserInvite>, AppError> {
         let email_lower = email.to_lowercase();
 
@@ -67,6 +73,10 @@ impl InviteService {
 
     /// Get any invite for a user (used or unused)
     /// This is used to check if a user has ever had a valid invite
+    ///
+    /// # Errors
+    ///
+    /// Returns `AppError` if database connection fails
     pub async fn get_user_invite(&self, email: &str) -> Result<Option<UserInvite>, AppError> {
         let email_lower = email.to_lowercase();
 
@@ -96,6 +106,12 @@ impl InviteService {
     }
 
     /// Mark an invite as used
+    ///
+    /// # Errors
+    ///
+    /// Returns `AppError` if:
+    /// - Database connection fails
+    /// - Invite not found
     pub async fn mark_invite_used(&self, email: &str) -> Result<(), AppError> {
         let email_lower = email.to_lowercase();
         let now = Utc::now();
@@ -121,6 +137,12 @@ impl InviteService {
     }
 
     /// Create a new invite
+    ///
+    /// # Errors
+    ///
+    /// Returns `AppError` if:
+    /// - Database connection fails
+    /// - Failed to generate invite ID
     pub async fn create_invite(
         &self,
         email: &str,
@@ -149,6 +171,10 @@ impl InviteService {
     }
 
     /// List all invites (for admin purposes)
+    ///
+    /// # Errors
+    ///
+    /// Returns `AppError` if database connection fails
     pub async fn list_invites(&self) -> Result<Vec<UserInvite>, AppError> {
         let invites = sqlx::query_as!(
             UserInvite,
@@ -173,6 +199,12 @@ impl InviteService {
     }
 
     /// Delete an invite
+    ///
+    /// # Errors
+    ///
+    /// Returns `AppError` if:
+    /// - Database connection fails
+    /// - Invite not found
     pub async fn delete_invite(&self, id: &str) -> Result<(), AppError> {
         let result = sqlx::query!(
             r#"
@@ -202,24 +234,11 @@ mod tests {
             .await
             .expect("Failed to create test database");
 
-        // Create the user_invites table
-        sqlx::query(
-            r"
-            CREATE TABLE user_invites (
-                id TEXT PRIMARY KEY NOT NULL,
-                email TEXT UNIQUE NOT NULL COLLATE NOCASE,
-                invited_by TEXT,
-                invited_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                used_at DATETIME,
-                expires_at DATETIME,
-                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )
-            ",
-        )
-        .execute(&pool)
-        .await
-        .expect("Failed to create user_invites table");
+        // Run migrations to ensure test database matches production schema
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await
+            .expect("Failed to run migrations");
 
         pool
     }
@@ -231,11 +250,11 @@ mod tests {
 
         // Create an invite
         let invite = service
-            .create_invite("test@example.com", Some("admin".to_string()), None)
+            .create_invite("test_create@example.com", Some("admin".to_string()), None)
             .await
             .expect("Failed to create invite");
 
-        assert_eq!(invite.email, "test@example.com");
+        assert_eq!(invite.email, "test_create@example.com");
         assert_eq!(invite.invited_by, Some("admin".to_string()));
         assert!(invite.used_at.is_none());
 
@@ -243,14 +262,14 @@ mod tests {
         let exists = service
             .check_invite_exists("test@example.com")
             .await
-            .expect("Failed to check invite");
+            .expect("Failed to check invite exists");
         assert!(exists);
 
         // Check with different case
         let exists = service
             .check_invite_exists("TEST@EXAMPLE.COM")
             .await
-            .expect("Failed to check invite with different case");
+            .expect("Failed to check invite exists with different case");
         assert!(exists);
     }
 
@@ -261,21 +280,21 @@ mod tests {
 
         // Create an invite
         service
-            .create_invite("test@example.com", None, None)
+            .create_invite("test_mark_used@example.com", None, None)
             .await
             .expect("Failed to create invite");
 
         // Mark as used
         service
-            .mark_invite_used("test@example.com")
+            .mark_invite_used("test_mark_used@example.com")
             .await
             .expect("Failed to mark invite as used");
 
         // Check invite no longer exists (as valid)
         let exists = service
-            .check_invite_exists("test@example.com")
+            .check_invite_exists("test_mark_used@example.com")
             .await
-            .expect("Failed to check invite after marking as used");
+            .expect("Failed to check invite exists after marking used");
         assert!(!exists);
     }
 
@@ -287,15 +306,15 @@ mod tests {
         // Create an expired invite
         let past_time = Utc::now() - chrono::Duration::hours(1);
         service
-            .create_invite("test@example.com", None, Some(past_time))
+            .create_invite("test_expired@example.com", None, Some(past_time))
             .await
             .expect("Failed to create expired invite");
 
         // Check invite does not exist (expired)
         let exists = service
-            .check_invite_exists("test@example.com")
+            .check_invite_exists("test_expired@example.com")
             .await
-            .expect("Failed to check expired invite");
+            .expect("Failed to check expired invite exists");
         assert!(!exists);
     }
 }

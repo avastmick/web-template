@@ -34,13 +34,10 @@ pub async fn check_payment_status(
     let user_email = &user.email;
 
     // Check if user has a valid invite
-    let has_invite = state.invite_service.check_invite_exists(user_email).await?;
+    let has_invite = state.invite.check_invite_exists(user_email).await?;
 
     // Check user's payment status
-    let payment_status = state
-        .payment_service
-        .get_user_payment_status(user_id)
-        .await?;
+    let payment_status = state.payment.get_user_payment_status(user_id).await?;
 
     // User needs either a valid invite OR an active payment
     if !has_invite && !payment_status.has_active_payment {
@@ -71,10 +68,7 @@ pub async fn check_payment_status(
 }
 
 /// Extractor that validates payment status after JWT authentication
-pub struct PaymentRequired {
-    #[allow(dead_code)]
-    pub user: AuthenticatedUser,
-}
+pub struct PaymentRequired;
 
 impl axum::extract::FromRequestParts<Arc<AppState>> for PaymentRequired {
     type Rejection = Response;
@@ -101,30 +95,6 @@ impl axum::extract::FromRequestParts<Arc<AppState>> for PaymentRequired {
                 }
             })?;
 
-        Ok(PaymentRequired {
-            user: jwt_auth.user,
-        })
+        Ok(PaymentRequired)
     }
-}
-
-/// List of route prefixes that require payment
-#[must_use]
-#[allow(dead_code)]
-fn payment_required_routes() -> Vec<&'static str> {
-    vec![
-        // AI chat endpoints require payment
-        "/api/ai/chat",
-        "/api/ai/conversations",
-        "/api/ai/upload",
-        // Add other premium endpoints here
-    ]
-}
-
-/// Check if a request path requires payment verification
-#[must_use]
-#[allow(dead_code)]
-fn requires_payment_check(path: &str) -> bool {
-    payment_required_routes()
-        .iter()
-        .any(|&route| path.starts_with(route))
 }

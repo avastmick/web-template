@@ -35,11 +35,10 @@ pub struct CodeAnalysisRequest {
 pub async fn ai_info_handler(
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<serde_json::Value>> {
-    let ai_service = state.ai_service.read().await;
+    let ai_service = state.ai.read().await;
 
     let info = serde_json::json!({
         "provider": ai_service.provider_name(),
-        "templates": ai_service.list_templates(),
         "schemas": ai_service.list_schemas(),
         "streaming_supported": true,
         "websocket_supported": true,
@@ -60,9 +59,9 @@ pub async fn contextual_chat_handler(
 ) -> AppResult<Json<serde_json::Value>> {
     // Verify JWT token and get user
     let token = auth.token();
-    let _user_id = state.auth_service.get_user_id_from_token(token)?;
+    let _user_id = state.auth.get_user_id_from_token(token)?;
 
-    let ai_service = state.ai_service.read().await;
+    let ai_service = state.ai.read().await;
 
     // Prepare template data
     let template_data = serde_json::json!({
@@ -114,12 +113,9 @@ pub async fn code_analysis_handler(
 ) -> AppResult<Json<serde_json::Value>> {
     // Verify JWT token and get user
     let token = auth.token();
-    let _user_id = state
-        .auth_service
-        .get_user_id_from_token(token)?
-        .to_string();
+    let _user_id = state.auth.get_user_id_from_token(token)?.to_string();
 
-    let ai_service = state.ai_service.read().await;
+    let ai_service = state.ai.read().await;
 
     // Use the dedicated analyze_code method
     let analysis_result = ai_service
@@ -132,7 +128,7 @@ pub async fn code_analysis_handler(
         .map_err(|e| AppError::BadRequest(format!("Code analysis failed: {e}")))?;
 
     Ok(Json(serde_json::json!({
-        "analysis": analysis_result.explanation,
+        "analysis": analysis_result,
         "language": request.language,
         "timestamp": chrono::Utc::now()
     })))
@@ -146,7 +142,7 @@ pub async fn code_analysis_handler(
 pub async fn health_check_handler(
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<serde_json::Value>> {
-    let ai_service = state.ai_service.read().await;
+    let ai_service = state.ai.read().await;
 
     // Use the provider's dedicated health check method
     ai_service
@@ -173,17 +169,14 @@ pub async fn moderate_content_handler(
 ) -> AppResult<Json<serde_json::Value>> {
     // Verify JWT token and get user
     let token = auth.token();
-    let _user_id = state
-        .auth_service
-        .get_user_id_from_token(token)?
-        .to_string();
+    let _user_id = state.auth.get_user_id_from_token(token)?.to_string();
 
     let content = request
         .get("content")
         .and_then(|v| v.as_str())
         .ok_or_else(|| AppError::BadRequest("Missing content field".to_string()))?;
 
-    let ai_service = state.ai_service.read().await;
+    let ai_service = state.ai.read().await;
 
     let moderation_result = ai_service
         .moderate_content(content)
@@ -206,7 +199,7 @@ pub async fn verify_token_handler(
 
     // Use the auth service to verify the token and get user ID
     let user_id = state
-        .auth_service
+        .auth
         .get_user_id_from_token(token)
         .map_err(|e| AppError::Unauthorized(format!("Token verification failed: {e}")))?;
 
@@ -284,7 +277,7 @@ pub async fn list_invites_handler(
     let _token = auth.token();
 
     let invites = state
-        .invite_service
+        .invite
         .list_invites()
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to list invites: {e}")))?;
@@ -319,7 +312,7 @@ pub async fn create_invite_handler(
         .map(String::from);
 
     let invite = state
-        .invite_service
+        .invite
         .create_invite(email, invited_by, None) // No expiration
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to create invite: {e}")))?;
@@ -340,7 +333,7 @@ pub async fn get_invite_handler(
     axum::extract::Path(email): axum::extract::Path<String>,
 ) -> AppResult<Json<serde_json::Value>> {
     let invite = state
-        .invite_service
+        .invite
         .get_valid_invite(&email)
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to get invite: {e}")))?;
@@ -388,7 +381,7 @@ pub async fn delete_invite_handler(
     let _token = auth.token();
 
     state
-        .invite_service
+        .invite
         .delete_invite(&invite_id)
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to delete invite: {e}")))?;

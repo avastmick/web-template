@@ -1,4 +1,4 @@
-// web-template/server/src/handlers/health_handler.rs
+// kanbain/server/src/handlers/health_handler.rs
 
 use axum::{http::StatusCode, response::Json};
 use serde_json::json;
@@ -13,7 +13,7 @@ pub async fn health_check() -> Result<Json<serde_json::Value>, StatusCode> {
         "status": "healthy",
         "timestamp": chrono::Utc::now().to_rfc3339(),
         "version": env!("CARGO_PKG_VERSION"),
-        "service": "web-template-server"
+        "service": "kanbain-server"
     })))
 }
 

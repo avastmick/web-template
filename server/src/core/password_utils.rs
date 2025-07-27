@@ -1,4 +1,4 @@
-// web-template/server/src/core/password_utils.rs
+// kanbain/server/src/core/password_utils.rs
 
 use argon2::{
     Argon2,

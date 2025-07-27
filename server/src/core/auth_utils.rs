@@ -1,4 +1,4 @@
-// web-template/server/src/core/auth_utils.rs
+// kanbain/server/src/core/auth_utils.rs
 
 use std::sync::Arc;
 
@@ -30,13 +30,10 @@ pub async fn build_unified_auth_response(
     token: String,
 ) -> AppResult<UnifiedAuthResponse> {
     // Get invite information - check if user has EVER had an invite
-    let invite = state.invite_service.get_user_invite(&user.email).await?;
+    let invite = state.invite.get_user_invite(&user.email).await?;
 
     // Get active payment information
-    let payment = state
-        .payment_service
-        .get_active_payment_for_user(user.id)
-        .await?;
+    let payment = state.payment.get_active_payment_for_user(user.id).await?;
 
     // Create unified response components
     let auth_user = AuthUser::from(user.clone());

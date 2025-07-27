@@ -7,7 +7,7 @@ use axum_extra::headers::authorization::Bearer;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-use crate::ai::{ChatMessage, ChatRole};
+use crate::ai::{ChatMessage, ChatRequest as AiChatRequest, ChatRole};
 use crate::core::AppState;
 use crate::errors::{AppError, AppResult};
 use crate::services::AuthService;
@@ -33,6 +33,7 @@ pub struct MessageInput {
 #[derive(Debug, Serialize)]
 pub struct ChatResponse {
     pub id: String,
+    pub conversation_id: String,
     pub message: MessageOutput,
     pub usage: Option<crate::ai::models::TokenUsage>,
 }
@@ -71,7 +72,7 @@ pub async fn chat_handler(
     }
 
     // Extract user info from auth
-    let user_id = extract_user_id_from_auth(auth_header, &state.auth_service)?;
+    let user_id = extract_user_id_from_auth(auth_header, &state.auth)?;
 
     // Set up conversation
     let (conversation_id, model) = create_conversation(&state, &user_id, &request).await?;
@@ -86,7 +87,7 @@ pub async fn chat_handler(
     save_response_and_usage(&state, &response, &conversation_id, &user_id, &model).await?;
 
     // Convert to API response
-    Ok(Json(convert_to_chat_response(response)))
+    Ok(Json(convert_to_chat_response(response, conversation_id)))
 }
 
 /// Extract user ID from authorization header
@@ -119,7 +120,7 @@ async fn create_conversation(
     };
 
     let conversation_response = state
-        .ai_data_service
+        .ai_data
         .create_conversation(user_id, create_request)
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to create conversation: {e}")))?;
@@ -160,7 +161,7 @@ async fn process_and_save_messages(
             // Note: In real implementation, we'd enhance CreateMessageRequest to include token_count
             // For now, we'll create the message and then update it
             let saved_message = state
-                .ai_data_service
+                .ai_data
                 .add_message(conversation_id, user_id, message_request)
                 .await
                 .map_err(|e| AppError::BadRequest(format!("Failed to save message: {e}")))?;
@@ -182,9 +183,9 @@ async fn get_ai_response(
     state: &Arc<AppState>,
     messages: Vec<ChatMessage>,
     request: &ChatRequest,
-    model: &str,
+    _model: &str,
 ) -> AppResult<crate::ai::ChatResponse> {
-    let ai_service = state.ai_service.read().await;
+    let ai_service = state.ai.read().await;
 
     // Use template if specified
     if let Some(template_name) = &request.template {
@@ -204,46 +205,28 @@ async fn get_ai_response(
     }
 
     if let Some(schema_name) = &request.use_schema {
-        let schema_response = ai_service
+        return ai_service
             .chat_with_schema(messages, schema_name)
             .await
-            .map_err(|e| AppError::BadRequest(format!("Schema-based chat failed: {e}")))?;
-
-        Ok(crate::ai::ChatResponse {
-            id: uuid::Uuid::new_v4().to_string(),
-            model: model.to_string(),
-            choices: vec![crate::ai::models::ChatChoice {
-                index: 0,
-                message: ChatMessage {
-                    role: ChatRole::Assistant,
-                    content: schema_response.to_string(),
-                },
-                finish_reason: Some("stop".to_string()),
-            }],
-            usage: Some(crate::ai::models::TokenUsage {
-                prompt_tokens: 100,
-                completion_tokens: 200,
-                total_tokens: 300,
-            }),
-            created: chrono::Utc::now().timestamp(),
-        })
-    } else {
-        // Use context and parameters if provided
-        let mut enhanced_messages = messages;
-
-        if let Some(context) = &request.context {
-            let context_message = ChatMessage {
-                role: ChatRole::System,
-                content: format!("Additional context: {}", context.join(", ")),
-            };
-            enhanced_messages.insert(0, context_message);
-        }
-
-        ai_service
-            .chat(enhanced_messages)
-            .await
-            .map_err(|e| AppError::BadRequest(format!("AI request failed: {e}")))
+            .map_err(|e| AppError::BadRequest(format!("Schema-based chat failed: {e}")));
     }
+
+    // Use context and parameters if provided
+    let mut enhanced_messages = messages;
+
+    if let Some(context) = &request.context {
+        let context_message = ChatMessage {
+            role: ChatRole::System,
+            content: format!("Additional context: {}", context.join(", ")),
+        };
+        enhanced_messages.insert(0, context_message);
+    }
+
+    let chat_request = AiChatRequest::new(enhanced_messages);
+    ai_service
+        .chat(chat_request)
+        .await
+        .map_err(|e| AppError::BadRequest(format!("AI request failed: {e}")))
 }
 
 /// Save AI response to database and record usage statistics
@@ -267,7 +250,7 @@ async fn save_response_and_usage(
     };
 
     let saved_response = state
-        .ai_data_service
+        .ai_data
         .add_message(conversation_id, user_id, message_request)
         .await
         .map_err(|e| AppError::BadRequest(format!("Failed to save AI response: {e}")))?;
@@ -282,14 +265,14 @@ async fn save_response_and_usage(
     // Record usage statistics
     if let Some(usage) = &response.usage {
         // Calculate estimated cost (example: $0.03 per 1K tokens for GPT-4)
-        let total_tokens = usage.prompt_tokens + usage.completion_tokens;
+        let total_tokens = usage.prompt + usage.completion;
         let estimated_cost_cents = (i64::from(total_tokens) * 3) / 100; // Rough estimate
 
         let ai_usage = crate::models::ai_models::AiUsage::new(
             user_id.to_string(),
             model.to_string(),
-            i64::from(usage.prompt_tokens),
-            i64::from(usage.completion_tokens),
+            i64::from(usage.prompt),
+            i64::from(usage.completion),
         )
         .with_conversation(conversation_id.to_string())
         .with_cost(estimated_cost_cents);
@@ -299,14 +282,14 @@ async fn save_response_and_usage(
             user_id,
             model,
             conversation_id: Some(&conv_id),
-            prompt_tokens: i64::from(usage.prompt_tokens),
-            completion_tokens: i64::from(usage.completion_tokens),
+            prompt_tokens: i64::from(usage.prompt),
+            completion_tokens: i64::from(usage.completion),
             request_id: Some(&response.id),
             duration_ms: Some(0),
         };
 
         state
-            .ai_data_service
+            .ai_data
             .record_usage(usage_record)
             .await
             .map_err(|e| AppError::BadRequest(format!("Failed to record usage: {e}")))?;
@@ -316,9 +299,13 @@ async fn save_response_and_usage(
 }
 
 /// Convert internal AI response to API response format
-fn convert_to_chat_response(response: crate::ai::ChatResponse) -> ChatResponse {
+fn convert_to_chat_response(
+    response: crate::ai::ChatResponse,
+    conversation_id: String,
+) -> ChatResponse {
     ChatResponse {
         id: response.id,
+        conversation_id,
         message: MessageOutput {
             role: "assistant".to_string(),
             content: response
@@ -327,9 +314,9 @@ fn convert_to_chat_response(response: crate::ai::ChatResponse) -> ChatResponse {
                 .map_or(String::new(), |c| c.message.content.clone()),
         },
         usage: response.usage.map(|u| crate::ai::models::TokenUsage {
-            prompt_tokens: u.prompt_tokens,
-            completion_tokens: u.completion_tokens,
-            total_tokens: u.total_tokens,
+            prompt: u.prompt,
+            completion: u.completion,
+            total: u.total,
         }),
     }
 }

@@ -23,7 +23,7 @@ check-env:
     fi
     echo "✅ Environment variables checked. Using ${DATABASE_PROVIDER:-sqlite} database."
 
-# --- Database (dbmate) ---
+# --- Database (sqlx) ---
 # db-clean: Completely cleans all database assets, cache, and state
 # Usage: just db-clean
 db-clean:
@@ -33,8 +33,6 @@ db-clean:
     @echo "Removing SQLX query cache..."
     @rm -rf server/.sqlx || true
     @rm -rf .sqlx || true
-    @echo "Removing schema.sql..."
-    @rm -f server/db/schema.sql || true
     @echo "✅ Database cleaning complete."
 
 # db-setup: Sets up DB by applying all migrations and preparing SQLX cache.
@@ -45,38 +43,34 @@ db-setup: check-env
     @echo "Database URL: ${DATABASE_URL}"
     @echo "Ensuring database directory exists..."
     @mkdir -p server/db
-    @echo "Applying database migrations using dbmate..."
-    cd server && dbmate up
-    @echo "Generating schema.sql from current database state..."
-    cd server && dbmate dump
+    @echo "Creating database if it doesn't exist..."
+    cd server && sqlx database create || true
+    @echo "Applying database migrations using sqlx..."
+    cd server && sqlx migrate run
     @echo "Preparing SQLx query cache with fresh database (including tests)..."
     cd server && SQLX_OFFLINE=false cargo sqlx prepare --workspace -- --all-targets
-    @echo "✅ Database setup complete with dbmate migrations applied and cache prepared."
+    @echo "✅ Database setup complete with sqlx migrations applied and cache prepared."
 
 # db-reset: Cleans everything and rebuilds from scratch
 # Usage: just db-reset
 db-reset: db-clean db-setup
     @echo "✅ Database completely reset and rebuilt."
 
-# db-migrate: Apply all pending database migrations using dbmate.
+# db-migrate: Apply all pending database migrations using sqlx.
 # Usage: just db-migrate
 db-migrate: check-env
     @echo "Ensuring database directory exists..."
     @mkdir -p server/db
-    @echo "Applying pending database migrations using dbmate..."
-    cd server && dbmate up
-    @echo "Updating schema.sql using dbmate..."
-    cd server && dbmate dump
-    @echo "✅ Database migrations applied using dbmate."
+    @echo "Applying pending database migrations using sqlx..."
+    cd server && sqlx migrate run
+    @echo "✅ Database migrations applied using sqlx."
 
-# db-rollback: Rollback the last database migration using dbmate.
+# db-rollback: Rollback the last database migration using sqlx.
 # Usage: just db-rollback
 db-rollback: check-env
-    @echo "Rolling back last database migration using dbmate..."
-    cd server && dbmate down
-    @echo "Updating schema.sql after rollback using dbmate..."
-    cd server && dbmate dump
-    @echo "✅ Last migration rolled back using dbmate."
+    @echo "Rolling back last database migration using sqlx..."
+    cd server && sqlx migrate revert
+    @echo "✅ Last migration rolled back using sqlx."
 
 # db-prepare-cache: Regenerate SQLX query cache only
 # Usage: just db-prepare-cache
@@ -86,26 +80,33 @@ db-prepare-cache: check-env
     @echo "Removing existing SQLX cache..."
     @rm -rf server/.sqlx || true
     @rm -rf .sqlx || true
-    @echo "Ensuring database is up to date using dbmate..."
-    cd server && dbmate up
+    @echo "Ensuring database is up to date using sqlx..."
+    cd server && sqlx migrate run
     @echo "Preparing new SQLX query cache (including tests)..."
     cd server && SQLX_OFFLINE=false cargo sqlx prepare --workspace -- --all-targets
     @echo "✅ SQLX query cache regenerated."
 
-# db-new-migration <name>: Create a new database migration file using dbmate.
+# db-new-migration <name>: Create a new database migration file using sqlx.
 # Usage: just db-new-migration my_new_migration
 db-new-migration name:
-    @echo "Creating new migration file using dbmate: {{name}}..."
-    cd server && dbmate new {{name}}
-    @echo "✅ New migration file created using dbmate: server/db/migrations/*_{{name}}.sql"
+    @echo "Creating new migration file using sqlx: {{name}}..."
+    cd server && sqlx migrate add -r {{name}}
+    @echo "✅ New migration files created using sqlx: server/migrations/*_{{name}}.up.sql and .down.sql"
 
-# db-status: Show database migration status using dbmate
+# db-status: Show database migration status using sqlx
 # Usage: just db-status
 db-status: check-env
-    @echo "📊 Database migration status (using dbmate):"
-    cd server && dbmate status
+    @echo "📊 Database migration status (using sqlx):"
+    cd server && sqlx migrate info
     @echo "📊 SQLX cache status:"
     @if [ -d "server/.sqlx" ]; then echo "✅ SQLX cache exists ($(find server/.sqlx -name '*.json' | wc -l) cached queries)"; else echo "❌ SQLX cache missing"; fi
+
+# db-dump: Show current database schema
+# Usage: just db-dump
+db-dump: check-env
+    @echo "📄 Current database schema:"
+    @echo "Note: sqlx does not have a built-in schema dump. Use SQLite CLI for schema inspection."
+    cd server && sqlite3 "${DATABASE_URL#sqlite:}" ".schema" || echo "Error: Could not dump schema"
 
 # --- Development Servers (User Managed) ---
 # These commands are intended for the user to run directly.
@@ -271,30 +272,6 @@ docker-run: check-env
     @echo "Running Docker container with local environment variables..."
     ./scripts/run-docker.sh
 
-# --- Template Scaffolding ---
-# template-build: Builds the template CLI tool
-# Usage: just template-build
-template-build:
-    @echo "Building template CLI tool..."
-    @cd scripts/create-web-template && cargo build --release
-    @echo "✅ Template CLI built at scripts/create-web-template/target/release/create-web-template"
-
-# template-test: Tests the template scaffolding by creating a test project
-# Usage: just template-test [project_name]
-template-test project_name="test-project":
-    @echo "Testing template scaffolding..."
-    @cd scripts/create-web-template && cargo build --quiet
-    @rm -rf {{project_name}}
-    @./scripts/create-web-template/target/debug/create-web-template new {{project_name}} --path ./{{project_name}} --no-interactive
-    @echo "✅ Template test complete. Project created at ./{{project_name}}"
-
-# template-clean: Cleans up test projects created by template testing
-# Usage: just template-clean
-template-clean:
-    @echo "Cleaning up test projects..."
-    @rm -rf test-project test-project-*
-    @echo "✅ Test projects cleaned"
-
 # logs: View the latest server and client logs
 # Usage: just logs          (shows both)
 #        just logs server   (shows server logs)
@@ -338,6 +315,12 @@ logs type="":
 test-server pattern="":
     @echo "Running Rust server tests..."
     @if [ -z "{{pattern}}" ]; then echo "Running all server tests (cargo test)..."; else echo "Running specific server tests matching '{{pattern}}' (cargo test {{pattern}})..."; fi
+    @if [ -z "{{pattern}}" ]; then cd server && SQLX_OFFLINE=true cargo test; else cd server && SQLX_OFFLINE=true cargo test "{{pattern}}"; fi
+    @echo "✅ Server tests complete."
+
+test-server-verbose pattern="":
+    @echo "Running Rust server tests..."
+    @if [ -z "{{pattern}}" ]; then echo "Running all server tests (cargo test)..."; else echo "Running specific server tests matching '{{pattern}}' (cargo test {{pattern}})..."; fi
     @if [ -z "{{pattern}}" ]; then cd server && RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test -- --nocapture --test-threads=1; else cd server && RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test "{{pattern}}" -- --nocapture --test-threads=1; fi
     @echo "✅ Server tests complete."
 
@@ -360,9 +343,10 @@ test-e2e pattern="": # Corresponds to `just test-e2e` in CLAUDE.md
 
 # test-integration [pattern] [--verbose] [--real-ai]: Runs integration tests (server tests that require database).
 # Usage: just test-integration
-#        just test-integration oauth_integration_tests
-#        just test-integration ai_integration_tests --verbose           (enables AI test verbose mode)
-#        just test-integration ai_integration_tests --verbose --real-ai (uses real OpenRouter API key)
+#        just test-integration integration_tests
+#        just test-integration endpoint_tests
+#        just test-integration auth_tests --verbose           (enables AI test verbose mode)
+#        just test-integration ai_tests --verbose --real-ai   (uses real OpenRouter API key)
 test-integration pattern="" *flags="":
     #!/usr/bin/env bash
     echo "Running integration tests..."
@@ -388,13 +372,29 @@ test-integration pattern="" *flags="":
     done
 
     if [ -z "{{pattern}}" ]; then
-        echo "Running all integration tests..."
-        cd server && eval "$test_env RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test --test '*integration*' -- --nocapture --test-threads=1"
+        echo "Running all integration and endpoint tests..."
+        cd server && eval "$test_env RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test --test integration_tests --test endpoint_tests -- --nocapture --test-threads=1"
     else
         echo "Running specific integration tests matching '{{pattern}}'..."
         cd server && eval "$test_env RUST_LOG=${RUST_LOG:-info} SQLX_OFFLINE=true cargo test --test '{{pattern}}' -- --nocapture --test-threads=1"
     fi
     echo "✅ Integration tests complete."
+
+# test-coverage: Run tests with coverage reporting using cargo-tarpaulin
+# Usage: just test-coverage
+test-coverage:
+    @echo "Running tests with coverage reporting..."
+    cd server && SQLX_OFFLINE=true cargo tarpaulin --out Lcov --all-features --workspace --timeout 120 --exclude-files "**/migrations/*" --exclude-files "**/tests/*" --ignore-panics --ignore-tests
+    @echo "✅ Coverage report generated."
+
+# test-coverage-html: Generate HTML coverage report and open in browser
+# Usage: just test-coverage-html
+test-coverage-html:
+    @echo "Generating HTML coverage report..."
+    cd server && SQLX_OFFLINE=true cargo tarpaulin --out Html --all-features --workspace --timeout 120 --exclude-files "**/migrations/*" --exclude-files "**/tests/*" --ignore-panics --ignore-tests
+    @echo "Opening coverage report in browser..."
+    @open server/tarpaulin-report.html 2>/dev/null || xdg-open server/tarpaulin-report.html 2>/dev/null || echo "Please open server/tarpaulin-report.html manually"
+    @echo "✅ HTML coverage report generated."
 
 # test [server_pattern] [client_pattern] [e2e_pattern]: Runs all tests.
 # Patterns are optional. If a pattern is not provided, all tests for that category run.
@@ -428,12 +428,12 @@ format: format-server format-client
     @echo "✅ All code formatting complete."
 
 # --- Quality Checks (Linters, Format Checkers, Type Checkers) ---
-# check-server: Runs server-side checks (fmt --all, clippy, cargo check).
-# As per CLAUDE.md: `cd server && cargo fmt --all && cargo clippy -- -D warnings`
+# check-server: Runs server-side checks (fmt --check, clippy, cargo check).
+# As per CLAUDE.md: `cd server && cargo fmt --check && cargo clippy -- -D warnings`
 # We add `cargo check` for completeness.
 check-server: format-server
-    @echo "Checking server code: cargo fmt --all, cargo clippy, cargo check..."
-    cd server && cargo fmt --all
+    @echo "Checking server code: cargo fmt --check, cargo clippy, cargo check..."
+    cd server && cargo fmt --check
     cd server && SQLX_OFFLINE=true cargo clippy --all-targets --all-features -- -D warnings
     @echo "Checking for overlong files (>600 lines)..."
     @find server/src -name "*.rs" -exec bash -c 'lines=$(wc -l < "{}"); if [ "$lines" -gt 600 ]; then echo "❌ ERROR: {} has $lines lines (max: 600)"; exit 1; fi' \; || (echo "❌ Some server files exceed 600 lines. Please refactor them into smaller modules." && exit 1)
@@ -450,10 +450,10 @@ check-client: format-client
     @find client/src -name "*.ts" -o -name "*.js" -o -name "*.svelte" -o -name "*.vue" -exec bash -c 'lines=$(wc -l < "{}"); if [ "$lines" -gt 600 ]; then echo "❌ ERROR: {} has $lines lines (max: 600)"; exit 1; fi' \; || (echo "❌ Some client files exceed 600 lines. Please refactor them into smaller modules." && exit 1)
     @echo "✅ All client checks complete."
 
-# check-template: Runs template generate checks (fmt --all, clippy, cargo check).
-#  `cd scripts/create-web-template && cargo fmt --all && cargo clippy -- -D warnings`
+# check-template: Runs template generate checks (fmt --check, clippy, cargo check).
+#  `cd scripts/create-web-template && cargo fmt --check && cargo clippy -- -D warnings`
 check-template:
-    @echo "Checking template generation code: cargo fmt --all, cargo clippy, cargo check..."
+    @echo "Checking template generation code: cargo fmt --check, cargo clippy, cargo check..."
     cd scripts/create-web-template && cargo fmt --all
     cd scripts/create-web-template && cargo clippy --all-targets --all-features -- -D warnings
     @echo "Checking for overlong files (>600 lines)..."

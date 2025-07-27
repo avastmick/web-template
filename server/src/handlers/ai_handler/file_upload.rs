@@ -180,10 +180,7 @@ pub async fn upload_file_handler(
 ) -> AppResult<Json<serde_json::Value>> {
     // Verify JWT token and get user
     let token = auth.token();
-    let _user_id = state
-        .auth_service
-        .get_user_id_from_token(token)?
-        .to_string();
+    let _user_id = state.auth.get_user_id_from_token(token)?.to_string();
 
     let mut files = Vec::new();
     let mut raw_files = Vec::new();
@@ -262,4 +259,158 @@ pub async fn upload_file_handler(
     }
 
     Ok(Json(response))
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::unwrap_used)]
+
+    use super::*;
+
+    #[test]
+    fn test_get_max_tokens_default() {
+        // SAFETY: Tests are single-threaded and we're cleaning up test values
+        #[allow(unsafe_code)]
+        unsafe {
+            std::env::remove_var("MAX_FILE_CONTEXT_TOKENS");
+        }
+        assert_eq!(get_max_tokens(), DEFAULT_MAX_TOKENS);
+    }
+
+    #[test]
+    fn test_get_max_tokens_from_env() {
+        // SAFETY: Tests are single-threaded and we're setting test values
+        #[allow(unsafe_code)]
+        unsafe {
+            std::env::set_var("MAX_FILE_CONTEXT_TOKENS", "5000");
+        }
+        assert_eq!(get_max_tokens(), 5000);
+        #[allow(unsafe_code)]
+        unsafe {
+            std::env::remove_var("MAX_FILE_CONTEXT_TOKENS");
+        }
+    }
+
+    #[test]
+    fn test_estimate_tokens() {
+        assert_eq!(estimate_tokens("test"), 1); // 4 chars = 1 token
+        assert_eq!(estimate_tokens("this is a test"), 3); // 14 chars ≈ 3 tokens
+        assert_eq!(estimate_tokens(""), 0);
+    }
+
+    #[test]
+    fn test_truncate_to_token_limit_no_truncation() {
+        let text = "This is a short text".to_string();
+        let result = truncate_to_token_limit(text.clone(), 100);
+        assert_eq!(result, text);
+    }
+
+    #[test]
+    fn test_truncate_to_token_limit_with_truncation() {
+        let text = "a".repeat(1000); // 1000 chars = ~250 tokens
+        let result = truncate_to_token_limit(text, 10); // 10 tokens = ~40 chars
+        assert!(result.len() < 100);
+        assert!(result.ends_with("[Content truncated to fit within token limit]"));
+    }
+
+    #[test]
+    fn test_extract_text_content_plain_text() {
+        let file = RawFileUpload {
+            name: "test.txt".to_string(),
+            data: b"Hello, world!".to_vec(),
+            mime_type: Some("text/plain".to_string()),
+        };
+
+        let result = extract_text_content(&file).unwrap();
+        assert_eq!(result, "Hello, world!");
+    }
+
+    #[test]
+    fn test_extract_text_content_json() {
+        let file = RawFileUpload {
+            name: "data.json".to_string(),
+            data: br#"{"key": "value"}"#.to_vec(),
+            mime_type: Some("application/json".to_string()),
+        };
+
+        let result = extract_text_content(&file).unwrap();
+        assert_eq!(result, r#"{"key": "value"}"#);
+    }
+
+    #[test]
+    fn test_extract_text_content_invalid_utf8() {
+        let file = RawFileUpload {
+            name: "invalid.txt".to_string(),
+            data: vec![0xFF, 0xFE, 0xFD], // Invalid UTF-8
+            mime_type: Some("text/plain".to_string()),
+        };
+
+        let result = extract_text_content(&file);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_extract_text_content_unsupported_type() {
+        let file = RawFileUpload {
+            name: "image.jpg".to_string(),
+            data: vec![0xFF, 0xD8, 0xFF], // JPEG header
+            mime_type: Some("image/jpeg".to_string()),
+        };
+
+        let result = extract_text_content(&file);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_file_type_detection_by_extension() {
+        let file = RawFileUpload {
+            name: "document.pdf".to_string(),
+            data: vec![],
+            mime_type: None,
+        };
+
+        // The function will detect PDF by extension
+        let result = extract_text_content(&file);
+        // PDF extraction will fail with empty data, but it should attempt PDF parsing
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_extract_pdf_text_empty_data() {
+        let result = extract_pdf_text(&[]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_extract_docx_text_empty_data() {
+        let result = extract_docx_text(&[]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_file_upload_struct() {
+        let upload = FileUpload {
+            name: "test.txt".to_string(),
+            content: "content".to_string(),
+            mime_type: Some("text/plain".to_string()),
+            size: 7,
+        };
+
+        assert_eq!(upload.name, "test.txt");
+        assert_eq!(upload.content, "content");
+        assert_eq!(upload.size, 7);
+    }
+
+    #[test]
+    fn test_raw_file_upload_struct() {
+        let upload = RawFileUpload {
+            name: "test.bin".to_string(),
+            data: vec![1, 2, 3],
+            mime_type: None,
+        };
+
+        assert_eq!(upload.name, "test.bin");
+        assert_eq!(upload.data, vec![1, 2, 3]);
+        assert!(upload.mime_type.is_none());
+    }
 }

@@ -1,4 +1,4 @@
-// web-template/server/src/middleware/auth_middleware.rs
+// kanbain/server/src/middleware/auth_middleware.rs
 
 //! JWT authentication middleware and extractors for Axum
 //!
@@ -58,7 +58,7 @@ impl FromRequestParts<Arc<AppState>> for JwtAuth {
         let token = authorization_header.token();
 
         // Validate the JWT token
-        let claims = app_state.auth_service.validate_token(token).map_err(|e| {
+        let claims = app_state.auth.validate_token(token).map_err(|e| {
             tracing::warn!("JWT validation failed: {:?}", e);
             (
                 StatusCode::UNAUTHORIZED,
@@ -79,7 +79,7 @@ impl FromRequestParts<Arc<AppState>> for JwtAuth {
 
         // Verify user still exists in database
         let _user = app_state
-            .user_service
+            .user
             .find_by_email(&claims.email)
             .await
             .map_err(|e| {

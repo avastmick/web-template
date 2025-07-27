@@ -13,7 +13,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use uuid::Uuid;
 
-use crate::ai::{ChatMessage, ChatRole};
+use crate::ai::{ChatMessage, ChatRequest as AiChatRequest, ChatRole};
 use crate::core::AppState;
 use crate::errors::AppResult;
 
@@ -38,7 +38,7 @@ pub async fn chat_stream_handler(
 ) -> AppResult<Sse<impl Stream<Item = Result<Event, Infallible>>>> {
     // Verify JWT token and get user
     let token = auth.token();
-    let _user_id = state.auth_service.get_user_id_from_token(token)?;
+    let _user_id = state.auth.get_user_id_from_token(token)?;
 
     let chat_id = Uuid::new_v4().to_string();
 
@@ -57,8 +57,9 @@ pub async fn chat_stream_handler(
         .collect();
 
     // For now, simulate streaming by calling regular chat and splitting the response
-    let ai_service = state.ai_service.read().await;
-    let response = ai_service.chat(messages).await;
+    let ai_service = state.ai.read().await;
+    let chat_request = AiChatRequest::new(messages);
+    let response = ai_service.chat(chat_request).await;
 
     // Create a stream that sends events
     let stream = stream::unfold(

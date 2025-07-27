@@ -1,4 +1,4 @@
-// web-template/server/src/errors.rs
+// kanbain/server/src/errors.rs
 use axum::{
     Json,
     http::StatusCode,
@@ -58,15 +58,14 @@ pub enum AppError {
     #[error("Invite already used")]
     InviteAlreadyUsed,
 
-    #[error("Registration is by invitation only")]
-    #[allow(dead_code)]
-    RegistrationRequiresInvite,
-
     #[error("Bad request: {0}")]
     BadRequest(String),
 
     #[error("Payment required")]
     PaymentRequired,
+
+    #[error("Not found: {0}")]
+    NotFound(String),
 }
 
 impl IntoResponse for AppError {
@@ -136,7 +135,7 @@ impl IntoResponse for AppError {
                     None,
                 )
             }
-            AppError::InviteNotFound | AppError::RegistrationRequiresInvite => (
+            AppError::InviteNotFound => (
                 StatusCode::FORBIDDEN,
                 "Registration is by invitation only.".to_string(),
                 None,
@@ -156,6 +155,7 @@ impl IntoResponse for AppError {
                 "Payment required to access this resource.".to_string(),
                 None,
             ),
+            AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg, None),
         };
 
         let mut body = json!({ "error": error_message });

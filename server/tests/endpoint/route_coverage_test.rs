@@ -19,11 +19,7 @@ fn normalize_path(path: &str) -> String {
     let mut normalized = uuid_regex.replace_all(path, "{id}").to_string();
 
     // Replace other common patterns
-    normalized = normalized
-        .replace("{}", "{id}")
-        .replace("{issue.id}", "{id}")
-        .replace("{board.id}", "{id}")
-        .replace("{user.board_id}", "{id}");
+    normalized = normalized.replace("{}", "{id}");
 
     // Handle specific test IDs
     if normalized.contains("/conversations/invalid-id-123") {
@@ -327,6 +323,14 @@ fn test_all_api_routes_have_tests() {
         ("GET", "/api/ai/conversations"),
         ("GET", "/api/ai/conversations/{id}"),
         ("GET", "/api/ai/sessions/{id}"),
+        ("GET", "/api/ai/health"),
+        ("GET", "/api/ai/info"),
+        ("GET", "/api/ai/usage"),
+        ("POST", "/api/ai/analyze/code"),
+        ("POST", "/api/ai/chat"),
+        ("POST", "/api/ai/chat/contextual"),
+        ("POST", "/api/ai/moderate"),
+        ("POST", "/api/ai/upload"),
     ];
 
     let info_exempted: HashSet<_> = info_exemptions

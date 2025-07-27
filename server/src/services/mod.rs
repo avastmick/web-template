@@ -8,6 +8,9 @@ pub mod oauth_service;
 pub mod payment;
 pub mod user_service;
 
+#[cfg(test)]
+mod tests;
+
 // Re-export for convenience
 pub use ai_data_service::AiDataService;
 pub use ai_service::AiService;

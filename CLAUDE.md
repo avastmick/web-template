@@ -26,6 +26,7 @@ The database is SQLite for local development, with `dbmate` for migrations. `jus
 
 **IMPORTANT RULES - ALWAYS STRICTLY FOLLOW**
 
+- ALWAYS approach ALL development with a Test Driven Development (TDD) mindset - create tests FIRST, THEN build out implementation to pass the tests.
 - ALWAYS work in small increments on a minimum set of files, in one area at a time - i.e. either `server` OR `client` NOT both.
 - ALWAYS run `just check-server` or `just check-client` after each increment; resolve ALL issues before proceeding.
 - DO NOT make many changes without running the checks as it will waste time.
@@ -34,6 +35,42 @@ The database is SQLite for local development, with `dbmate` for migrations. `jus
 - ALWAYS check local logs; If a `.overmind.sock` is present then the server is running. Check the logs in the `logs` dir to check issues; there are `logs/client_latest.log` and `logs/server_latest.log` for client and server
 - ALWAYS use `playwright` mcp to review browser console log
 - ALWAYS explicitly follow code organisation conventions listed in `documentation/ARCHITECTURE.md`. Update `ARCHITECTURE.md` if any additional code directories are added.
+
+##  MANDATORY Development Rules
+
+### 1. Test-Driven Development (TDD) Workflow
+```bash
+# STRICT SEQUENCE - NO EXCEPTIONS:
+1. Write failing test FIRST
+2. Run: cargo test <test_name> -- --nocapture
+3. See test fail (RED)
+4. Write minimal code to pass
+5. Run: cargo clippy --all-targets --all-features
+6. Fix all clippy warnings
+7. Run: cargo test <test_name>
+8. See test pass (GREEN)
+9. Refactor if needed
+10. Run: cargo fmt && cargo clippy && cargo test
+11. Commit only when both pass
+```
+
+### 2. Server Code Quality Checklist
+- [ ] **NO `unwrap()` ** - Use `expect("descriptive message")` or `?`
+- [ ] **NO `allow` attributes** - Fix the actual issue
+- [ ] **NO unsafe code** - Period.
+- [ ] **NO manual Cargo.toml edits** - Use `cargo add`
+- [ ] **NO code duplication** - Extract to functions/modules
+- [ ] **80% test coverage** - Check with `cargo tarpaulin`
+- [ ] **Zero clippy warnings** - Run before EVERY commit
+- [ ] **Unix line endings ONLY** - NO Windows CRLF line endings
+
+### 3. File Format Standards
+- **Line Endings**: ALL files MUST use Unix line endings (LF only)
+  - NO Windows line endings (CRLF) allowed
+  - Configure your editor to use LF line endings
+  - Check with: `file <filename>` should NOT show "CRLF"
+  - Fix with: `sed -i 's/\r$//' <filename>`
+
 
 ## Key Project Goals (from PRD.md and README.md)
 

@@ -320,3 +320,159 @@ fn convert_to_chat_response(
         }),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ai::models::usage::TokenUsage as AiTokenUsage;
+    use crate::ai::models::{ChatChoice, chat::ChatResponse as AiChatResponse};
+    use crate::test_helpers::create_test_app_state;
+    use sqlx::SqlitePool;
+
+    #[test]
+    fn test_estimate_token_count() {
+        assert_eq!(estimate_token_count(""), 0);
+        assert_eq!(estimate_token_count("test"), 1);
+        assert_eq!(estimate_token_count("hello world"), 3);
+        assert_eq!(
+            estimate_token_count("This is a longer sentence with more tokens"),
+            11
+        );
+        assert_eq!(estimate_token_count("🦀🚀"), 1); // Unicode chars
+    }
+
+    #[sqlx::test]
+    async fn test_extract_user_id_from_auth_missing_header(pool: SqlitePool) {
+        let state = create_test_app_state(&pool);
+        let result = extract_user_id_from_auth(None, &state.auth);
+        assert!(result.is_err());
+        match result.expect_err("Expected an error but got Ok") {
+            AppError::Unauthorized(msg) => {
+                assert_eq!(msg, "Missing authorization header");
+            }
+            _ => panic!("Expected Unauthorized error"),
+        }
+    }
+
+    #[sqlx::test]
+    async fn test_extract_user_id_from_auth_invalid_token(pool: SqlitePool) {
+        let state = create_test_app_state(&pool);
+        let auth_header = TypedHeader(
+            Authorization::bearer("invalid_token").expect("Failed to create auth header"),
+        );
+        let result = extract_user_id_from_auth(Some(auth_header), &state.auth);
+        assert!(result.is_err());
+    }
+
+    #[sqlx::test]
+    async fn test_chat_handler_with_streaming_request(pool: SqlitePool) {
+        let state = create_test_app_state(&pool);
+
+        let request = ChatRequest {
+            messages: vec![MessageInput {
+                role: "user".to_string(),
+                content: "Hello".to_string(),
+            }],
+            stream: Some(true),
+            model: None,
+            temperature: None,
+            max_tokens: None,
+            context: None,
+            use_schema: None,
+            template: None,
+        };
+
+        let result = chat_handler(State(state), None, Json(request)).await;
+
+        assert!(result.is_err());
+        match result.expect_err("Expected an error but got Ok") {
+            AppError::BadRequest(msg) => {
+                assert_eq!(
+                    msg,
+                    "Use /api/ai/chat/stream endpoint for streaming responses"
+                );
+            }
+            _ => panic!("Expected BadRequest error"),
+        }
+    }
+
+    #[sqlx::test]
+    async fn test_chat_handler_unauthorized(pool: SqlitePool) {
+        let state = create_test_app_state(&pool);
+
+        let request = ChatRequest {
+            messages: vec![MessageInput {
+                role: "user".to_string(),
+                content: "Hello".to_string(),
+            }],
+            stream: Some(false),
+            model: None,
+            temperature: None,
+            max_tokens: None,
+            context: None,
+            use_schema: None,
+            template: None,
+        };
+
+        let result = chat_handler(State(state), None, Json(request)).await;
+
+        assert!(result.is_err());
+        match result.expect_err("Expected an error but got Ok") {
+            AppError::Unauthorized(_) => {}
+            _ => panic!("Expected Unauthorized error"),
+        }
+    }
+
+    #[test]
+    fn test_convert_to_chat_response() {
+        let ai_response = AiChatResponse {
+            id: "test-id".to_string(),
+            created: 1_234_567_890,
+            model: "gpt-4".to_string(),
+            choices: vec![ChatChoice {
+                index: 0,
+                message: ChatMessage {
+                    role: ChatRole::Assistant,
+                    content: "Hello, how can I help you?".to_string(),
+                },
+                finish_reason: Some("stop".to_string()),
+            }],
+            usage: Some(AiTokenUsage {
+                prompt: 10,
+                completion: 5,
+                total: 15,
+            }),
+            function_call: None,
+        };
+
+        let conversation_id = "conv-123".to_string();
+        let result = convert_to_chat_response(ai_response, conversation_id.clone());
+
+        assert_eq!(result.id, "test-id");
+        assert_eq!(result.conversation_id, conversation_id);
+        assert_eq!(result.message.role, "assistant");
+        assert_eq!(result.message.content, "Hello, how can I help you?");
+        assert!(result.usage.is_some());
+
+        let usage = result.usage.expect("Expected usage but got None");
+        assert_eq!(usage.prompt, 10);
+        assert_eq!(usage.completion, 5);
+        assert_eq!(usage.total, 15);
+    }
+
+    #[test]
+    fn test_convert_to_chat_response_empty_choices() {
+        let ai_response = AiChatResponse {
+            id: "test-id".to_string(),
+            created: 1_234_567_890,
+            model: "gpt-4".to_string(),
+            choices: vec![],
+            usage: None,
+            function_call: None,
+        };
+
+        let result = convert_to_chat_response(ai_response, "conv-123".to_string());
+        assert_eq!(result.message.content, "");
+        assert!(result.usage.is_none());
+    }
+}

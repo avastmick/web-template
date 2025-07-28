@@ -54,3 +54,116 @@ impl Default for AiPersona {
         Self::BusinessAnalyst
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_display_name() {
+        assert_eq!(
+            AiPersona::BusinessAnalyst.display_name(),
+            "Business Analyst"
+        );
+        assert_eq!(
+            AiPersona::TechnicalSupport.display_name(),
+            "Technical Support"
+        );
+        assert_eq!(AiPersona::CodeReviewer.display_name(), "Code Reviewer");
+        assert_eq!(AiPersona::ProjectManager.display_name(), "Project Manager");
+    }
+
+    #[test]
+    fn test_template_name() {
+        assert_eq!(
+            AiPersona::BusinessAnalyst.template_name(),
+            "business_analyst_conversation"
+        );
+        assert_eq!(
+            AiPersona::TechnicalSupport.template_name(),
+            "technical_support_conversation"
+        );
+        assert_eq!(
+            AiPersona::CodeReviewer.template_name(),
+            "code_reviewer_conversation"
+        );
+        assert_eq!(
+            AiPersona::ProjectManager.template_name(),
+            "project_manager_conversation"
+        );
+    }
+
+    #[test]
+    fn test_supports_functions() {
+        assert!(AiPersona::BusinessAnalyst.supports_functions());
+        assert!(AiPersona::ProjectManager.supports_functions());
+        assert!(!AiPersona::TechnicalSupport.supports_functions());
+        assert!(!AiPersona::CodeReviewer.supports_functions());
+    }
+
+    #[test]
+    fn test_default() {
+        assert_eq!(AiPersona::default(), AiPersona::BusinessAnalyst);
+    }
+
+    #[test]
+    fn test_equality() {
+        assert_eq!(AiPersona::BusinessAnalyst, AiPersona::BusinessAnalyst);
+        assert_ne!(AiPersona::BusinessAnalyst, AiPersona::TechnicalSupport);
+    }
+
+    #[test]
+    fn test_clone() {
+        let persona = AiPersona::ProjectManager;
+        #[allow(clippy::clone_on_copy)]
+        let cloned = persona.clone();
+        assert_eq!(persona, cloned);
+    }
+
+    #[test]
+    fn test_copy() {
+        let persona = AiPersona::CodeReviewer;
+        let copied = persona;
+        assert_eq!(persona, copied);
+    }
+
+    #[test]
+    fn test_debug() {
+        let persona = AiPersona::TechnicalSupport;
+        let debug_str = format!("{persona:?}");
+        assert_eq!(debug_str, "TechnicalSupport");
+    }
+
+    #[test]
+    fn test_serialize() {
+        let persona = AiPersona::BusinessAnalyst;
+        let serialized = serde_json::to_string(&persona).expect("Failed to serialize AiPersona");
+        assert_eq!(serialized, r#""business_analyst""#);
+    }
+
+    #[test]
+    fn test_deserialize() {
+        let json = r#""project_manager""#;
+        let persona: AiPersona =
+            serde_json::from_str(json).expect("Failed to deserialize AiPersona");
+        assert_eq!(persona, AiPersona::ProjectManager);
+    }
+
+    #[test]
+    fn test_serialize_deserialize_all_variants() {
+        let personas = vec![
+            AiPersona::BusinessAnalyst,
+            AiPersona::TechnicalSupport,
+            AiPersona::CodeReviewer,
+            AiPersona::ProjectManager,
+        ];
+
+        for persona in personas {
+            let serialized =
+                serde_json::to_string(&persona).expect("Failed to serialize AiPersona");
+            let deserialized: AiPersona =
+                serde_json::from_str(&serialized).expect("Failed to deserialize AiPersona");
+            assert_eq!(persona, deserialized);
+        }
+    }
+}

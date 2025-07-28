@@ -265,3 +265,304 @@ impl AiSessionAsset {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_session_status_serialization() {
+        assert_eq!(
+            serde_json::to_string(&SessionStatus::Active).expect("Failed to serialize"),
+            r#""active""#
+        );
+        assert_eq!(
+            serde_json::to_string(&SessionStatus::Completed).expect("Failed to serialize"),
+            r#""completed""#
+        );
+        assert_eq!(
+            serde_json::to_string(&SessionStatus::Cancelled).expect("Failed to serialize"),
+            r#""cancelled""#
+        );
+        assert_eq!(
+            serde_json::to_string(&SessionStatus::Expired).expect("Failed to serialize"),
+            r#""expired""#
+        );
+    }
+
+    #[test]
+    fn test_session_status_deserialization() {
+        assert_eq!(
+            serde_json::from_str::<SessionStatus>(r#""active""#).expect("Failed to deserialize"),
+            SessionStatus::Active
+        );
+        assert_eq!(
+            serde_json::from_str::<SessionStatus>(r#""completed""#).expect("Failed to deserialize"),
+            SessionStatus::Completed
+        );
+    }
+
+    #[test]
+    fn test_message_role_serialization() {
+        assert_eq!(
+            serde_json::to_string(&MessageRole::User).expect("Failed to serialize"),
+            r#""user""#
+        );
+        assert_eq!(
+            serde_json::to_string(&MessageRole::Assistant).expect("Failed to serialize"),
+            r#""assistant""#
+        );
+        assert_eq!(
+            serde_json::to_string(&MessageRole::Function).expect("Failed to serialize"),
+            r#""function""#
+        );
+    }
+
+    #[test]
+    fn test_ai_session_new() {
+        let user_id = "user_123".to_string();
+        let session = AiSession::new(user_id.clone());
+
+        assert!(session.id.starts_with("sess_"));
+        assert_eq!(session.user_id, user_id);
+        assert_eq!(session.status, SessionStatus::Active);
+        assert!(session.draft.is_none());
+        assert!(session.completed_at.is_none());
+        assert!(session.expires_at > session.created_at);
+    }
+
+    #[test]
+    fn test_ai_session_get_context() {
+        let session = AiSession::new("user_123".to_string());
+        let context = session.get_context().expect("Failed to get context");
+
+        assert!(context.requirements.is_empty());
+        assert!(context.technical_notes.is_empty());
+        assert!(context.design_notes.is_empty());
+        assert!(context.other_notes.is_empty());
+        assert!(context.board_id.is_none());
+        assert_eq!(context.persona, AiPersona::BusinessAnalyst);
+    }
+
+    #[test]
+    fn test_ai_session_get_draft_none() {
+        let session = AiSession::new("user_123".to_string());
+        let draft = session.get_draft().expect("Failed to get draft");
+        assert!(draft.is_none());
+    }
+
+    #[test]
+    fn test_ai_session_get_draft_some() {
+        let mut session = AiSession::new("user_123".to_string());
+        let draft = IssueDraft {
+            title: Some("Test Issue".to_string()),
+            description: Some("Test Description".to_string()),
+            acceptance_criteria: vec!["AC1".to_string()],
+            technical_notes: None,
+            assets: vec![],
+            estimated_hours: Some(3.5),
+            priority: Some("high".to_string()),
+            tags: vec!["test".to_string()],
+        };
+        session.draft = Some(serde_json::to_string(&draft).expect("Failed to serialize draft"));
+
+        let retrieved_draft = session.get_draft().expect("Failed to get draft");
+        assert!(retrieved_draft.is_some());
+        let retrieved_draft = retrieved_draft.expect("Draft should exist");
+        assert_eq!(retrieved_draft.title, Some("Test Issue".to_string()));
+        assert_eq!(retrieved_draft.estimated_hours, Some(3.5));
+    }
+
+    #[test]
+    fn test_ai_session_message_new() {
+        let session_id = "sess_123".to_string();
+        let content = "Hello AI".to_string();
+        let message = AiSessionMessage::new(session_id.clone(), MessageRole::User, content.clone());
+
+        assert!(message.id.starts_with("msg_"));
+        assert_eq!(message.session_id, session_id);
+        assert_eq!(message.role, MessageRole::User);
+        assert_eq!(message.content, content);
+        assert!(message.function_call.is_none());
+    }
+
+    #[test]
+    fn test_ai_session_asset_new() {
+        let session_id = "sess_123".to_string();
+        let file_path = "/tmp/file.pdf".to_string();
+        let content_type = "application/pdf".to_string();
+        let size = 1024;
+        let description = Some("Test PDF".to_string());
+
+        let asset = AiSessionAsset::new(
+            session_id.clone(),
+            file_path.clone(),
+            content_type.clone(),
+            size,
+            description.clone(),
+        );
+
+        assert!(asset.id.starts_with("asset_"));
+        assert_eq!(asset.session_id, session_id);
+        assert_eq!(asset.file_path, file_path);
+        assert_eq!(asset.content_type, content_type);
+        assert_eq!(asset.size, size);
+        assert_eq!(asset.description, description);
+        assert!(asset.metadata.is_none());
+    }
+
+    #[test]
+    fn test_create_session_request_serialization() {
+        let request = CreateSessionRequest {
+            initial_input: Some("Create a login feature".to_string()),
+            board_id: Some("board_123".to_string()),
+            persona: AiPersona::BusinessAnalyst,
+        };
+
+        let json = serde_json::to_string(&request).expect("Failed to serialize");
+        assert!(json.contains("initial_input"));
+        assert!(json.contains("board_id"));
+        assert!(json.contains("persona"));
+    }
+
+    #[test]
+    fn test_session_context_default() {
+        let context = SessionContext::default();
+        assert!(context.requirements.is_empty());
+        assert!(context.technical_notes.is_empty());
+        assert!(context.design_notes.is_empty());
+        assert!(context.other_notes.is_empty());
+        assert!(context.board_id.is_none());
+        assert_eq!(context.persona, AiPersona::BusinessAnalyst);
+    }
+
+    #[test]
+    fn test_issue_draft_default() {
+        let draft = IssueDraft::default();
+        assert!(draft.title.is_none());
+        assert!(draft.description.is_none());
+        assert!(draft.acceptance_criteria.is_empty());
+        assert!(draft.technical_notes.is_none());
+        assert!(draft.assets.is_empty());
+        assert!(draft.estimated_hours.is_none());
+        assert!(draft.priority.is_none());
+        assert!(draft.tags.is_empty());
+    }
+
+    #[test]
+    fn test_finalize_action_serialization() {
+        assert_eq!(
+            serde_json::to_string(&FinalizeAction::CreateIssue).expect("Failed to serialize"),
+            r#""create_issue""#
+        );
+        assert_eq!(
+            serde_json::to_string(&FinalizeAction::Cancel).expect("Failed to serialize"),
+            r#""cancel""#
+        );
+    }
+
+    #[test]
+    fn test_function_call_serialization() {
+        let func_call = FunctionCall {
+            name: "create_issue".to_string(),
+            parameters: serde_json::json!({
+                "title": "Test Issue",
+                "priority": "high"
+            }),
+        };
+
+        let json = serde_json::to_string(&func_call).expect("Failed to serialize");
+        assert!(json.contains("create_issue"));
+        assert!(json.contains("Test Issue"));
+    }
+
+    #[test]
+    fn test_issue_preview_serialization() {
+        let preview = IssuePreview {
+            title: "Test Issue".to_string(),
+            description: "Test Description".to_string(),
+            acceptance_criteria: vec!["AC1".to_string(), "AC2".to_string()],
+            technical_notes: Some("Tech notes".to_string()),
+            estimated_hours: Some(5.0),
+            priority: "medium".to_string(),
+            tags: vec!["backend".to_string()],
+            asset_count: 2,
+        };
+
+        let json = serde_json::to_string(&preview).expect("Failed to serialize");
+        let deserialized: IssuePreview =
+            serde_json::from_str(&json).expect("Failed to deserialize");
+
+        assert_eq!(deserialized.title, preview.title);
+        assert_eq!(deserialized.acceptance_criteria.len(), 2);
+        assert_eq!(deserialized.asset_count, 2);
+    }
+
+    #[test]
+    fn test_ai_session_expiry_duration() {
+        let session = AiSession::new("user_123".to_string());
+        let duration = session.expires_at - session.created_at;
+        assert_eq!(duration.num_minutes(), 30);
+    }
+
+    #[test]
+    fn test_session_status_equality() {
+        assert_eq!(SessionStatus::Active, SessionStatus::Active);
+        assert_ne!(SessionStatus::Active, SessionStatus::Completed);
+    }
+
+    #[test]
+    fn test_message_role_equality() {
+        assert_eq!(MessageRole::User, MessageRole::User);
+        assert_ne!(MessageRole::User, MessageRole::Assistant);
+    }
+
+    #[test]
+    fn test_create_session_response_serialization() {
+        let response = CreateSessionResponse {
+            session_id: "sess_123".to_string(),
+            status: SessionStatus::Active,
+            assistant_response: "Hello! How can I help?".to_string(),
+            expires_at: Utc::now() + chrono::Duration::minutes(30),
+        };
+
+        let json = serde_json::to_string(&response).expect("Failed to serialize");
+        assert!(json.contains("sess_123"));
+        assert!(json.contains("active"));
+    }
+
+    #[test]
+    fn test_send_message_response_with_function_calls() {
+        let response = SendMessageResponse {
+            message_id: "msg_123".to_string(),
+            assistant_response: "I'll help you with that.".to_string(),
+            function_calls: vec![FunctionCall {
+                name: "analyze_requirements".to_string(),
+                parameters: serde_json::json!({"text": "login feature"}),
+            }],
+            draft_updated: true,
+        };
+
+        let json = serde_json::to_string(&response).expect("Failed to serialize");
+        assert!(json.contains("analyze_requirements"));
+        assert!(json.contains("draft_updated"));
+    }
+
+    #[test]
+    fn test_finalize_session_response_serialization() {
+        let response = FinalizeSessionResponse {
+            issue_id: Some("issue_123".to_string()),
+            board_id: Some("board_456".to_string()),
+            status: SessionStatus::Completed,
+            url: Some("https://example.com/issue/123".to_string()),
+            assets_moved: 3,
+        };
+
+        let json = serde_json::to_string(&response).expect("Failed to serialize");
+        let deserialized: FinalizeSessionResponse =
+            serde_json::from_str(&json).expect("Failed to deserialize");
+
+        assert_eq!(deserialized.assets_moved, 3);
+        assert_eq!(deserialized.status, SessionStatus::Completed);
+    }
+}

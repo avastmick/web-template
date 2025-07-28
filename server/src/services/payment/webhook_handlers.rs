@@ -136,22 +136,13 @@ mod tests {
         let pool = setup_test_db().await;
         let service = create_test_service(pool.clone());
 
-        let user_id = Uuid::new_v4();
-
-        // Create user first due to foreign key constraint
-        sqlx::query(
-            "INSERT INTO users (id, email, hashed_password, provider, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?)",
-        )
-        .bind(user_id.to_string())
-        .bind(format!("{user_id}@example.com"))
-        .bind("hashed_password")
-        .bind("local")
-        .bind(chrono::Utc::now().to_rfc3339())
-        .bind(chrono::Utc::now().to_rfc3339())
-        .execute(&pool)
-        .await
-        .unwrap();
+        // Create user using proper service method
+        let user_service = crate::services::user_service::UserServiceImpl::new(pool.clone());
+        let user = user_service
+            .create_test_user("test@example.com", "test_password")
+            .await
+            .unwrap();
+        let user_id = user.id;
         let payment = service
             .create_payment(user_id, PaymentType::OneTime)
             .await

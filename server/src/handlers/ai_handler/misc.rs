@@ -391,3 +391,203 @@ pub async fn delete_invite_handler(
         "message": "Invite deleted successfully"
     })))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_helpers::create_test_app_state;
+    use serde_json::json;
+    use sqlx::SqlitePool;
+
+    async fn setup_test_db() -> SqlitePool {
+        let pool = SqlitePool::connect("sqlite::memory:")
+            .await
+            .expect("Failed to create test database");
+
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await
+            .expect("Failed to run migrations");
+
+        pool
+    }
+
+    #[tokio::test]
+    async fn test_ai_info_handler() {
+        let pool = setup_test_db().await;
+        let state = create_test_app_state(&pool);
+
+        let result = ai_info_handler(State(state)).await;
+        assert!(result.is_ok());
+
+        let response = result.expect("AI info handler should succeed");
+        let value = response.0;
+
+        assert!(value.get("provider").is_some());
+        assert!(value.get("schemas").is_some());
+        assert_eq!(value.get("streaming_supported"), Some(&json!(true)));
+        assert_eq!(value.get("websocket_supported"), Some(&json!(true)));
+    }
+
+    #[tokio::test]
+    async fn test_health_check_handler() {
+        let pool = setup_test_db().await;
+        let state = create_test_app_state(&pool);
+
+        let result = health_check_handler(State(state)).await;
+        assert!(result.is_ok());
+
+        let response = result.expect("Health check handler should succeed");
+        let value = response.0;
+
+        assert_eq!(value.get("status"), Some(&json!("healthy")));
+        assert!(value.get("provider").is_some());
+        assert!(value.get("timestamp").is_some());
+    }
+
+    #[tokio::test]
+    async fn test_demo_message_handler() {
+        let result = demo_message_handler().await;
+        assert!(result.is_ok());
+
+        let response = result.expect("Demo message handler should succeed");
+        let value = response.0;
+
+        assert!(value.get("demo_message").is_some());
+        assert_eq!(value.get("token_count"), Some(&json!(12)));
+        assert!(value.get("message").is_some());
+    }
+
+    #[tokio::test]
+    async fn test_error_demo_handler_jwt() {
+        let result = error_demo_handler(axum::extract::Path("jwt".to_string())).await;
+        assert!(result.is_err());
+        assert!(matches!(
+            result.expect_err("Should return JWT error"),
+            AppError::JwtError(_)
+        ));
+    }
+
+    #[tokio::test]
+    async fn test_error_demo_handler_invite_expired() {
+        let result = error_demo_handler(axum::extract::Path("invite_expired".to_string())).await;
+        assert!(result.is_err());
+        assert!(matches!(
+            result.expect_err("Should return invite expired error"),
+            AppError::InviteExpired
+        ));
+    }
+
+    #[tokio::test]
+    async fn test_error_demo_handler_invite_used() {
+        let result = error_demo_handler(axum::extract::Path("invite_used".to_string())).await;
+        assert!(result.is_err());
+        assert!(matches!(
+            result.expect_err("Should return invite used error"),
+            AppError::InviteAlreadyUsed
+        ));
+    }
+
+    #[tokio::test]
+    async fn test_error_demo_handler_ai_invalid() {
+        let result = error_demo_handler(axum::extract::Path("ai_invalid".to_string())).await;
+        assert!(result.is_err());
+        assert!(matches!(
+            result.expect_err("Should return bad request error"),
+            AppError::BadRequest(_)
+        ));
+    }
+
+    #[tokio::test]
+    async fn test_error_demo_handler_ai_rate_limit() {
+        let result = error_demo_handler(axum::extract::Path("ai_rate_limit".to_string())).await;
+        assert!(result.is_err());
+        assert!(matches!(
+            result.expect_err("Should return bad request error"),
+            AppError::BadRequest(_)
+        ));
+    }
+
+    #[tokio::test]
+    async fn test_error_demo_handler_ai_unknown() {
+        let result = error_demo_handler(axum::extract::Path("ai_unknown".to_string())).await;
+        assert!(result.is_err());
+        assert!(matches!(
+            result.expect_err("Should return bad request error"),
+            AppError::BadRequest(_)
+        ));
+    }
+
+    #[tokio::test]
+    async fn test_error_demo_handler_no_error() {
+        let result = error_demo_handler(axum::extract::Path("other".to_string())).await;
+        assert!(result.is_ok());
+
+        let response = result.expect("Error demo handler should succeed");
+        let value = response.0;
+
+        assert_eq!(value.get("message"), Some(&json!("No error generated")));
+        assert!(value.get("available_errors").is_some());
+    }
+
+    #[tokio::test]
+    async fn test_contextual_chat_request_deserialization() {
+        let json_data = json!({
+            "question": "What is this code doing?",
+            "context": ["Some context"],
+            "files": null,
+            "use_schema": "analysis_schema"
+        });
+
+        let request: ContextualChatRequest =
+            serde_json::from_value(json_data).expect("Should deserialize contextual chat request");
+        assert_eq!(request.question, "What is this code doing?");
+        assert_eq!(request.context, Some(vec!["Some context".to_string()]));
+        assert_eq!(request.use_schema, Some("analysis_schema".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_code_analysis_request_deserialization() {
+        let json_data = json!({
+            "code": "fn main() { println!(\"Hello\"); }",
+            "language": "rust",
+            "context": "Main function"
+        });
+
+        let request: CodeAnalysisRequest =
+            serde_json::from_value(json_data).expect("Should deserialize code analysis request");
+        assert_eq!(request.code, "fn main() { println!(\"Hello\"); }");
+        assert_eq!(request.language, "rust");
+        assert_eq!(request.context, Some("Main function".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_get_invite_handler_not_found() {
+        let pool = setup_test_db().await;
+        let state = create_test_app_state(&pool);
+
+        let result = get_invite_handler(
+            State(state),
+            axum::extract::Path("nonexistent@example.com".to_string()),
+        )
+        .await;
+
+        assert!(result.is_ok());
+        let response = result.expect("Get invite handler should succeed");
+        let value = response.0;
+
+        assert_eq!(value.get("invite"), Some(&json!(null)));
+        assert_eq!(value.get("valid"), Some(&json!(false)));
+        assert!(value.get("message").is_some());
+    }
+
+    // Note: The following tests require authentication and would need to be integration tests
+    // with proper JWT token setup to test the authenticated endpoints:
+    // - contextual_chat_handler
+    // - code_analysis_handler
+    // - moderate_content_handler
+    // - verify_token_handler
+    // - list_invites_handler
+    // - create_invite_handler
+    // - delete_invite_handler
+}

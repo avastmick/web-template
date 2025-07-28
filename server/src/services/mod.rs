@@ -1,4 +1,4 @@
-// web-template/server/src/services/mod.rs
+// kanbain/server/src/services/mod.rs
 
 pub mod ai_data_service;
 pub mod ai_service;
@@ -7,6 +7,9 @@ pub mod invite_service;
 pub mod oauth_service;
 pub mod payment;
 pub mod user_service;
+
+#[cfg(test)]
+mod tests;
 
 // Re-export for convenience
 pub use ai_data_service::AiDataService;

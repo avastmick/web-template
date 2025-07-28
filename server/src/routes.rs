@@ -1,4 +1,4 @@
-// web-template/server/src/routes.rs
+// kanbain/server/src/routes.rs
 
 use axum::http::{HeaderValue, Method, StatusCode};
 use axum::{
@@ -36,6 +36,62 @@ use crate::services::{
     UserServiceImpl,
 };
 
+/// Create AI routes
+fn ai_routes() -> Router<Arc<AppState>> {
+    Router::new()
+        .route("/api/ai/chat", post(chat_handler))
+        .route("/api/ai/chat/stream", get(chat_stream_handler))
+        .route("/api/ai/chat/contextual", post(contextual_chat_handler))
+        .route("/api/ai/analyze/code", post(code_analysis_handler))
+        .route("/api/ai/upload", post(upload_file_handler))
+        .route("/api/ai/conversations", get(get_conversations_handler))
+        .route("/api/ai/conversations/{id}", get(get_conversation_handler))
+        .route(
+            "/api/ai/conversations/{id}",
+            axum::routing::delete(delete_conversation_handler),
+        )
+        .route(
+            "/api/ai/conversations/{id}/archive",
+            post(archive_conversation_handler),
+        )
+        .route("/api/ai/usage", get(get_usage_stats_handler))
+        .route("/api/ai/health", get(health_check_handler))
+        .route("/api/ai/moderate", post(moderate_content_handler))
+        .route("/api/ai/info", get(ai_info_handler))
+}
+
+/// Create CORS layer
+fn create_cors_layer() -> Result<CorsLayer, Box<dyn std::error::Error>> {
+    let allowed_origins = env::var("ALLOWED_ORIGINS").unwrap_or_else(|_| {
+        let client_port = env::var("CLIENT_PORT").unwrap_or_else(|_| "8080".to_string());
+        format!("http://localhost:{client_port}")
+    });
+
+    let first_origin = allowed_origins
+        .split(',')
+        .next()
+        .unwrap_or("http://localhost:8080")
+        .trim();
+
+    Ok(CorsLayer::new()
+        .allow_origin(
+            first_origin
+                .parse::<HeaderValue>()
+                .map_err(|e| format!("Invalid CORS origin header value '{first_origin}': {e}"))?,
+        )
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::DELETE,
+            Method::PUT,
+            Method::OPTIONS,
+        ])
+        .allow_headers([
+            axum::http::header::CONTENT_TYPE,
+            axum::http::header::AUTHORIZATION,
+        ]))
+}
+
 /// Creates and returns the main application router.
 /// It takes the shared application state (`UserServiceImpl`, `AuthService`, `InviteService`, `AiService`, and `OAuthService`) as an argument.
 ///
@@ -54,28 +110,27 @@ use crate::services::{
 ///
 /// Panics if the `CLIENT_PORT` environment variable contains an invalid port number
 /// that cannot be formatted into a valid HTTP origin URL.
-#[allow(clippy::too_many_lines)]
-pub async fn create_router(
+pub fn create_router(
     user_service: Arc<UserServiceImpl>,
     auth_service: Arc<AuthService>,
     invite_service: Arc<InviteService>,
     oauth_service: Arc<OAuthService>,
-    db_pool: sqlx::SqlitePool,
+    db_pool: &sqlx::SqlitePool,
 ) -> Result<Router, Box<dyn std::error::Error>> {
     // Initialize AI services
-    let ai_service = AiService::new().await?;
+    let ai_service = AiService::new()?;
     let ai_data_service = AiDataService::new(db_pool.clone());
 
     // Initialize Payment service
     let payment_service = PaymentService::new(db_pool.clone())?;
 
     let app_state = Arc::new(AppState {
-        user_service,
-        auth_service,
-        invite_service,
-        ai_service: Arc::new(tokio::sync::RwLock::new(ai_service)),
-        ai_data_service: Arc::new(ai_data_service),
-        payment_service: Arc::new(payment_service),
+        user: user_service,
+        auth: auth_service,
+        invite: invite_service,
+        ai: Arc::new(tokio::sync::RwLock::new(ai_service)),
+        ai_data: Arc::new(ai_data_service),
+        payment: Arc::new(payment_service),
     });
 
     let oauth_app_state = OAuthAppState {
@@ -97,7 +152,6 @@ pub async fn create_router(
         )
         .with_state(oauth_app_state);
 
-    // Get static directory from environment or use default
     let static_dir = env::var("STATIC_DIR").unwrap_or_else(|_| "./static".to_string());
 
     // Main router with standard auth routes
@@ -129,27 +183,7 @@ pub async fn create_router(
         // Debug/development routes
         .route("/api/debug/error/{error_type}", get(error_demo_handler))
         .route("/api/debug/message", get(demo_message_handler))
-        // AI routes
-        .route("/api/ai/chat", post(chat_handler))
-        .route("/api/ai/chat/stream", get(chat_stream_handler))
-        .route("/api/ai/chat/contextual", post(contextual_chat_handler))
-        .route("/api/ai/analyze/code", post(code_analysis_handler))
-        .route("/api/ai/upload", post(upload_file_handler))
-        .route("/api/ai/conversations", get(get_conversations_handler))
-        .route("/api/ai/conversations/{id}", get(get_conversation_handler))
-        .route(
-            "/api/ai/conversations/{id}",
-            axum::routing::delete(delete_conversation_handler),
-        )
-        .route(
-            "/api/ai/conversations/{id}/archive",
-            post(archive_conversation_handler),
-        )
-        .route("/api/ai/usage", get(get_usage_stats_handler))
-        .route("/api/ai/health", get(health_check_handler))
-        .route("/api/ai/moderate", post(moderate_content_handler))
-        .route("/api/ai/info", get(ai_info_handler))
-        // Add other routes here (e.g., for other resources)
+        .merge(ai_routes())
         .with_state(app_state)
         // Merge OAuth routes
         .merge(oauth_router)
@@ -166,39 +200,7 @@ pub async fn create_router(
                 )
             }),
         )
-        .layer(
-            CorsLayer::new()
-                .allow_origin({
-                    let allowed_origins = env::var("ALLOWED_ORIGINS").unwrap_or_else(|_| {
-                        let client_port =
-                            env::var("CLIENT_PORT").unwrap_or_else(|_| "8080".to_string());
-                        format!("http://localhost:{client_port}")
-                    });
-
-                    // For now, use the first origin (tower-http 0.6.4 doesn't support multiple origins easily)
-                    // To support multiple origins, we'd need to upgrade or use a custom middleware
-                    let first_origin = allowed_origins
-                        .split(',')
-                        .next()
-                        .unwrap_or("http://localhost:8080")
-                        .trim();
-
-                    first_origin
-                        .parse::<HeaderValue>()
-                        .expect("Invalid header value for origin")
-                })
-                .allow_methods([
-                    Method::GET,
-                    Method::POST,
-                    Method::DELETE,
-                    Method::PUT,
-                    Method::OPTIONS,
-                ])
-                .allow_headers([
-                    axum::http::header::CONTENT_TYPE,
-                    axum::http::header::AUTHORIZATION,
-                ]),
-        );
+        .layer(create_cors_layer()?);
 
     Ok(router)
 }

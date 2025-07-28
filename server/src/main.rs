@@ -6,18 +6,9 @@ use tokio_cron_scheduler::{Job, JobScheduler};
 use tracing::info;
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt}; // Corrected import
 
-// Declare modules
-mod ai;
-mod config;
-mod core;
-mod errors;
-mod handlers;
-mod middleware;
-mod models;
-mod routes;
-mod services;
-
-use services::{AuthService, InviteService, OAuthService, UserServiceImpl};
+// Use the library crate instead of re-declaring modules
+use server::errors;
+use server::services::{AuthService, InviteService, OAuthService, UserServiceImpl};
 
 /// Initialize tracing/logging
 fn initialize_tracing() {
@@ -31,6 +22,20 @@ fn initialize_tracing() {
         .init();
 
     info!("Tracing initialized. Server starting...");
+}
+
+/// Run database migrations
+async fn run_migrations(db_pool: &sqlx::SqlitePool) -> Result<(), errors::AppError> {
+    info!("Running database migrations...");
+    sqlx::migrate!("./migrations")
+        .run(db_pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to run database migrations: {}", e);
+            errors::AppError::ConfigError(format!("Failed to run migrations: {e}"))
+        })?;
+    info!("Database migrations completed successfully");
+    Ok(())
 }
 
 /// Set up the OAuth state cleanup scheduler
@@ -92,13 +97,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // Attempt to load .env file. This is a fallback if direnv is not used or .envrc is not sourced.
-    // For direnv users, .envrc should already have populated the environment.
-    if let Ok(path) = dotenvy::dotenv() {
-        info!(".env file loaded from path: {}", path.display());
-    } else {
-        info!("No .env file found or failed to load, relying on existing environment variables.");
-    }
+    // -------- Check the correct environment is setup --------
+    // Check if we have a real LLM API key
+    std::env::var("OPENROUTER_API_KEY").expect("OPENROUTER_API_KEY must be set!");
+    // Check if we have a model configured
+    std::env::var("AI_DEFAULT_MODEL").expect("AI_DEFAULT_MODEL must be set!");
 
     // Initialize tracing (logging)
     initialize_tracing();
@@ -145,6 +148,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         database_url, db_pool_max_connections
     );
 
+    // Run database migrations
+    run_migrations(&db_pool).await?;
+
     // Initialize services and application state
     let user_service = Arc::new(UserServiceImpl::new(db_pool.clone()));
     let auth_service = Arc::new(AuthService::new().map_err(|e| {
@@ -161,14 +167,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     setup_oauth_cleanup_scheduler(&oauth_service).await?;
 
     // Create the main application router
-    let app = routes::create_router(
+    let app = server::routes::create_router(
         user_service,
         auth_service,
         invite_service,
         oauth_service,
-        db_pool.clone(),
-    )
-    .await?;
+        &db_pool,
+    )?;
 
     // Server address
     let host_str = env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());

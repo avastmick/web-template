@@ -1,4 +1,4 @@
-// web-template/server/src/config/mod.rs
+// kanbain/server/src/config/mod.rs
 
 pub mod oauth;
 

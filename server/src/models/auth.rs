@@ -1,4 +1,4 @@
-// web-template/server/src/models/auth.rs
+// kanbain/server/src/models/auth.rs
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

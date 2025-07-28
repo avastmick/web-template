@@ -1,4 +1,4 @@
-// web-template/server/src/core/mod.rs
+// kanbain/server/src/core/mod.rs
 
 pub mod auth_utils;
 pub mod password_utils;

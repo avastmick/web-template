@@ -6,30 +6,29 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 
 ### Task 1.1: Achieve 80% Server Code Coverage
 *   **Status:** **[-] TODO**
-*   **Action:** Implement comprehensive test coverage for all server code
+*   **Action:** Implement comprehensive UNIT test coverage for all server code
 *   **Details:**
-    *   Install and configure cargo-tarpaulin for coverage reporting
     *   Write unit tests to achieve >80% coverage for all services
     *   Write unit tests for all models and utilities
+    *   Refactor ALL code that is in non-adherence to DRY and poor Separation of Concerns principles to ease testing
     *   Create test helpers and fixtures for common scenarios
     *   Add property-based tests for complex business logic
-    *   Configure CI to enforce 90% minimum coverage
-    *   Add new just commands for testing:
-        - just coverage: Run tests with coverage reporting
-        - just coverage-html: Generate HTML coverage report
+    *   Configure CI to enforce 80% minimum coverage
+    *   Use the new just commands for testing:
+        - `just test-coverage`: Run tests with coverage reporting
+        - `just test-coverage-html`: Generate HTML coverage report
 *   **Files to Create/Modify:**
     *   `server/src/**/*.rs` (add #[cfg(test)] modules)
-    *   `server/.tarpaulin.toml` (coverage configuration)
-    *   `justfile` (add coverage commands)
 *   **Implementation Notes:**
+    *   Check the current state of `justfile` to ensure correct usage
     *   Use cargo-tarpaulin for coverage measurement
     *   Focus on business logic and edge cases
     *   Test error paths thoroughly
     *   Use property testing for issue sizing logic
-    *   Mock only external services (AI providers)
 *   **Quality Checks:**
     *   Run `cargo tarpaulin --out Html` for coverage report
-    *   Verify 90%+ coverage achieved
+    *   Verify 80%+ coverage achieved
+    *   ALL checks pass - i.e. run `just check-server` often and fix ALL issues
     *   All tests pass reliably (no flaky tests)
     *   Tests complete in under 30 seconds
 

@@ -1,4 +1,4 @@
-// web-template/server/src/handlers/user_handler.rs
+// kanbain/server/src/handlers/user_handler.rs
 
 //! User-related HTTP handlers
 //!
@@ -48,7 +48,7 @@ pub async fn get_current_user_handler(
     );
 
     // Fetch the full user from the database
-    let user = state.user_service.find_by_email(&auth.user.email).await?;
+    let user = state.user.find_by_email(&auth.user.email).await?;
 
     // Create unified auth response using shared function (without token)
     let response = build_unified_auth_response_no_token(&state, &user).await?;

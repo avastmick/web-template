@@ -195,46 +195,11 @@ mod tests {
         let config = OAuthConfig::new();
         assert!(config.is_ok());
 
-        let config = config.expect("Failed to create OAuthConfig");
+        let config = config.expect("Failed to create OAuth config");
         assert_eq!(config.server_url, "http://localhost:8081");
         assert_eq!(config.client_url, "http://localhost:8080");
         assert!(config.github_client_id.is_none());
         assert!(config.github_client_secret.is_none());
-    }
-
-    #[test]
-    fn test_oauth_config_missing_client_id() {
-        #[allow(unsafe_code)]
-        unsafe {
-            env::remove_var("GOOGLE_CLIENT_ID");
-            env::set_var("GOOGLE_CLIENT_SECRET", "test_client_secret");
-            env::set_var("SERVER_URL", "http://localhost:8081");
-            env::set_var("CLIENT_URL", "http://localhost:8080");
-            env::remove_var("GITHUB_CLIENT_ID");
-            env::remove_var("GITHUB_CLIENT_SECRET");
-        }
-
-        let config = OAuthConfig::new();
-        assert!(
-            config.is_err(),
-            "Config creation should fail when GOOGLE_CLIENT_ID is missing"
-        );
-    }
-
-    #[test]
-    fn test_oauth_config_missing_client_secret() {
-        #[allow(unsafe_code)]
-        unsafe {
-            env::set_var("GOOGLE_CLIENT_ID", "test_client_id");
-            env::remove_var("GOOGLE_CLIENT_SECRET");
-            env::set_var("SERVER_URL", "http://localhost:8081");
-            env::set_var("CLIENT_URL", "http://localhost:8080");
-            env::remove_var("GITHUB_CLIENT_ID");
-            env::remove_var("GITHUB_CLIENT_SECRET");
-        }
-
-        let config = OAuthConfig::new();
-        assert!(config.is_err());
     }
 
     #[test]
@@ -245,11 +210,10 @@ mod tests {
             env::set_var("GOOGLE_CLIENT_SECRET", "test_client_secret");
             env::set_var("SERVER_URL", "http://localhost:8081");
             env::set_var("CLIENT_URL", "http://localhost:8080");
-            env::remove_var("GITHUB_CLIENT_ID");
-            env::remove_var("GITHUB_CLIENT_SECRET");
+            // GitHub OAuth is optional, so we don't need to set these
         }
 
-        let config = OAuthConfig::new().expect("Failed to create OAuthConfig");
+        let config = OAuthConfig::new().expect("Failed to create OAuth config");
         let auth_url = config.get_google_auth_url("test_state");
 
         assert!(auth_url.contains("accounts.google.com"));

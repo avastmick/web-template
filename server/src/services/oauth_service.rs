@@ -1,5 +1,3 @@
-#![allow(clippy::missing_errors_doc)]
-
 use chrono::{DateTime, Duration, Utc};
 use oauth2::{AuthorizationCode, TokenResponse, basic::BasicTokenResponse, reqwest};
 use reqwest::Client;
@@ -47,6 +45,13 @@ impl OAuthService {
     }
 
     /// Exchange authorization code for access token and get user info
+    ///
+    /// # Errors
+    ///
+    /// Returns `AppError` if:
+    /// - Failed to exchange authorization code
+    /// - Failed to fetch user info from Google
+    /// - Invalid response from Google API
     pub async fn handle_google_callback(&self, code: &str) -> Result<OAuthUserInfo, AppError> {
         // Exchange authorization code for access token
         let http_client = reqwest::ClientBuilder::new()
@@ -129,6 +134,13 @@ impl OAuthService {
     }
 
     /// Exchange GitHub authorization code for access token and get user info
+    ///
+    /// # Errors
+    ///
+    /// Returns `AppError` if:
+    /// - Failed to exchange authorization code
+    /// - Failed to fetch user info from GitHub
+    /// - Invalid response from GitHub API
     pub async fn handle_github_callback(&self, code: &str) -> Result<OAuthUserInfo, AppError> {
         // Exchange authorization code for access token
         let http_client = reqwest::ClientBuilder::new()
@@ -167,7 +179,7 @@ impl OAuthService {
             .http_client
             .get("https://api.github.com/user")
             .header("Accept", "application/vnd.github.v3+json")
-            .header("User-Agent", "web-template-oauth")
+            .header("User-Agent", "kanbain-oauth")
             .bearer_auth(access_token)
             .send()
             .await
@@ -205,7 +217,7 @@ impl OAuthService {
                 .http_client
                 .get("https://api.github.com/user/emails")
                 .header("Accept", "application/vnd.github.v3+json")
-                .header("User-Agent", "web-template-oauth")
+                .header("User-Agent", "kanbain-oauth")
                 .bearer_auth(access_token)
                 .send()
                 .await
@@ -252,17 +264,19 @@ impl OAuthService {
         redirect_uri: Option<&str>,
     ) -> Result<(), AppError> {
         // OAuth state expires after 10 minutes
-        let expires_at = Utc::now() + Duration::minutes(10);
+        let now = Utc::now();
+        let expires_at = now + Duration::minutes(10);
         let provider_str = provider.to_string();
 
         sqlx::query!(
             r#"
-            INSERT INTO oauth_states (state, provider, redirect_uri, expires_at)
-            VALUES (?1, ?2, ?3, ?4)
+            INSERT INTO oauth_states (state, provider, redirect_uri, created_at, expires_at)
+            VALUES (?1, ?2, ?3, ?4, ?5)
             "#,
             state,
             provider_str,
             redirect_uri,
+            now,
             expires_at
         )
         .execute(&self.db_pool)
@@ -344,6 +358,12 @@ impl OAuthService {
     /// Clean up expired OAuth states
     ///
     /// This should be called periodically to remove expired states
+    ///
+    /// # Errors
+    ///
+    /// Returns `AppError` if:
+    /// - Database connection fails
+    /// - Failed to delete expired states
     pub async fn cleanup_expired_states(&self) -> Result<u64, AppError> {
         let now = Utc::now();
         let result = sqlx::query!(

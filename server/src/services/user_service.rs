@@ -1,5 +1,3 @@
-// web-template/server/src/services/user_service.rs
-
 use crate::handlers::auth_handler::RegisterUserPayload;
 use crate::{
     core::password_utils,
@@ -151,65 +149,18 @@ impl UserServiceImpl {
         }
     }
 
-    /// Check if user requires payment (no invite and no active payment)
-    ///
-    /// # Arguments
-    /// * `user_id` - The user's UUID
-    /// * `email` - The user's email address
-    /// * `invite_service` - Reference to invite service for checking invites
-    /// * `payment_service` - Reference to payment service for checking payment status
-    ///
-    /// # Returns
-    /// Returns true if user requires payment, false otherwise
+    /// Create a user for testing purposes
     ///
     /// # Errors
-    /// Returns database errors if unable to check status
-    #[instrument(skip(self, invite_service, payment_service), err(Debug))]
+    ///
+    /// Returns an error if user creation fails
+    #[cfg(test)]
     #[allow(dead_code)]
-    pub async fn requires_payment(
-        &self,
-        user_id: Uuid,
-        email: &str,
-        invite_service: &crate::services::InviteService,
-        payment_service: &crate::services::PaymentService,
-    ) -> AppResult<bool> {
-        // Check if user has a valid invite
-        let has_invite = invite_service.check_invite_exists(email).await?;
-
-        // Check user's payment status
-        let payment_status = payment_service.get_user_payment_status(user_id).await?;
-
-        // User requires payment if they have neither invite nor active payment
-        Ok(!has_invite && !payment_status.has_active_payment)
-    }
-
-    /// Get user's complete registration status including payment requirements
-    ///
-    /// # Arguments
-    /// * `user_id` - The user's UUID
-    /// * `email` - The user's email address
-    /// * `invite_service` - Reference to invite service
-    /// * `payment_service` - Reference to payment service
-    ///
-    /// # Returns
-    /// Returns a tuple of (has_invite, has_active_payment, payment_required)
-    ///
-    /// # Errors
-    /// Returns database errors if unable to check status
-    #[instrument(skip(self, invite_service, payment_service), err(Debug))]
-    #[allow(dead_code)]
-    pub async fn get_registration_status(
-        &self,
-        user_id: Uuid,
-        email: &str,
-        invite_service: &crate::services::InviteService,
-        payment_service: &crate::services::PaymentService,
-    ) -> AppResult<(bool, bool, bool)> {
-        let has_invite = invite_service.check_invite_exists(email).await?;
-        let payment_status = payment_service.get_user_payment_status(user_id).await?;
-        let has_active_payment = payment_status.has_active_payment;
-        let payment_required = !has_invite && !has_active_payment;
-
-        Ok((has_invite, has_active_payment, payment_required))
+    pub async fn create_test_user(&self, email: &str, password: &str) -> AppResult<User> {
+        self.create_user(&RegisterUserPayload {
+            email: email.to_string(),
+            password: password.to_string(),
+        })
+        .await
     }
 }

@@ -8,12 +8,11 @@ use crate::services::{
 };
 
 /// Application state for handlers that need all services
-#[allow(clippy::struct_field_names)]
 pub struct AppState {
-    pub user_service: Arc<UserServiceImpl>,
-    pub auth_service: Arc<AuthService>,
-    pub invite_service: Arc<InviteService>,
-    pub ai_service: Arc<RwLock<AiService>>,
-    pub ai_data_service: Arc<AiDataService>,
-    pub payment_service: Arc<PaymentService>,
+    pub user: Arc<UserServiceImpl>,
+    pub auth: Arc<AuthService>,
+    pub invite: Arc<InviteService>,
+    pub ai: Arc<RwLock<AiService>>,
+    pub ai_data: Arc<AiDataService>,
+    pub payment: Arc<PaymentService>,
 }

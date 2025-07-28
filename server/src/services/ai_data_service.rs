@@ -420,3 +420,7 @@ impl AiDataService {
         Ok(())
     }
 }
+
+#[cfg(test)]
+#[path = "ai_data_service_tests.rs"]
+mod ai_data_service_tests;

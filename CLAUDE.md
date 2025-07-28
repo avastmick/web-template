@@ -1,15 +1,68 @@
 # WEB-TEMPLATE CODEBASE GUIDE
 
+## IMPORTANT: THIS IS A NEW PROJECT - NO LEGACY CODE
+
+**This is a brand new project build. There is NO need for backwards compatibility. Keep the codebase clean:**
+- Delete ALL unused code immediately
+- Do NOT maintain legacy interfaces or compatibility layers
+- Remove old implementations when creating new ones
+- Keep only the current, active implementation of any feature
+- No "backward compatibility" comments or re-exports
+- If refactoring, DELETE the old code, don't keep it around
+
 ## IMPORTANT: SESSION START REQUIREMENTS
 
 **ALWAYS BEGIN EACH SESSION BY READING THE FOLLOWING DOCUMENTATION:**
 1. `documentation/PRD.md` - Product Requirements Document (defines project goals and features)
 2. `documentation/ARCHITECTURE.md` - System architecture and design decisions
-3. `README.md` - Project overview and setup instructions
-4. `CURRENT_TASKS.md` - Current development tasks and progress
-5. This file (`CLAUDE.md`) - Development guidelines and best practices
+3. `documentation/UI_GUIDELINES.md` - The current UI guidelines for the client web application
+4. `documentation/SECURITY.md` - The security of the system
+5. `README.md` - Project overview and setup instructions
 
 **DO NOT SKIP THIS STEP.** These documents contain critical context about the project's goals, architecture, current state, and development standards. Reading them ensures you understand the project requirements and can make informed decisions aligned with the project's vision.
+
+**WHEN ADDING TESTS:**
+If you are asked to add integration or endpoint tests, you MUST also read:
+- `server/tests/README.md` - Overview of the three-tier testing strategy
+- `server/tests/integration/README.md` - For integration tests (service-level, no HTTP)
+- `server/tests/endpoint/README.md` - For endpoint tests (HTTP requests, MUST verify database state)
+ENSURE you align to the current means of creating to tests FULLY aligning to the existing practice.
+
+**IMPORTANT** Remember that 'Kanbain' is a working title; take care not to name things in the application using the working title as it is likely to change.
+
+
+## CRITICAL: Server-First MVP Development
+
+**DO NOT IMPLEMENT ANY CLIENT FUNCTIONALITY UNTIL SERVER MVP v1.0.0 IS COMPLETE**
+
+**ALWAYS** Run `just check-server` frequently during the server development. Go NO MORE than FIVE changes to source files before re-running.
+
+The development approach for this project follows a strict server-first methodology:
+
+1. **Server MVP (v1.0.0) Requirements:**
+   - ALL API endpoints fully implemented and tested
+   - 80%+ code coverage with comprehensive unit tests
+   - 100% of API endpoints have integration tests (NO mocks, real server with clean database)
+   - ALL server checks pass (`just check-server`)
+   - ALL server tests pass (`just test-server`)
+   - Full AI integration (issue creation assistant, duplicate detection, sizing)
+   - Complete authentication system (local + OAuth)
+   - All database migrations finalized
+   - Security measures fully implemented
+   - Performance targets met (<100ms response times)
+
+2. **No Client Work Until Server MVP Complete:**
+   - Do NOT work on web client (`client/`) until server v1.0.0 is released
+   - Do NOT work on CLI until server v1.0.0 is released
+   - Focus exclusively on server functionality, testing, and quality
+
+3. **Server MVP Verification:**
+   - Server can be tested entirely via API calls (curl, httpie, Postman)
+   - All Kanban board functionality works via API
+   - AI features are fully functional via API
+   - Authentication flows work via API
+
+This approach ensures the server is rock-solid, fully tested, and meets all requirements before any client implementation begins.
 
 ## Overview
 
@@ -20,23 +73,60 @@ This project aims to create a high-performance, secure, and high-quality web app
 
 **IMPORTANT**: The client is a pure SPA with CSR (Client-Side Rendering) only. There is NO Server-Side Rendering (SSR) in this application. In production, the client is served as static files from the server.
 
-The database is SQLite for local development, with `dbmate` for migrations. `just` is used for ALL command running, and `direnv` manages environment variables through `.envrc`.
+The database is SQLite for local development, with `sqlx-cli` for migrations. `just` is used for ALL command running, and `direnv` manages environment variables through `.envrc`.
 
 ## Development
 
 **IMPORTANT RULES - ALWAYS STRICTLY FOLLOW**
 
-- ALWAYS work in small increments on a minimum set of files, in one area at a time - i.e. either `server` OR `client` NOT both.
+- ALWAYS work in small increments on a minimum set of files, in one area at a time - i.e. either `server` OR `client` NEVER work on both in the same changeset.
 - ALWAYS run `just check-server` or `just check-client` after each increment; resolve ALL issues before proceeding.
 - DO NOT make many changes without running the checks as it will waste time.
-- DO NOT add linter exclusions (such as `#[allow(clippy::SOME_EXCLUSION)]` or `eslint-disable`) to any code without explicit reason. Add agreement comment if overridden and date of agreement.
+- NEVER add linter exclusions (such as `#[allow(clippy::SOME_EXCLUSION)]` or `eslint-disable`) to any code without explicit reason. Add agreement comment if overridden and date of agreement.
 - DO NOT add `#[allow(dead_code)]` or equivalent exclusions; all code MUST be used.
 - ALWAYS check local logs; If a `.overmind.sock` is present then the server is running. Check the logs in the `logs` dir to check issues; there are `logs/client_latest.log` and `logs/server_latest.log` for client and server
 - ALWAYS use `playwright` mcp to review browser console log
 - ALWAYS explicitly follow code organisation conventions listed in `documentation/ARCHITECTURE.md`. Update `ARCHITECTURE.md` if any additional code directories are added.
 
+## CRITICAL: Architecture and Usage Patterns MUST Be Followed
+
+**ALWAYS respect and follow the existing architecture patterns:**
+
+### Adding New Services
+When adding a new service (e.g., `AiSessionService`):
+1. Create the service in `server/src/services/` following existing patterns
+2. Add the service to `AppState` in `server/src/core/state.rs`
+3. Initialize the service in `create_router()` in `server/src/routes.rs`
+4. Access the service through `state.service_name` in handlers
+
+**Example Pattern (from existing code):**
+```rust
+// In server/src/core/state.rs
+pub struct AppState {
+    pub board: Arc<BoardService>,  // Existing service
+    pub ai_session: Arc<AiSessionService>,  // New service
+}
+
+// In server/src/routes.rs
+let board_service = BoardService::new(db_pool.clone());  // Existing
+let ai_session_service = AiSessionService::new(db_pool.clone());  // New
+
+// In handlers
+let board = state.board.get_user_board(&user_id).await?;  // Usage
+```
+
+### Adding New Routes
+When adding new API endpoints:
+1. Create handlers in `server/src/handlers/` following module organization
+2. Import handlers in `server/src/routes.rs`
+3. Add routes to appropriate route group function (e.g., `ai_routes()`, `board_issue_routes()`)
+4. Use existing authentication patterns (e.g., `AuthUser`, `JwtAuth`)
+
+**NEVER modify core infrastructure without understanding the patterns first!**
+
 ## Key Project Goals (from PRD.md and README.md)
 
+-   **MINIMAL CODE:** The least code to achieve the outcome.
 -   **Performance:** Exceed highest performance expectations.
 -   **Security:** Provably secure with modern cryptography and best practices.
 -   **High Quality:** Rigorous static analysis, linting, formatting, and type-checking.
@@ -45,11 +135,28 @@ The database is SQLite for local development, with `dbmate` for migrations. `jus
 -   **Beautiful & Functional UI:** Engaging, easily extensible UI with dark/light modes and themes.
 -   **Modular Backend:** Fast, extensible Rust server for database, AI, payments, etc.
 
+## Code Quality Standards
+
+**IMPORTANT** ALWAYS adhere to the following in ALL cases:
+
+-   Adhere to general quality standards: Accuracy, Correctness, Efficiency, Maintainability, Readability, Security.
+-   **DRY Principle:** Extract common code into shared utilities/services. Avoid duplicating logic.
+-   **Simplicity:** Avoid deep nesting, complex recursion. Refactor for clarity.
+-   **Testing:** Include tests for algorithms, complex calculations, business logic, API endpoints.
+    -   **Code Coverage:** Maintain 80%+ code coverage for all server code. Use `cargo tarpaulin` to measure coverage.
+    -   **Integration Testing:** All API endpoints MUST have comprehensive integration tests that run against a real server instance (NO MOCKS).
+-   **Single Responsibility:** Functions should be concise, handle a single task. Files should group related functionality.
+-   **File Size:** Files MUST be under 600 lines. The `just check-server` and `just check-client` commands enforce this limit. Refactor larger files into smaller, logically grouped modules.
+-   **Commenting:** Add clear, concise comments for complex logic. Rust functions, structs, enums, and modules should have doc comments (`///` or `//!`). Files should have a header comment summarizing contents and usage if not obvious from structure.
+-   **TypeScript - No Non-Null Assertions (`!`)**:
+    -   Handle potential absence of data explicitly using checks, optional chaining (`?.`), or type guards.
+-   **Error Handling:** Use `Result<T, E>` comprehensively in Rust. Handle errors gracefully and provide meaningful context. Leverage `thiserror` and `anyhow` crates as appropriate.
+
 ## Package Management
 
 This project uses Bun (client) and Cargo (server) *exclusively*.
 
-**IMPORTANT:** Always use the appropriate package manager commands (`cargo add`, `bun add`) rather than manually editing `Cargo.toml` or `package.json`. Manual edits result in outdated versions and can cause dependency conflicts.
+**IMPORTANT:** Always use the appropriate package manager commands (`cargo add`, `bun add`) NEVER manually edit `Cargo.toml` or `package.json`. Manual edits result in outdated versions and can cause dependency conflicts.
 
 ### Client - Bun (`web-template/client/`)
 
@@ -107,11 +214,14 @@ The `justfile` in the project root (`web-template/`) provides a unified interfac
     *   `just test-client [pattern]`: Runs client-side unit/integration tests (`cd client && bun run test`).
     *   `just test-server [pattern]`: Runs server-side tests (`cd server && cargo test`).
     *   `just test-e2e [pattern]`: Runs end-to-end tests (`cd client && bun playwright test`).
-*   **Database (using `dbmate`):**
-    *   `just db-setup`: Sets up the database by applying all pending migrations (`dbmate up`).
-    *   `just db-migrate`: Applies pending database migrations (`dbmate up`).
-    *   `just db-rollback`: Rolls back the last database migration (`dbmate down`).
-    *   `just db-new-migration <name>`: Creates a new migration file (`dbmate new <name>`).
+    *   `just test-coverage`: Runs server tests with coverage reporting using cargo-tarpaulin.
+    *   `just test-coverage-html`: Generates HTML coverage report and opens in browser.
+    *   `just test-integration`: Runs only integration tests against real server.
+*   **Database (using `sqlx`):**
+    *   `just db-setup`: Sets up the database by applying all pending migrations (`sqlx migrate run`).
+    *   `just db-migrate`: Applies pending database migrations (`sqlx migrate run`).
+    *   `just db-rollback`: Rolls back the last database migration (`sqlx migrate revert`).
+    *   `just db-new-migration <name>`: Creates new migration files (`sqlx migrate add -r <name>`).
 *   **Cleaning:**
     *   `just clean`: Removes all build artifacts, dependencies (`node_modules`, `target`), and temporary files.
     *   `just clean-client`: Cleans client artifacts and dependencies (`rm -rf client/node_modules client/.svelte-kit client/build client/bun.lockb client/.bun`).
@@ -135,19 +245,6 @@ The `justfile` in the project root (`web-template/`) provides a unified interfac
     -   Modules, crates, functions, variables: `snake_case`.
     -   Types (structs, enums, traits): `PascalCase`.
     -   Follow official Rust API Guidelines.
-
-## Code Quality Standards
-
--   Adhere to general quality standards: Accuracy, Correctness, Efficiency, Maintainability, Readability, Security.
--   **DRY Principle:** Extract common code into shared utilities/services. Avoid duplicating logic.
--   **Simplicity:** Avoid deep nesting, complex recursion. Refactor for clarity.
--   **Testing:** Include tests for algorithms, complex calculations, business logic, API endpoints.
--   **Single Responsibility:** Functions should be concise, handle a single task. Files should group related functionality.
--   **File Size:** Files MUST be under 600 lines. The `just check-server` and `just check-client` commands enforce this limit. Refactor larger files into smaller, logically grouped modules.
--   **Commenting:** Add clear, concise comments for complex logic. Rust functions, structs, enums, and modules should have doc comments (`///` or `//!`). Files should have a header comment summarizing contents and usage if not obvious from structure.
--   **TypeScript - No Non-Null Assertions (`!`)**:
-    -   Handle potential absence of data explicitly using checks, optional chaining (`?.`), or type guards.
--   **Error Handling:** Use `Result<T, E>` comprehensively in Rust. Handle errors gracefully and provide meaningful context. Leverage `thiserror` and `anyhow` crates as appropriate.
 
 ## TypeScript Strictness Settings (Client)
 
@@ -196,6 +293,14 @@ After installation, these checks will run automatically when you attempt to `git
 
 ## Project Structure (High-Level)
 
+**CRITICAL: NO CODE OR SQL FILES IN PROJECT ROOT**
+The project root should NEVER contain:
+- Migration files (.sql)
+- Source code files (.rs, .ts, .js, .svelte)
+- Build artifacts
+
+ALL code and SQL files MUST be in their appropriate subdirectories as listed below:
+
 -   `client/`: SvelteKit frontend.
     -   `src/lib/components/`: Reusable Svelte components.
     -   `src/lib/services/`: Client-side services (e.g., API calls).
@@ -214,9 +319,10 @@ After installation, these checks will run automatically when you attempt to `git
     -   `src/main.rs`: Application entry point.
     -   `src/routes.rs`: API route definitions.
     -   `tests/`: Integration tests for handlers and services.
--   `db/`: Database migrations (managed by `dbmate`).
-    -   `migrations/`: Migration SQL files.
-    -   `schema.sql`: Current DB schema (generated by `dbmate dump`).
+-   **`server/migrations/`**: Database migrations (managed by `sqlx`).
+    -   **CRITICAL**: ALL migration files MUST be created here using `just db-new-migration <name>`
+    -   Migration SQL files in format: `<timestamp>_<name>.up.sql` and `.down.sql`
+    -   **NEVER create migrations in the project root `/migrations/` directory**
 -   `documentation/`: Project documentation (`PRD.md`, `ARCHITECTURE.md`, etc.).
 -   `justfile`: Command definitions for the `web-template` root.
 -   `.envrc`: Environment variables (gitignored).

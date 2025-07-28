@@ -1,5 +1,8 @@
 # Web Template
 
+> [!CAUTION]
+> Under active development - breaking changes often. Some documentation may be out of date, or not aligned with function. Wait until first release.
+
 ## Overview
 
 The web-template is a project that will enable the quick-start for a high-performance web application. The project goals are:
@@ -9,7 +12,6 @@ The web-template is a project that will enable the quick-start for a high-perfor
 -   **High quality:** the code must be provably high-quality, with all static analysis and code quality check turned to 11!
 -   **Lightweight:** we need to ensure that the application uses the smallest possible memory and storage footprint, both on the server and in the browser
 -   **Easy to use:** usage of web application, the developer experience, and operation of the application should be first class
--   **Beautiful:** the web application must be first class in look and feel, engaging users, causing them to ooh and aah in use.
 -   **Functional:** the web application in particular must be able to leverage modern web application tools, extensions and widgets easily, to make development fast and easy.
 
 This foundation is built using a SvelteKit frontend and a Rust backend, further detailed in the Architecture section.
@@ -18,7 +20,6 @@ This foundation is built using a SvelteKit frontend and a Rust backend, further 
 
 To achieve the above, the project will deliver on the following specific requirements:
 
--   Beautiful web application with easy CSS-only changes for themes (dark/light modes, configurable color-schemes).
 -   Fast, modular Rust server supporting:
     -   Database access (SQLite initially, using `sqlx`).
     -   Easy integration of server-side components.
@@ -54,7 +55,7 @@ The project is structured into two main components:
     -   `clippy` (Linting)
 -   **Database:**
     -   SQLite (for local development, configurable for production)
-    -   `dbmate` (for database migrations)
+    -   `sqlx-cli` (for database migrations)
 -   **Tooling & Orchestration:**
     -   `just` (Command runner for managing project tasks)
     -   `overmind` (or similar, for running multiple processes locally, e.g., client and server dev servers)
@@ -64,7 +65,7 @@ The project is structured into two main components:
 ## Documentation
 
 For detailed information about the project:
-- **Architecture**: See `documentation/ARCHITECTURE.md` for system design, data flow, authentication mechanisms, and component interactions.
+- **Architecture**: See `documentation/ARCHITECTURE.md` for organized architecture documentation covering system design, data flow, authentication mechanisms, and component interactions.
 - **UI/UX & Theming**: See `documentation/UI_UX_THEME.md` for theming guidelines, CSS variables, dark/light mode implementation, and component styling standards.
 - **Product Requirements**: See `documentation/PRD.md` for detailed feature specifications.
 - **Development Guidelines**: See `CLAUDE.md` for coding standards and development workflow.
@@ -75,7 +76,7 @@ For detailed information about the project:
     *   Install Rust: [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install)
     *   Install Bun: [https://bun.sh/docs/installation](https://bun.sh/docs/installation)
     *   Install `just`: [https://github.com/casey/just#installation](https://github.com/casey/just#installation)
-    *   Install `dbmate`: [https://github.com/amacneil/dbmate#installation](https://github.com/amacneil/dbmate#installation)
+    *   Install `sqlx-cli`: Run `cargo install sqlx-cli --no-default-features --features rustls,postgres,sqlite`
     *   Install `direnv`: [https://direnv.net/docs/installation.html](https://direnv.net/docs/installation.html) and hook it into your shell.
     *   Install `pre-commit`: [https://pre-commit.com/#install](https://pre-commit.com/#install)
 
@@ -101,7 +102,7 @@ For detailed information about the project:
 5.  **Initial Project Setup (Clean Install & Build):**
     *   Run `just setup`. This command cleans previous build artifacts and dependencies, then installs fresh dependencies for both client and server, and performs an initial build.
 6.  **Database Setup:**
-    *   Run `just db-setup` to apply database migrations using `dbmate`. This will create the necessary tables in your database.
+    *   Run `just db-setup` to apply database migrations using `sqlx`. This will create the necessary tables in your database.
 7.  **OAuth Configuration (Required for Authentication):**
     *   Create a Google Cloud Project at [Google Cloud Console](https://console.cloud.google.com/)
     *   Enable the Google OAuth 2.0 API
@@ -127,7 +128,7 @@ Key command categories include:
 *   `check`: For running linters, type checkers, and formatters (in check mode). (`just check`, `just check-client`, `just check-server`)
 *   `format`: For auto-formatting code. (`just format`, `just format-client`, `just format-server`)
 *   `test`: For running unit, integration, and e2e tests. (`just test [server_pattern] [client_pattern] [e2e_pattern]`, `just server-test [pattern]`, `just test-client [pattern]`, `just test-e2e [pattern]`)
-*   `db-*`: For database migration tasks using `dbmate`. (`just db-setup`, `just db-migrate`, `just db-rollback`, `just db-new-migration <name>`)
+*   `db-*`: For database migration tasks using `sqlx`. (`just db-setup`, `just db-migrate`, `just db-rollback`, `just db-new-migration <name>`)
 *   `clean`: For cleaning build artifacts, dependencies, and temporary files. (`just clean`, `just clean-client`, `just clean-server`)
 
 Refer to `CLAUDE.md` for detailed guidelines on development practices, code style, and contributing to this project.

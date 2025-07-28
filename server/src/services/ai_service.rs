@@ -1,18 +1,16 @@
-//! AI service that integrates provider, prompts, and schema validation
+//! AI service that integrates provider and schema validation
 
 use crate::ai::{
     AiError, AiProvider, AiResult, ChatMessage, ChatRequest, ChatResponse, ChatRole,
-    OpenRouterProvider, PromptManager, SchemaValidator, schemas,
+    OpenRouterProvider, SchemaValidator, prompts::PromptRenderer, schemas,
 };
-use std::env;
-use std::path::PathBuf;
 use std::sync::Arc;
 
 /// Main AI service that coordinates all AI functionality
 pub struct AiService {
     provider: Arc<dyn AiProvider>,
-    prompt_manager: PromptManager,
     schema_validator: SchemaValidator,
+    prompt_renderer: PromptRenderer,
 }
 
 impl AiService {
@@ -22,212 +20,89 @@ impl AiService {
     ///
     /// Returns an error if:
     /// - The AI provider cannot be initialized
-    /// - The prompt templates cannot be loaded
     ///
     /// # Panics
     ///
     /// Panics if `OPENROUTER_API_KEY` environment variable is not set in production
-    pub async fn new() -> AiResult<Self> {
-        // Get configuration from environment variables
-        // For testing, use a placeholder API key if not provided
-        let api_key = env::var("OPENROUTER_API_KEY").unwrap_or_else(|_| {
-            if cfg!(test) {
-                "test_api_key_placeholder".to_string()
-            } else {
-                panic!("OPENROUTER_API_KEY environment variable is required")
-            }
-        });
-
-        let default_model =
-            env::var("AI_DEFAULT_MODEL").unwrap_or_else(|_| "openai/gpt-4o-mini".to_string());
-
-        // Check if this is a test environment
-        let is_test = api_key == "test_api_key_placeholder" || api_key == "test_api_key_not_real";
-
-        // Initialize provider
-        let provider: Arc<dyn AiProvider> =
-            Arc::new(OpenRouterProvider::new(api_key, default_model)?);
-
-        // Initialize prompt manager
-        let prompts_dir = if is_test {
-            // Use a dummy directory path for tests
-            PathBuf::from("/tmp/test_prompts_not_exist")
-        } else {
-            PathBuf::from("prompts")
-        };
-        let mut prompt_manager = PromptManager::new(prompts_dir);
-        prompt_manager.load_templates().await?;
+    pub fn new() -> AiResult<Self> {
+        // Initialize provider using environment configuration
+        let provider: Arc<dyn AiProvider> = Arc::new(OpenRouterProvider::new()?);
 
         // Initialize schema validator with common schemas
         let mut schema_validator = SchemaValidator::new();
-        schema_validator.register_schema("moderation", schemas::moderation_response())?;
+        schema_validator.register_schema("moderation_response", schemas::moderation_response())?;
         schema_validator.register_schema("code_analysis", schemas::code_analysis())?;
+
+        // Initialize prompt renderer
+        let prompt_renderer = PromptRenderer::new()?;
 
         Ok(Self {
             provider,
-            prompt_manager,
             schema_validator,
+            prompt_renderer,
         })
     }
 
-    /// Send a simple chat message
+    /// Get the AI provider
+    #[must_use]
+    pub fn provider(&self) -> Arc<dyn AiProvider> {
+        Arc::clone(&self.provider)
+    }
+
+    /// Send a chat message to the AI provider
     ///
     /// # Errors
     ///
-    /// Returns an error if the chat request fails
-    pub async fn chat(&self, messages: Vec<ChatMessage>) -> AiResult<ChatResponse> {
-        let request = ChatRequest::new(messages);
+    /// Returns an error if the provider fails
+    pub async fn chat(&self, request: ChatRequest) -> AiResult<ChatResponse> {
         self.provider.chat(request).await
     }
 
-    /// Send a chat message with a specific prompt template
+    /// Send a system message to the AI
     ///
     /// # Errors
     ///
-    /// Returns an error if:
-    /// - The template doesn't exist
-    /// - The template rendering fails
-    /// - The chat request fails
-    pub async fn chat_with_template<T: serde::Serialize>(
+    /// Returns an error if the provider fails
+    pub async fn send_system_message(
         &self,
-        template_name: &str,
-        data: &T,
-    ) -> AiResult<ChatResponse> {
-        let json_data = serde_json::to_value(data).map_err(AiError::Serialization)?;
-        let prompt = self.prompt_manager.render(template_name, &json_data)?;
+        system_content: String,
+        user_content: String,
+    ) -> AiResult<String> {
+        let request = ChatRequest {
+            model: Some(self.provider.model().to_string()),
+            messages: vec![
+                ChatMessage {
+                    role: ChatRole::System,
+                    content: system_content,
+                },
+                ChatMessage {
+                    role: ChatRole::User,
+                    content: user_content,
+                },
+            ],
+            temperature: Some(0.7),
+            max_tokens: Some(1000),
+            response_format: None,
+            stream: None,
+            metadata: None,
+            functions: None,
+            function_call: None,
+        };
 
-        let messages = vec![ChatMessage {
-            role: ChatRole::User,
-            content: prompt,
-        }];
+        let response = self.chat(request).await?;
 
-        let request = ChatRequest::new(messages);
-        self.provider.chat(request).await
+        response
+            .choices
+            .into_iter()
+            .next()
+            .map(|choice| choice.message.content)
+            .ok_or_else(|| AiError::InvalidRequest("No message content in response".to_string()))
     }
 
-    /// Send a chat message and validate the response against a schema
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if:
-    /// - The chat request fails
-    /// - The response doesn't match the schema
-    pub async fn chat_with_schema(
-        &self,
-        messages: Vec<ChatMessage>,
-        schema_name: &str,
-    ) -> AiResult<serde_json::Value> {
-        // Verify the schema exists
-        if !self
-            .schema_validator
-            .list_schemas()
-            .contains(&schema_name.to_string())
-        {
-            return Err(AiError::SchemaValidation(format!(
-                "Schema '{schema_name}' not found"
-            )));
-        }
-
-        // Create request with JSON response format
-        let request = ChatRequest::new(messages).with_json_schema(serde_json::json!({
-            "name": schema_name,
-            "strict": true
-        }));
-
-        let response = self.provider.chat(request).await?;
-
-        // Extract and validate the response
-        if let Some(choice) = response.choices.first() {
-            let content = &choice.message.content;
-            let json_value: serde_json::Value = serde_json::from_str(content)
-                .map_err(|e| AiError::SchemaValidation(format!("Invalid JSON response: {e}")))?;
-
-            // Validate against schema
-            self.schema_validator.validate(schema_name, &json_value)?;
-
-            Ok(json_value)
-        } else {
-            Err(AiError::Provider(
-                "No response from AI provider".to_string(),
-            ))
-        }
-    }
-
-    /// Moderate content using AI
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the moderation request fails
-    pub async fn moderate_content(&self, content: &str) -> AiResult<ModerationResult> {
-        let data = serde_json::json!({
-            "content": content
-        });
-
-        let response = self
-            .chat_with_template("moderation/content_check", &data)
-            .await?;
-
-        if let Some(choice) = response.choices.first() {
-            let result: ModerationResult =
-                serde_json::from_str(&choice.message.content).map_err(|e| {
-                    AiError::SchemaValidation(format!("Invalid moderation response: {e}"))
-                })?;
-            Ok(result)
-        } else {
-            Err(AiError::Provider("No response from moderation".to_string()))
-        }
-    }
-
-    /// Analyze code using AI
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the code analysis request fails
-    pub async fn analyze_code(
-        &self,
-        code: &str,
-        language: Option<&str>,
-        specific_question: Option<&str>,
-    ) -> AiResult<CodeAnalysisResult> {
-        let data = serde_json::json!({
-            "code": code,
-            "language": language,
-            "specific_question": specific_question
-        });
-
-        let response = self.chat_with_template("code/explain", &data).await?;
-
-        if let Some(choice) = response.choices.first() {
-            // For code analysis, we return the text response directly
-            Ok(CodeAnalysisResult {
-                explanation: choice.message.content.clone(),
-            })
-        } else {
-            Err(AiError::Provider(
-                "No response from code analysis".to_string(),
-            ))
-        }
-    }
-
-    /// Get the current provider name
+    /// Get the provider name
     #[must_use]
     pub fn provider_name(&self) -> &str {
         self.provider.name()
-    }
-
-    /// Perform a health check on the AI provider
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the provider is not responding or unhealthy
-    pub async fn health_check(&self) -> AiResult<()> {
-        self.provider.health_check().await
-    }
-
-    /// List available prompt templates
-    #[must_use]
-    pub fn list_templates(&self) -> Vec<String> {
-        self.prompt_manager.list_templates()
     }
 
     /// List available schemas
@@ -235,29 +110,165 @@ impl AiService {
     pub fn list_schemas(&self) -> Vec<String> {
         self.schema_validator.list_schemas()
     }
-}
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct ModerationResult {
-    pub safe: bool,
-    pub issues: Vec<String>,
-    pub severity: String,
-    pub recommendation: String,
-}
+    /// Chat with a template
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The template cannot be rendered
+    /// - The AI provider fails
+    pub async fn chat_with_template(
+        &self,
+        template_name: &str,
+        context: &serde_json::Value,
+    ) -> AiResult<ChatResponse> {
+        // Render the prompt using the template
+        let rendered = self
+            .prompt_renderer
+            .render_request(template_name, context)?;
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct CodeAnalysisResult {
-    pub explanation: String,
-}
+        // Convert rendered messages to ChatMessage
+        let messages = if let Some(messages_array) = rendered.as_array() {
+            messages_array
+                .iter()
+                .filter_map(|msg| {
+                    let role = msg.get("role")?.as_str()?;
+                    let msg_content = msg.get("content")?.as_str()?;
+                    let role = match role {
+                        "system" => ChatRole::System,
+                        "user" => ChatRole::User,
+                        "assistant" => ChatRole::Assistant,
+                        _ => return None,
+                    };
+                    Some(ChatMessage {
+                        role,
+                        content: msg_content.to_string(),
+                    })
+                })
+                .collect()
+        } else {
+            return Err(AiError::InvalidRequest(
+                "Template did not render to an array of messages".to_string(),
+            ));
+        };
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+        let request = ChatRequest::new(messages);
+        self.chat(request).await
+    }
 
-    #[tokio::test]
-    async fn test_ai_service_creation() {
-        // This test would require mock settings
-        // For now, just verify the types compile
-        let _ = std::marker::PhantomData::<AiService>;
+    /// Chat with schema validation
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The schema doesn't exist
+    /// - The AI provider fails
+    /// - The response doesn't match the schema
+    pub async fn chat_with_schema(
+        &self,
+        messages: Vec<ChatMessage>,
+        schema_name: &str,
+    ) -> AiResult<ChatResponse> {
+        // Get the schema
+        let schemas_list = self.schema_validator.list_schemas();
+        if !schemas_list.contains(&schema_name.to_string()) {
+            return Err(AiError::InvalidRequest(format!(
+                "Schema '{schema_name}' not found"
+            )));
+        }
+
+        // Get the actual schema value
+        let schema = match schema_name {
+            "moderation_response" => schemas::moderation_response(),
+            "code_analysis" => schemas::code_analysis(),
+            _ => {
+                return Err(AiError::InvalidRequest(format!(
+                    "Unknown schema: {schema_name}"
+                )));
+            }
+        };
+
+        // Create request with JSON schema
+        let request = ChatRequest::new(messages).with_json_schema(schema);
+
+        // Send to AI provider
+        let response = self.chat(request).await?;
+
+        // Validate the response
+        if let Some(choice) = response.choices.first() {
+            let content_value: serde_json::Value = serde_json::from_str(&choice.message.content)
+                .map_err(|e| AiError::InvalidRequest(format!("Invalid JSON response: {e}")))?;
+            self.schema_validator
+                .validate(schema_name, &content_value)?;
+        }
+
+        Ok(response)
+    }
+
+    /// Analyze code
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the AI provider fails
+    pub async fn analyze_code(
+        &self,
+        code: &str,
+        language: Option<&str>,
+        context: Option<&str>,
+    ) -> AiResult<serde_json::Value> {
+        let template_data = serde_json::json!({
+            "code": code,
+            "language": language.unwrap_or("unknown"),
+            "context": context.unwrap_or("")
+        });
+
+        let response = self
+            .chat_with_template("code_analysis", &template_data)
+            .await?;
+
+        // Extract and parse the response
+        let response_content = response
+            .choices
+            .first()
+            .map(|c| &c.message.content)
+            .ok_or_else(|| AiError::InvalidRequest("No response content".to_string()))?;
+
+        serde_json::from_str(response_content)
+            .map_err(|e| AiError::InvalidRequest(format!("Invalid JSON response: {e}")))
+    }
+
+    /// Check provider health
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the provider is unhealthy
+    pub async fn health_check(&self) -> AiResult<()> {
+        self.provider.health_check().await
+    }
+
+    /// Moderate content
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the AI provider fails
+    pub async fn moderate_content(&self, content: &str) -> AiResult<serde_json::Value> {
+        let template_data = serde_json::json!({
+            "content": content
+        });
+
+        let response = self
+            .chat_with_template("content_moderation", &template_data)
+            .await?;
+
+        // Extract and parse the response
+        let response_content = response
+            .choices
+            .first()
+            .map(|c| &c.message.content)
+            .ok_or_else(|| AiError::InvalidRequest("No response content".to_string()))?;
+
+        serde_json::from_str(response_content)
+            .map_err(|e| AiError::InvalidRequest(format!("Invalid JSON response: {e}")))
     }
 }

@@ -1,4 +1,4 @@
-// web-template/server/src/middleware/mod.rs
+// kanbain/server/src/middleware/mod.rs
 
 pub mod auth_middleware;
 pub mod payment_middleware;

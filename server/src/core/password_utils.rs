@@ -1,4 +1,4 @@
-// web-template/server/src/core/password_utils.rs
+// kanbain/server/src/core/password_utils.rs
 
 use argon2::{
     Argon2,
@@ -109,5 +109,86 @@ mod tests {
         let result = verify_password(password, invalid_hash);
         assert!(matches!(result, Err(PasswordError::VerificationError(_))));
         // More specific error check if needed, e.g. Error::PhcStringField
+    }
+
+    #[test]
+    fn test_hash_password_empty_string() {
+        let password = "";
+        let result = hash_password(password);
+        assert!(result.is_ok());
+        let hashed = result.expect("Failed to hash empty password");
+        verify_password(password, &hashed).expect("Failed to verify empty password");
+    }
+
+    #[test]
+    fn test_hash_password_very_long_password() {
+        let password = "a".repeat(1000);
+        let result = hash_password(&password);
+        assert!(result.is_ok());
+        let hashed = result.expect("Failed to hash long password");
+        verify_password(&password, &hashed).expect("Failed to verify long password");
+    }
+
+    #[test]
+    fn test_hash_password_special_characters() {
+        let password = "🔐🔑😀 Special !@#$%^&*()_+-=[]{}|;':\",./<>?";
+        let result = hash_password(password);
+        assert!(result.is_ok());
+        let hashed = result.expect("Failed to hash special character password");
+        verify_password(password, &hashed).expect("Failed to verify special character password");
+    }
+
+    #[test]
+    fn test_hash_password_produces_different_hashes() {
+        let password = "samePassword123!";
+        let hash1 = hash_password(password).expect("Failed to hash password");
+        let hash2 = hash_password(password).expect("Failed to hash password");
+
+        // Same password should produce different hashes due to random salt
+        assert_ne!(hash1, hash2);
+
+        // But both should verify correctly
+        verify_password(password, &hash1).expect("Failed to verify hash1");
+        verify_password(password, &hash2).expect("Failed to verify hash2");
+    }
+
+    #[test]
+    fn test_password_error_display() {
+        // Test Display implementation for PasswordError
+        let hash_error = PasswordError::HashingError(PasswordHashError::Password);
+        assert_eq!(
+            format!("{hash_error}"),
+            "Password hashing failed: invalid password"
+        );
+
+        let verify_error = PasswordError::VerificationError(PasswordHashError::Password);
+        assert_eq!(
+            format!("{verify_error}"),
+            "Password verification failed: invalid password"
+        );
+    }
+
+    #[test]
+    fn test_password_error_debug() {
+        // Test Debug implementation for PasswordError
+        let error = PasswordError::HashingError(PasswordHashError::Password);
+        let debug_str = format!("{error:?}");
+        assert!(debug_str.contains("HashingError"));
+    }
+
+    #[test]
+    fn test_verify_password_empty_hash() {
+        let password = "test123";
+        let result = verify_password(password, "");
+        assert!(matches!(result, Err(PasswordError::VerificationError(_))));
+    }
+
+    #[test]
+    fn test_verify_password_malformed_phc_string() {
+        let password = "test123";
+        // PHC format requires $ separators
+        let malformed_hash = "$argon2id$invalid";
+        let result = verify_password(password, malformed_hash);
+        assert!(matches!(result, Err(PasswordError::VerificationError(_))));
     }
 }

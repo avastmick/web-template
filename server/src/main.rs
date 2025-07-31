@@ -1,8 +1,8 @@
 use axum::serve;
+use server::scheduler::setup_oauth_cleanup_scheduler;
 use sqlx::sqlite::SqlitePoolOptions;
 use std::{env, net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
-use tokio_cron_scheduler::{Job, JobScheduler};
 use tracing::info;
 use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt}; // Corrected import
 
@@ -35,53 +35,6 @@ async fn run_migrations(db_pool: &sqlx::SqlitePool) -> Result<(), errors::AppErr
             errors::AppError::ConfigError(format!("Failed to run migrations: {e}"))
         })?;
     info!("Database migrations completed successfully");
-    Ok(())
-}
-
-/// Set up the OAuth state cleanup scheduler
-async fn setup_oauth_cleanup_scheduler(
-    oauth_service: &Arc<OAuthService>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let scheduler = JobScheduler::new().await.map_err(|e| {
-        tracing::error!("Failed to create job scheduler: {:?}", e);
-        Box::new(e) as Box<dyn std::error::Error>
-    })?;
-
-    let oauth_service_for_cleanup = oauth_service.clone();
-    scheduler
-        .add(
-            Job::new_async("0 */10 * * * *", move |_uuid, _l| {
-                let oauth_service = oauth_service_for_cleanup.clone();
-                Box::pin(async move {
-                    match oauth_service.cleanup_expired_states().await {
-                        Ok(deleted_count) => {
-                            if deleted_count > 0 {
-                                tracing::info!("Cleaned up {} expired OAuth states", deleted_count);
-                            }
-                        }
-                        Err(e) => {
-                            tracing::error!("Failed to cleanup expired OAuth states: {:?}", e);
-                        }
-                    }
-                })
-            })
-            .map_err(|e| {
-                tracing::error!("Failed to create cleanup job: {:?}", e);
-                Box::new(e) as Box<dyn std::error::Error>
-            })?,
-        )
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to add cleanup job to scheduler: {:?}", e);
-            Box::new(e) as Box<dyn std::error::Error>
-        })?;
-
-    scheduler.start().await.map_err(|e| {
-        tracing::error!("Failed to start job scheduler: {:?}", e);
-        Box::new(e) as Box<dyn std::error::Error>
-    })?;
-
-    info!("OAuth state cleanup job scheduled to run every 10 minutes");
     Ok(())
 }
 

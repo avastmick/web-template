@@ -1,6 +1,6 @@
 # AI Module Architecture
 
-This module contains all AI-related functionality for the Kanbain server, organized for clarity, extensibility, and maintainability.
+This module contains all AI-related functionality for the web-template server, organized for clarity, extensibility, and maintainability.
 
 ## Directory Structure
 

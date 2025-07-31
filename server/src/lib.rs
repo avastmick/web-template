@@ -1,5 +1,3 @@
-// kanbain/server/src/lib.rs
-
 //! Server library crate
 //!
 //! This module exposes the core server functionality for use in integration tests
@@ -13,6 +11,7 @@ pub mod handlers;
 pub mod middleware;
 pub mod models;
 pub mod routes;
+pub mod scheduler;
 pub mod services;
 
 // Test helpers are available for both unit tests and integration tests

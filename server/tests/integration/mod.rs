@@ -4,3 +4,4 @@
 //! discoverable by Cargo's test runner.
 
 pub mod oauth_tests;
+pub mod payment_mock_tests;

@@ -1,0 +1,51 @@
+{
+  "id": "evt_fixture_payment_failed",
+  "object": "event",
+  "api_version": "2023-10-16",
+  "created": 1704067200,
+  "type": "payment_intent.payment_failed",
+  "data": {
+    "object": {
+      "id": "pi_fixture_failed",
+      "object": "payment_intent",
+      "amount": 2500,
+      "amount_capturable": 0,
+      "amount_received": 0,
+      "currency": "eur",
+      "status": "requires_payment_method",
+      "customer": "cus_fixture_123",
+      "description": "One-time payment",
+      "metadata": {
+        "payment_id": "REPLACE_WITH_PAYMENT_ID",
+        "user_id": "REPLACE_WITH_USER_ID"
+      },
+      "last_payment_error": {
+        "charge": "ch_fixture_failed",
+        "code": "card_declined",
+        "decline_code": "generic_decline",
+        "doc_url": "https://stripe.com/docs/error-codes/card-declined",
+        "message": "Your card was declined.",
+        "payment_method": {
+          "id": "pm_fixture_declined",
+          "object": "payment_method",
+          "type": "card",
+          "card": {
+            "brand": "visa",
+            "last4": "4242"
+          }
+        },
+        "type": "card_error"
+      },
+      "payment_method": null,
+      "payment_method_types": ["card"],
+      "created": 1704067200,
+      "livemode": false
+    }
+  },
+  "livemode": false,
+  "pending_webhooks": 0,
+  "request": {
+    "id": "req_fixture_456",
+    "idempotency_key": null
+  }
+}

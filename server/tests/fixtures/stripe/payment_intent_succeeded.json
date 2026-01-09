@@ -1,0 +1,35 @@
+{
+  "id": "evt_fixture_payment_succeeded",
+  "object": "event",
+  "api_version": "2023-10-16",
+  "created": 1704067200,
+  "type": "payment_intent.succeeded",
+  "data": {
+    "object": {
+      "id": "pi_fixture_succeeded",
+      "object": "payment_intent",
+      "amount": 2500,
+      "amount_capturable": 0,
+      "amount_received": 2500,
+      "currency": "eur",
+      "status": "succeeded",
+      "customer": "cus_fixture_123",
+      "description": "One-time payment",
+      "metadata": {
+        "payment_id": "REPLACE_WITH_PAYMENT_ID",
+        "user_id": "REPLACE_WITH_USER_ID"
+      },
+      "payment_method": "pm_fixture_card",
+      "payment_method_types": ["card"],
+      "receipt_email": "customer@example.com",
+      "created": 1704067200,
+      "livemode": false
+    }
+  },
+  "livemode": false,
+  "pending_webhooks": 0,
+  "request": {
+    "id": "req_fixture_123",
+    "idempotency_key": null
+  }
+}

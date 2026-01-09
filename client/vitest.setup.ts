@@ -1,4 +1,5 @@
 import '@testing-library/svelte/vitest';
+import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 
 // Mock browser APIs not available in jsdom
@@ -37,6 +38,13 @@ const sessionStorageMock = {
 	key: vi.fn()
 };
 Object.defineProperty(window, 'sessionStorage', { value: sessionStorageMock });
+
+// Mock Web Animations API for Svelte transitions
+Element.prototype.animate = vi.fn().mockReturnValue({
+	onfinish: null,
+	cancel: vi.fn(),
+	finished: Promise.resolve()
+});
 
 // Reset mocks between tests
 beforeEach(() => {

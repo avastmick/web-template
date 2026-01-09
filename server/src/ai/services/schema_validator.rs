@@ -68,12 +68,12 @@ fn validate_against_schema(value: &Value, schema: &Value) -> AiResult<()> {
                         AiError::SchemaValidation("Value is not an object".to_string())
                     })?;
                     for req in required {
-                        if let Some(req_name) = req.as_str() {
-                            if !obj.contains_key(req_name) {
-                                return Err(AiError::SchemaValidation(format!(
-                                    "Missing required property: {req_name}"
-                                )));
-                            }
+                        if let Some(req_name) = req.as_str()
+                            && !obj.contains_key(req_name)
+                        {
+                            return Err(AiError::SchemaValidation(format!(
+                                "Missing required property: {req_name}"
+                            )));
                         }
                     }
                 }

@@ -46,10 +46,10 @@ impl OpenRouterProvider {
         };
 
         // Pretty print the given JSON schema for debugging
-        if tracing::enabled!(tracing::Level::DEBUG) {
-            if let Ok(json) = serde_json::to_string_pretty(&final_schema) {
-                tracing::debug!("Final JSON Schema:\n{}", json);
-            }
+        if tracing::enabled!(tracing::Level::DEBUG)
+            && let Ok(json) = serde_json::to_string_pretty(&final_schema)
+        {
+            tracing::debug!("Final JSON Schema:\n{}", json);
         }
 
         // Create the OpenAI-compatible response_format structure

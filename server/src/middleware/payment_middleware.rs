@@ -51,17 +51,17 @@ pub async fn check_payment_status(
     }
 
     // Check if payment subscription has expired
-    if let Some(subscription_end_date) = payment_status.subscription_end_date {
-        if subscription_end_date < chrono::Utc::now() {
-            tracing::warn!(
-                "Access denied for user {} ({}): payment subscription expired at {}",
-                user_email,
-                user_id,
-                subscription_end_date
-            );
+    if let Some(subscription_end_date) = payment_status.subscription_end_date
+        && subscription_end_date < chrono::Utc::now()
+    {
+        tracing::warn!(
+            "Access denied for user {} ({}): payment subscription expired at {}",
+            user_email,
+            user_id,
+            subscription_end_date
+        );
 
-            return Err(AppError::PaymentRequired);
-        }
+        return Err(AppError::PaymentRequired);
     }
 
     Ok(())

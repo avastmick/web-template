@@ -1,38 +1,47 @@
 # Internationalization (i18n) Implementation Process
 
-This document defines the mandatory process for implementing internationalization in all components and pages within this project.
+This document defines the mandatory process for implementing
+internationalization in all components and pages within this project.
 
 ## 🎯 Core Principle
 
 **Every user-facing string MUST be translatable from day one.**
 
-No hardcoded English text is permitted in any component or page. This ensures consistent international user experience and prevents technical debt.
+No hardcoded English text is permitted in any component or page. This ensures
+consistent international user experience and prevents technical debt.
 
 ## 📋 Mandatory Implementation Checklist
 
 ### For Every New Component
 
 - [ ] **Import Translation Function**: `import { _ } from 'svelte-i18n';`
-- [ ] **Replace All Hardcoded Text**: Use `$_('key')` for all user-visible strings
-- [ ] **Add Translation Keys**: Add keys to ALL locale files (`en-US.json`, `es-ES.json`, `zh-CN.json`, `ar-SA.json`)
-- [ ] **Test Language Switching**: Verify component displays correctly in all languages
-- [ ] **Accessibility Text**: Translate ARIA labels, alt text, and screen reader content
+- [ ] **Replace All Hardcoded Text**: Use `$_('key')` for all user-visible
+      strings
+- [ ] **Add Translation Keys**: Add keys to ALL locale files (`en-US.json`,
+      `es-ES.json`, `zh-CN.json`, `ar-SA.json`)
+- [ ] **Test Language Switching**: Verify component displays correctly in all
+      languages
+- [ ] **Accessibility Text**: Translate ARIA labels, alt text, and screen reader
+      content
 
 ### For Every New Page
 
 - [ ] **Import Translation Function**: `import { _ } from 'svelte-i18n';`
 - [ ] **Page Title**: `<title>{$_('page.pageTitle')}</title>`
-- [ ] **Meta Description**: `<meta name="description" content={$_('page.pageDescription')} />`
+- [ ] **Meta Description**:
+      `<meta name="description" content={$_('page.pageDescription')} />`
 - [ ] **All Content**: Convert all user-facing text to translation keys
 - [ ] **Form Labels**: All input labels, placeholders, and validation messages
 - [ ] **Error Messages**: All error states and loading messages
 - [ ] **Navigation Text**: Any page-specific navigation or breadcrumbs
-- [ ] **Write E2E Test**: Create Playwright test for language switching on this page
+- [ ] **Write E2E Test**: Create Playwright test for language switching on this
+      page
 
 ### For Every New Route
 
 - [ ] **Follow Page Requirements**: All page implementation requirements above
-- [ ] **Add Route to i18n Tests**: Include route in comprehensive i18n validation
+- [ ] **Add Route to i18n Tests**: Include route in comprehensive i18n
+      validation
 - [ ] **Test RTL Layout**: Verify Arabic language displays correctly
 - [ ] **Meta Tag Validation**: Ensure proper SEO in all languages
 
@@ -98,9 +107,12 @@ bun playwright test language-switching
 
 The following checks are enforced automatically:
 
-1. **Translation Import Check**: Verify `import { _ } from 'svelte-i18n';` in components with user-facing text
-2. **Hardcoded Text Detection**: Scan for English strings outside translation functions
-3. **Translation Key Validation**: Ensure all used keys exist in all locale files
+1. **Translation Import Check**: Verify `import { _ } from 'svelte-i18n';` in
+   components with user-facing text
+2. **Hardcoded Text Detection**: Scan for English strings outside translation
+   functions
+3. **Translation Key Validation**: Ensure all used keys exist in all locale
+   files
 4. **Page Title Validation**: Verify all pages use translation keys for titles
 
 ### Code Review Requirements
@@ -134,14 +146,14 @@ category.subcategory.element
 
 ### Required Categories
 
-| Category | Purpose | Example Keys |
-|----------|---------|--------------|
-| `common.*` | Shared UI elements | `common.save`, `common.cancel` |
-| `nav.*` | Navigation elements | `nav.home`, `nav.profile` |
-| `auth.*` | Authentication flows | `auth.login.title`, `auth.register.submit` |
-| `validation.*` | Form validation | `validation.required`, `validation.email` |
-| `error.*` | Error messages | `error.notFound`, `error.serverError` |
-| `accessibility.*` | Screen reader text | `accessibility.skipToMain` |
+| Category          | Purpose              | Example Keys                               |
+| ----------------- | -------------------- | ------------------------------------------ |
+| `common.*`        | Shared UI elements   | `common.save`, `common.cancel`             |
+| `nav.*`           | Navigation elements  | `nav.home`, `nav.profile`                  |
+| `auth.*`          | Authentication flows | `auth.login.title`, `auth.register.submit` |
+| `validation.*`    | Form validation      | `validation.required`, `validation.email`  |
+| `error.*`         | Error messages       | `error.notFound`, `error.serverError`      |
+| `accessibility.*` | Screen reader text   | `accessibility.skipToMain`                 |
 
 ### Page-Specific Requirements
 
@@ -173,7 +185,8 @@ Before marking i18n implementation complete:
 - [ ] **English (en-US)**: Default language displays correctly
 - [ ] **Spanish (es-ES)**: All text translated and displays properly
 - [ ] **Chinese (zh-CN)**: Character encoding and layout work correctly
-- [ ] **Arabic (ar-SA)**: RTL layout functions properly, text flows right-to-left
+- [ ] **Arabic (ar-SA)**: RTL layout functions properly, text flows
+      right-to-left
 - [ ] **Language Persistence**: Selected language persists across navigation
 - [ ] **Page Titles**: Browser tab shows translated titles
 - [ ] **Meta Descriptions**: Search engine descriptions are translated
@@ -278,11 +291,7 @@ For every i18n implementation:
 
 ### Templates
 
-Use these templates for consistent documentation:
-
-- [Component i18n Template](../templates/component-i18n.md)
-- [Page i18n Template](../templates/page-i18n.md)
-- [E2E Test Template](../templates/e2e-i18n-test.md)
+See [Template usage](/documentation/TEMPLATE_USAGE.md) for more information
 
 ## 🎯 Success Criteria
 
@@ -323,6 +332,7 @@ This process document is a living document. Updates should be made when:
 - User feedback suggests changes
 
 All process updates require:
+
 - Team review and approval
 - Documentation of the change rationale
 - Update of related templates and examples
@@ -330,4 +340,5 @@ All process updates require:
 
 ---
 
-**Remember: i18n is not optional - it's a core requirement for every user-facing element in this application.**
+**Remember: i18n is not optional - it's a core requirement for every user-facing
+element in this application.**

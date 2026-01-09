@@ -483,4 +483,140 @@ mod tests {
         assert_eq!(deserialized.exp, claims.exp);
         assert_eq!(deserialized.iat, claims.iat);
     }
+
+    // Property-based tests using proptest
+    mod property_tests {
+        use super::*;
+        use proptest::prelude::*;
+
+        fn setup_env_for_proptest() {
+            #[allow(unsafe_code)]
+            unsafe {
+                env::set_var(
+                    "JWT_SECRET",
+                    "property_test_secret_key_that_is_long_enough_for_testing_purposes",
+                );
+            }
+        }
+
+        proptest! {
+            /// Property: Any valid UUID and email should produce a token that decodes back correctly
+            #[test]
+            fn jwt_roundtrip(
+                email in "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+            ) {
+                setup_env_for_proptest();
+                let auth_service = AuthService::new().expect("Failed to create auth service");
+                let user_id = Uuid::new_v4();
+
+                let token = auth_service.generate_token(user_id, &email)
+                    .expect("Token generation should succeed");
+
+                let claims = auth_service.validate_token(&token)
+                    .expect("Token validation should succeed");
+
+                prop_assert_eq!(claims.sub, user_id.to_string());
+                prop_assert_eq!(claims.email, email);
+            }
+
+            /// Property: get_user_id_from_token returns the same UUID that was encoded
+            #[test]
+            fn user_id_roundtrip(
+                email in "[a-z]{5,10}@example\\.com"
+            ) {
+                setup_env_for_proptest();
+                let auth_service = AuthService::new().expect("Failed to create auth service");
+                let user_id = Uuid::new_v4();
+
+                let token = auth_service.generate_token(user_id, &email)
+                    .expect("Token generation should succeed");
+
+                let extracted_id = auth_service.get_user_id_from_token(&token)
+                    .expect("User ID extraction should succeed");
+
+                prop_assert_eq!(extracted_id, user_id);
+            }
+
+            /// Property: Different users produce different tokens
+            #[test]
+            fn different_users_different_tokens(
+                email1 in "[a-z]{5,10}@example\\.com",
+                email2 in "[a-z]{5,10}@test\\.com"
+            ) {
+                setup_env_for_proptest();
+                let auth_service = AuthService::new().expect("Failed to create auth service");
+                let user_id1 = Uuid::new_v4();
+                let user_id2 = Uuid::new_v4();
+
+                let token1 = auth_service.generate_token(user_id1, &email1)
+                    .expect("Token generation should succeed");
+                let token2 = auth_service.generate_token(user_id2, &email2)
+                    .expect("Token generation should succeed");
+
+                // Different users should produce different tokens
+                prop_assert_ne!(token1, token2);
+            }
+
+            /// Property: Tokens have correct expiration (approximately 24 hours)
+            #[test]
+            fn token_expiration_is_24_hours(
+                email in "[a-z]{5,10}@example\\.com"
+            ) {
+                setup_env_for_proptest();
+                let auth_service = AuthService::new().expect("Failed to create auth service");
+                let user_id = Uuid::new_v4();
+
+                let before = Utc::now();
+                let token = auth_service.generate_token(user_id, &email)
+                    .expect("Token generation should succeed");
+                let after = Utc::now();
+
+                let claims = auth_service.validate_token(&token)
+                    .expect("Token validation should succeed");
+
+                // Expiration should be approximately 24 hours from now
+                let expected_exp_min = before.timestamp() + 24 * 3600 - 60;
+                let expected_exp_max = after.timestamp() + 24 * 3600 + 60;
+
+                prop_assert!(claims.exp >= expected_exp_min);
+                prop_assert!(claims.exp <= expected_exp_max);
+            }
+
+            /// Property: Empty email is allowed
+            #[test]
+            fn empty_email_allowed(_seed in 0u32..100u32) {
+                setup_env_for_proptest();
+                let auth_service = AuthService::new().expect("Failed to create auth service");
+                let user_id = Uuid::new_v4();
+
+                let token = auth_service.generate_token(user_id, "")
+                    .expect("Token generation should succeed");
+
+                let claims = auth_service.validate_token(&token)
+                    .expect("Token validation should succeed");
+
+                prop_assert_eq!(claims.email, "");
+            }
+
+            /// Property: Special characters in email are preserved
+            #[test]
+            fn special_email_chars_preserved(
+                local_part in "[a-z0-9._%+-]{3,20}",
+                domain in "[a-z0-9-]{3,10}\\.[a-z]{2,4}"
+            ) {
+                setup_env_for_proptest();
+                let auth_service = AuthService::new().expect("Failed to create auth service");
+                let user_id = Uuid::new_v4();
+                let email = format!("{local_part}@{domain}");
+
+                let token = auth_service.generate_token(user_id, &email)
+                    .expect("Token generation should succeed");
+
+                let claims = auth_service.validate_token(&token)
+                    .expect("Token validation should succeed");
+
+                prop_assert_eq!(claims.email, email);
+            }
+        }
+    }
 }

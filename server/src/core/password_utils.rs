@@ -191,4 +191,74 @@ mod tests {
         let result = verify_password(password, malformed_hash);
         assert!(matches!(result, Err(PasswordError::VerificationError(_))));
     }
+
+    // Property-based tests using proptest
+    mod property_tests {
+        use super::*;
+        use proptest::prelude::*;
+
+        proptest! {
+            /// Property: Any password that can be hashed should verify correctly
+            #[test]
+            fn password_roundtrip(password in ".*") {
+                // Skip if password is too long (argon2 has limits)
+                if password.len() > 4096 {
+                    return Ok(());
+                }
+
+                let hashed = hash_password(&password).expect("Hashing should succeed");
+                verify_password(&password, &hashed).expect("Verification should succeed");
+            }
+
+            /// Property: Different passwords should produce different hashes (with high probability)
+            #[test]
+            fn different_passwords_different_hashes(
+                password1 in "[a-zA-Z0-9]{8,32}",
+                password2 in "[a-zA-Z0-9]{8,32}"
+            ) {
+                prop_assume!(password1 != password2);
+
+                let hash1 = hash_password(&password1).expect("Hashing should succeed");
+                let hash2 = hash_password(&password2).expect("Hashing should succeed");
+
+                // Hashes should be different (different passwords + different salts)
+                prop_assert_ne!(hash1, hash2);
+            }
+
+            /// Property: Same password hashed twice produces different hashes (due to salt)
+            #[test]
+            fn same_password_different_salts(password in "[a-zA-Z0-9!@#$%]{4,64}") {
+                let hash1 = hash_password(&password).expect("Hashing should succeed");
+                let hash2 = hash_password(&password).expect("Hashing should succeed");
+
+                // Same password should produce different hashes due to random salt
+                prop_assert_ne!(&hash1, &hash2);
+
+                // But both should verify
+                verify_password(&password, &hash1).expect("Verification of hash1 should succeed");
+                verify_password(&password, &hash2).expect("Verification of hash2 should succeed");
+            }
+
+            /// Property: Wrong password should fail verification
+            #[test]
+            fn wrong_password_fails(
+                correct_password in "[a-zA-Z0-9]{8,32}",
+                wrong_password in "[a-zA-Z0-9]{8,32}"
+            ) {
+                prop_assume!(correct_password != wrong_password);
+
+                let hashed = hash_password(&correct_password).expect("Hashing should succeed");
+                let result = verify_password(&wrong_password, &hashed);
+
+                prop_assert!(result.is_err());
+            }
+
+            /// Property: Unicode passwords work correctly
+            #[test]
+            fn unicode_passwords_work(password in "[\\p{L}\\p{N}\\p{Emoji}]{1,100}") {
+                let hashed = hash_password(&password).expect("Hashing should succeed");
+                verify_password(&password, &hashed).expect("Verification should succeed");
+            }
+        }
+    }
 }

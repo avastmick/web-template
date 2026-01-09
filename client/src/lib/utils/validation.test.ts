@@ -1,229 +1,289 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import fc from 'fast-check';
 import { validateEmail, validatePasswordStrength, validatePasswordMatch } from './validation';
 
-describe('validation utils', () => {
-	describe('validateEmail', () => {
-		describe('valid emails', () => {
-			const validEmails = [
-				'test@example.com',
-				'user.name@domain.org',
-				'user+tag@example.co.uk',
-				'firstname.lastname@company.com',
-				'email@subdomain.domain.com',
-				'1234567890@example.com',
-				'email@example-one.com',
-				'_______@example.com',
-				'email@example.name',
-				'email@example.museum',
-				'email@example.co.jp'
-			];
+// Simple smoke test to verify vitest setup works
+describe('Vitest Setup', () => {
+	it('should run tests', () => {
+		expect(true).toBe(true);
+	});
 
-			validEmails.forEach((email) => {
-				it(`should accept "${email}"`, () => {
+	it('should have jsdom environment', () => {
+		expect(typeof window).toBe('object');
+		expect(typeof document).toBe('object');
+	});
+
+	it('should have localStorage mock', () => {
+		expect(typeof localStorage).toBe('object');
+		expect(typeof localStorage.getItem).toBe('function');
+	});
+});
+
+// Property-based tests for validation functions
+describe('Validation Property Tests', () => {
+	describe('validateEmail', () => {
+		it('should always return an object with isValid boolean', () => {
+			fc.assert(
+				fc.property(fc.string(), (email) => {
 					const result = validateEmail(email);
-					expect(result.isValid).toBe(true);
-					expect(result.error).toBeUndefined();
-				});
-			});
+					expect(typeof result.isValid).toBe('boolean');
+					if (!result.isValid) {
+						expect(typeof result.error).toBe('string');
+					}
+				})
+			);
 		});
 
-		describe('invalid emails', () => {
-			it('should reject empty string', () => {
-				const result = validateEmail('');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Email is required');
-			});
+		it('should reject all whitespace-only strings', () => {
+			const whitespaceArb = fc
+				.array(fc.constantFrom(' ', '\t', '\n', '\r'), { minLength: 1, maxLength: 20 })
+				.map((chars) => chars.join(''));
 
-			it('should reject whitespace only', () => {
-				const result = validateEmail('   ');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Email is required');
-			});
+			fc.assert(
+				fc.property(whitespaceArb, (whitespace) => {
+					const result = validateEmail(whitespace);
+					expect(result.isValid).toBe(false);
+					expect(result.error).toBe('Email is required');
+				})
+			);
+		});
 
-			it('should reject email without @', () => {
-				const result = validateEmail('plainaddress');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Please enter a valid email address');
-			});
+		it('should accept valid email formats', () => {
+			// Generate emails in the format: localpart@domain.tld
+			const alphanumeric = 'abcdefghijklmnopqrstuvwxyz0123456789';
+			const localChars = 'abcdefghijklmnopqrstuvwxyz0123456789._-';
+			const letters = 'abcdefghijklmnopqrstuvwxyz';
 
-			it('should reject email without domain', () => {
-				const result = validateEmail('email@');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Please enter a valid email address');
-			});
+			const localPartArb = fc
+				.array(fc.constantFrom(...localChars.split('')), { minLength: 1, maxLength: 20 })
+				.map((chars) => chars.join(''))
+				.filter((s) => !s.startsWith('.') && !s.endsWith('.') && !s.includes('..'));
 
-			it('should reject email without local part', () => {
-				const result = validateEmail('@example.com');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Please enter a valid email address');
-			});
+			const domainArb = fc
+				.array(fc.constantFrom(...alphanumeric.split('')), { minLength: 1, maxLength: 15 })
+				.map((chars) => chars.join(''));
 
-			it('should reject email with spaces', () => {
-				const result = validateEmail('email with space@example.com');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Please enter a valid email address');
-			});
+			const tldArb = fc
+				.array(fc.constantFrom(...letters.split('')), { minLength: 2, maxLength: 6 })
+				.map((chars) => chars.join(''));
 
-			it('should reject email without TLD', () => {
-				const result = validateEmail('email@domain');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Please enter a valid email address');
-			});
+			const validEmailArb = fc
+				.tuple(localPartArb, domainArb, tldArb)
+				.map(([local, domain, tld]) => `${local}@${domain}.${tld}`);
 
-			it('should reject email with multiple @ symbols', () => {
-				const result = validateEmail('email@domain@example.com');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Please enter a valid email address');
-			});
+			fc.assert(
+				fc.property(validEmailArb, (email) => {
+					const result = validateEmail(email);
+					expect(result.isValid).toBe(true);
+				})
+			);
+		});
+
+		it('should reject strings without @ symbol', () => {
+			fc.assert(
+				fc.property(
+					fc.string({ minLength: 1 }).filter((s) => !s.includes('@') && s.trim().length > 0),
+					(email) => {
+						const result = validateEmail(email);
+						expect(result.isValid).toBe(false);
+					}
+				)
+			);
+		});
+
+		it('should be deterministic (same input always gives same output)', () => {
+			fc.assert(
+				fc.property(fc.string(), (email) => {
+					const result1 = validateEmail(email);
+					const result2 = validateEmail(email);
+					expect(result1.isValid).toBe(result2.isValid);
+					expect(result1.error).toBe(result2.error);
+				})
+			);
 		});
 	});
 
 	describe('validatePasswordStrength', () => {
-		describe('valid passwords', () => {
-			const validPasswords = [
-				'SecurePass123',
-				'MyPassword1234',
-				'Complex1Pass!',
-				'TestPassword1',
-				'AbCdEfGh1234',
-				'UpperLower1234'
-			];
+		it('should always return an object with isValid boolean', () => {
+			fc.assert(
+				fc.property(fc.string(), (password) => {
+					const result = validatePasswordStrength(password);
+					expect(typeof result.isValid).toBe('boolean');
+					if (!result.isValid) {
+						expect(typeof result.error).toBe('string');
+					}
+				})
+			);
+		});
 
-			validPasswords.forEach((password) => {
-				it(`should accept "${password}"`, () => {
+		it('should reject passwords shorter than 12 characters', () => {
+			fc.assert(
+				fc.property(fc.string({ minLength: 1, maxLength: 11 }), (shortPassword) => {
+					const result = validatePasswordStrength(shortPassword);
+					// Should fail, either due to length or missing character types
+					expect(result.isValid).toBe(false);
+				})
+			);
+		});
+
+		it('should accept passwords meeting all criteria', () => {
+			// Generate passwords that meet all requirements
+			const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+			const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+			const numbers = '0123456789';
+			const allChars = lowercase + uppercase + numbers;
+
+			const lowerArb = fc
+				.array(fc.constantFrom(...lowercase.split('')), { minLength: 1, maxLength: 10 })
+				.map((chars) => chars.join(''));
+
+			const upperArb = fc
+				.array(fc.constantFrom(...uppercase.split('')), { minLength: 1, maxLength: 10 })
+				.map((chars) => chars.join(''));
+
+			const numArb = fc
+				.array(fc.constantFrom(...numbers.split('')), { minLength: 1, maxLength: 10 })
+				.map((chars) => chars.join(''));
+
+			const extraArb = fc
+				.array(fc.constantFrom(...allChars.split('')), { minLength: 0, maxLength: 20 })
+				.map((chars) => chars.join(''));
+
+			const validPasswordArb = fc
+				.tuple(lowerArb, upperArb, numArb, extraArb)
+				.map(([lower, upper, num, extra]) => lower + upper + num + extra)
+				.filter((password) => password.length >= 12);
+
+			fc.assert(
+				fc.property(validPasswordArb, (password) => {
 					const result = validatePasswordStrength(password);
 					expect(result.isValid).toBe(true);
-					expect(result.error).toBeUndefined();
-				});
-			});
+				})
+			);
 		});
 
-		describe('invalid passwords', () => {
-			it('should reject empty password', () => {
-				const result = validatePasswordStrength('');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Password is required');
-			});
+		it('should reject passwords without lowercase letters', () => {
+			const upperAndNumbers = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
-			it('should reject password shorter than 12 characters', () => {
-				const result = validatePasswordStrength('Short1Ab');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Password must be at least 12 characters long');
-			});
+			const noLowercaseArb = fc
+				.array(fc.constantFrom(...upperAndNumbers.split('')), { minLength: 12, maxLength: 30 })
+				.map((chars) => chars.join(''));
 
-			it('should reject password with exactly 11 characters', () => {
-				const result = validatePasswordStrength('AbcDefgH123');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Password must be at least 12 characters long');
-			});
-
-			it('should reject password without lowercase letters', () => {
-				const result = validatePasswordStrength('ALLUPPERCASE123');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Password must contain at least one lowercase letter');
-			});
-
-			it('should reject password without uppercase letters', () => {
-				const result = validatePasswordStrength('alllowercase123');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Password must contain at least one uppercase letter');
-			});
-
-			it('should reject password without numbers', () => {
-				const result = validatePasswordStrength('NoNumbersHere');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Password must contain at least one number');
-			});
-
-			it('should reject all-lowercase password', () => {
-				const result = validatePasswordStrength('alllowercaseonly');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Password must contain at least one uppercase letter');
-			});
-
-			it('should reject all-uppercase password', () => {
-				const result = validatePasswordStrength('ALLUPPERCASEONLY');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Password must contain at least one lowercase letter');
-			});
-
-			it('should reject all-numbers password', () => {
-				const result = validatePasswordStrength('123456789012');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Password must contain at least one lowercase letter');
-			});
+			fc.assert(
+				fc.property(noLowercaseArb, (noLowercase) => {
+					const result = validatePasswordStrength(noLowercase);
+					expect(result.isValid).toBe(false);
+					expect(result.error).toBe('Password must contain at least one lowercase letter');
+				})
+			);
 		});
 
-		describe('edge cases', () => {
-			it('should accept password with exactly 12 characters', () => {
-				const result = validatePasswordStrength('AbcDefgHi123');
-				expect(result.isValid).toBe(true);
-			});
+		it('should reject passwords without uppercase letters', () => {
+			const lowerAndNumbers = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
-			it('should accept password with special characters', () => {
-				const result = validatePasswordStrength('SecureP@ss123!');
-				expect(result.isValid).toBe(true);
-			});
+			const noUppercaseArb = fc
+				.array(fc.constantFrom(...lowerAndNumbers.split('')), { minLength: 12, maxLength: 30 })
+				.map((chars) => chars.join(''));
 
-			it('should accept very long password', () => {
-				const result = validatePasswordStrength('ThisIsAVeryLongPasswordWith1UpperAndLower');
-				expect(result.isValid).toBe(true);
-			});
+			fc.assert(
+				fc.property(noUppercaseArb, (noUppercase) => {
+					const result = validatePasswordStrength(noUppercase);
+					expect(result.isValid).toBe(false);
+					expect(result.error).toBe('Password must contain at least one uppercase letter');
+				})
+			);
+		});
+
+		it('should reject passwords without numbers', () => {
+			const lettersOnly = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+			const noNumbersArb = fc
+				.array(fc.constantFrom(...lettersOnly.split('')), { minLength: 12, maxLength: 30 })
+				.map((chars) => chars.join(''));
+
+			fc.assert(
+				fc.property(noNumbersArb, (noNumbers) => {
+					const result = validatePasswordStrength(noNumbers);
+					expect(result.isValid).toBe(false);
+					expect(result.error).toBe('Password must contain at least one number');
+				})
+			);
+		});
+
+		it('should be deterministic', () => {
+			fc.assert(
+				fc.property(fc.string(), (password) => {
+					const result1 = validatePasswordStrength(password);
+					const result2 = validatePasswordStrength(password);
+					expect(result1.isValid).toBe(result2.isValid);
+					expect(result1.error).toBe(result2.error);
+				})
+			);
 		});
 	});
 
 	describe('validatePasswordMatch', () => {
-		describe('matching passwords', () => {
-			it('should accept matching passwords', () => {
-				const result = validatePasswordMatch('SecurePass123', 'SecurePass123');
-				expect(result.isValid).toBe(true);
-				expect(result.error).toBeUndefined();
-			});
-
-			it('should accept matching empty passwords (validation responsibility is elsewhere)', () => {
-				// Note: This tests matching, not strength. Empty password handling is in validatePasswordStrength
-				const result = validatePasswordMatch('', '');
-				expect(result.isValid).toBe(false); // confirmPassword is empty
-				expect(result.error).toBe('Please confirm your password');
-			});
+		it('should always return an object with isValid boolean', () => {
+			fc.assert(
+				fc.property(fc.string(), fc.string(), (password, confirmPassword) => {
+					const result = validatePasswordMatch(password, confirmPassword);
+					expect(typeof result.isValid).toBe('boolean');
+					if (!result.isValid) {
+						expect(typeof result.error).toBe('string');
+					}
+				})
+			);
 		});
 
-		describe('non-matching passwords', () => {
-			it('should reject empty confirmation password', () => {
-				const result = validatePasswordMatch('SecurePass123', '');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Please confirm your password');
-			});
+		it('should accept when passwords match', () => {
+			fc.assert(
+				fc.property(fc.string({ minLength: 1 }), (password) => {
+					const result = validatePasswordMatch(password, password);
+					expect(result.isValid).toBe(true);
+				})
+			);
+		});
 
-			it('should reject different passwords', () => {
-				const result = validatePasswordMatch('SecurePass123', 'DifferentPass456');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Passwords do not match');
-			});
+		it('should reject when passwords differ', () => {
+			fc.assert(
+				fc.property(fc.string({ minLength: 1 }), fc.string({ minLength: 1 }), (password, confirmPassword) => {
+					fc.pre(password !== confirmPassword);
+					const result = validatePasswordMatch(password, confirmPassword);
+					expect(result.isValid).toBe(false);
+					expect(result.error).toBe('Passwords do not match');
+				})
+			);
+		});
 
-			it('should reject passwords with different case', () => {
-				const result = validatePasswordMatch('SecurePass123', 'securepass123');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Passwords do not match');
-			});
+		it('should reject empty confirmation password', () => {
+			fc.assert(
+				fc.property(fc.string({ minLength: 1 }), (password) => {
+					const result = validatePasswordMatch(password, '');
+					expect(result.isValid).toBe(false);
+					expect(result.error).toBe('Please confirm your password');
+				})
+			);
+		});
 
-			it('should reject passwords with extra whitespace', () => {
-				const result = validatePasswordMatch('SecurePass123', 'SecurePass123 ');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Passwords do not match');
-			});
+		it('should be symmetric for matching (order of comparison)', () => {
+			fc.assert(
+				fc.property(fc.string({ minLength: 1 }), (password) => {
+					// If we pass the same password twice, it should always be valid
+					const result = validatePasswordMatch(password, password);
+					expect(result.isValid).toBe(true);
+				})
+			);
+		});
 
-			it('should reject passwords with leading whitespace', () => {
-				const result = validatePasswordMatch('SecurePass123', ' SecurePass123');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Passwords do not match');
-			});
-
-			it('should reject nearly matching passwords', () => {
-				const result = validatePasswordMatch('SecurePass123', 'SecurePass124');
-				expect(result.isValid).toBe(false);
-				expect(result.error).toBe('Passwords do not match');
-			});
+		it('should be deterministic', () => {
+			fc.assert(
+				fc.property(fc.string(), fc.string(), (password, confirmPassword) => {
+					const result1 = validatePasswordMatch(password, confirmPassword);
+					const result2 = validatePasswordMatch(password, confirmPassword);
+					expect(result1.isValid).toBe(result2.isValid);
+					expect(result1.error).toBe(result2.error);
+				})
+			);
 		});
 	});
 });

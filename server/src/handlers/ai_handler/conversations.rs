@@ -93,7 +93,7 @@ pub async fn archive_conversation_handler(
 
     // Demonstrate usage of archive and update_timestamp methods
     let mut conversation =
-        crate::models::ai_models::AiConversation::new(user_id.to_string(), "gpt-4".to_string());
+        crate::models::ai_models::AiConversation::new(user_id.clone(), "gpt-4".to_string());
     conversation.update_timestamp();
     conversation.archive();
 

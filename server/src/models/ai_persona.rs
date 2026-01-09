@@ -3,10 +3,11 @@
 use serde::{Deserialize, Serialize};
 
 /// Available AI personas for different conversation contexts
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum AiPersona {
     /// Business Analyst for requirements gathering and issue creation
+    #[default]
     BusinessAnalyst,
     /// Technical Support for troubleshooting
     TechnicalSupport,
@@ -46,12 +47,6 @@ impl AiPersona {
             Self::BusinessAnalyst | Self::ProjectManager => true,
             Self::TechnicalSupport | Self::CodeReviewer => false,
         }
-    }
-}
-
-impl Default for AiPersona {
-    fn default() -> Self {
-        Self::BusinessAnalyst
     }
 }
 

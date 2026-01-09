@@ -161,14 +161,14 @@ impl IntoResponse for AppError {
         let mut body = json!({ "error": error_message });
 
         // Include detailed error in debug builds only for non-user-facing errors
-        if cfg!(debug_assertions) {
-            if let Some(detail) = error_detail {
-                match status {
-                    StatusCode::INTERNAL_SERVER_ERROR | StatusCode::BAD_REQUEST => {
-                        body["detail"] = json!(detail);
-                    }
-                    _ => {} // Don't add detail for auth errors etc.
+        if cfg!(debug_assertions)
+            && let Some(detail) = error_detail
+        {
+            match status {
+                StatusCode::INTERNAL_SERVER_ERROR | StatusCode::BAD_REQUEST => {
+                    body["detail"] = json!(detail);
                 }
+                _ => {} // Don't add detail for auth errors etc.
             }
         }
 

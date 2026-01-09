@@ -1,0 +1,28 @@
+{
+  "scenarios": {
+    "stress_test": {
+      "executor": "ramping-vus",
+      "startVUs": 0,
+      "stages": [
+        { "duration": "1m", "target": 20 },
+        { "duration": "2m", "target": 20 },
+        { "duration": "1m", "target": 50 },
+        { "duration": "2m", "target": 50 },
+        { "duration": "1m", "target": 100 },
+        { "duration": "3m", "target": 100 },
+        { "duration": "2m", "target": 0 }
+      ],
+      "gracefulRampDown": "1m"
+    }
+  },
+  "thresholds": {
+    "http_req_duration{endpoint:login}": ["p(95)<500"],
+    "http_req_duration{endpoint:register}": ["p(95)<500"],
+    "http_req_duration{endpoint:chat}": ["p(95)<5000"],
+    "http_req_duration{endpoint:chat_contextual}": ["p(95)<5000"],
+    "http_req_failed": ["rate<0.05"],
+    "errors": ["rate<0.05"]
+  },
+  "noConnectionReuse": false,
+  "userAgent": "k6-stress-test/1.0"
+}

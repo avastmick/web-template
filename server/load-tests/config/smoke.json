@@ -1,0 +1,16 @@
+{
+  "scenarios": {
+    "smoke_test": {
+      "executor": "constant-vus",
+      "vus": 1,
+      "duration": "30s"
+    }
+  },
+  "thresholds": {
+    "http_req_duration": ["p(95)<500"],
+    "http_req_failed": ["rate<0.01"],
+    "errors": ["rate<0.01"]
+  },
+  "noConnectionReuse": false,
+  "userAgent": "k6-smoke-test/1.0"
+}

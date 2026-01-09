@@ -1,0 +1,26 @@
+{
+  "scenarios": {
+    "load_test": {
+      "executor": "ramping-vus",
+      "startVUs": 0,
+      "stages": [
+        { "duration": "30s", "target": 10 },
+        { "duration": "1m", "target": 10 },
+        { "duration": "30s", "target": 20 },
+        { "duration": "2m", "target": 20 },
+        { "duration": "30s", "target": 0 }
+      ],
+      "gracefulRampDown": "30s"
+    }
+  },
+  "thresholds": {
+    "http_req_duration{endpoint:login}": ["p(95)<200"],
+    "http_req_duration{endpoint:register}": ["p(95)<300"],
+    "http_req_duration{endpoint:chat}": ["p(95)<2000"],
+    "http_req_duration{endpoint:chat_contextual}": ["p(95)<2500"],
+    "http_req_failed": ["rate<0.001"],
+    "errors": ["rate<0.001"]
+  },
+  "noConnectionReuse": false,
+  "userAgent": "k6-load-test/1.0"
+}

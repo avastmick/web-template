@@ -93,6 +93,7 @@ fn extract_tested_routes() -> HashSet<(String, String)> {
 
     // List of test file contents
     let test_files = vec![
+        include_str!("./ai_tests.rs"),
         include_str!("./auth_tests.rs"),
         include_str!("./payment_tests.rs"),
     ];
@@ -105,7 +106,7 @@ fn extract_tested_routes() -> HashSet<(String, String)> {
         let lines: Vec<&str> = content.lines().collect();
 
         // Find all API paths being tested
-        for line in &lines {
+        for (i, line) in lines.iter().enumerate() {
             if let Some(uri_match) = uri_regex.find(line) {
                 let uri = uri_match.as_str();
                 let path = uri
@@ -114,10 +115,29 @@ fn extract_tested_routes() -> HashSet<(String, String)> {
                     .trim_start_matches('"')
                     .trim_end_matches('"');
 
-                // Look for method in nearby lines
+                // Look for method in current line first
+                let mut method = None;
                 if let Some(method_match) = method_regex.find(line) {
-                    let method = method_match.as_str().replace("Method::", "").to_uppercase();
+                    method = Some(method_match.as_str().replace("Method::", "").to_uppercase());
+                }
 
+                // If not found, look in nearby lines (Request::builder pattern)
+                if method.is_none() {
+                    // Look back up to 5 lines for .method(Method::...)
+                    for k in 1..=5 {
+                        if i < k {
+                            break;
+                        }
+                        let prev_line = lines[i - k];
+                        if let Some(method_match) = method_regex.find(prev_line) {
+                            method =
+                                Some(method_match.as_str().replace("Method::", "").to_uppercase());
+                            break;
+                        }
+                    }
+                }
+
+                if let Some(method) = method {
                     // Handle parameterized paths
                     // Strip query parameters if present
                     let path_without_query = path.split('?').next().unwrap_or(path);
@@ -130,6 +150,62 @@ fn extract_tested_routes() -> HashSet<(String, String)> {
 
         // Also check for specific test patterns (including multi-line)
         for (i, line) in lines.iter().enumerate() {
+            // Pattern: Helper functions with method implied by name
+            // send_get_request, send_authenticated_get_request → GET
+            // send_authenticated_delete_request → DELETE
+            if line.contains("send_get_request") || line.contains("send_authenticated_get_request") {
+                // Look for path in this line or next few lines
+                let mut path = None;
+                if let Some(start) = line.find("\"/api/") {
+                    if let Some(end) = line[start + 1..].find('"') {
+                        path = Some(line[start + 1..start + 1 + end].to_string());
+                    }
+                }
+                for j in 1..=3 {
+                    if path.is_some() || i + j >= lines.len() {
+                        break;
+                    }
+                    let next_line = lines[i + j];
+                    if let Some(start) = next_line.find("\"/api/") {
+                        if let Some(end) = next_line[start + 1..].find('"') {
+                            path = Some(next_line[start + 1..start + 1 + end].to_string());
+                        }
+                    }
+                }
+                if let Some(path) = path {
+                    let path_without_query = path.split('?').next().unwrap_or(&path);
+                    let normalized_path = normalize_path(path_without_query);
+                    tested.insert(("GET".to_string(), normalized_path));
+                }
+                continue;
+            }
+
+            if line.contains("send_authenticated_delete_request") {
+                let mut path = None;
+                if let Some(start) = line.find("\"/api/") {
+                    if let Some(end) = line[start + 1..].find('"') {
+                        path = Some(line[start + 1..start + 1 + end].to_string());
+                    }
+                }
+                for j in 1..=3 {
+                    if path.is_some() || i + j >= lines.len() {
+                        break;
+                    }
+                    let next_line = lines[i + j];
+                    if let Some(start) = next_line.find("\"/api/") {
+                        if let Some(end) = next_line[start + 1..].find('"') {
+                            path = Some(next_line[start + 1..start + 1 + end].to_string());
+                        }
+                    }
+                }
+                if let Some(path) = path {
+                    let path_without_query = path.split('?').next().unwrap_or(&path);
+                    let normalized_path = normalize_path(path_without_query);
+                    tested.insert(("DELETE".to_string(), normalized_path));
+                }
+                continue;
+            }
+
             // Pattern: send_authenticated_request or send_json_request
             if line.contains("send_authenticated_json_request")
                 || line.contains("send_authenticated_request")
@@ -319,18 +395,8 @@ fn test_all_api_routes_have_tests() {
         // Other endpoints without tests
         ("GET", "/api/invites/{email}"),
         ("GET", "/api/auth/verify"),
-        ("GET", "/api/ai/chat/stream"),
-        ("GET", "/api/ai/conversations"),
-        ("GET", "/api/ai/conversations/{id}"),
+        // AI sessions endpoint (not in standard AI tests)
         ("GET", "/api/ai/sessions/{id}"),
-        ("GET", "/api/ai/health"),
-        ("GET", "/api/ai/info"),
-        ("GET", "/api/ai/usage"),
-        ("POST", "/api/ai/analyze/code"),
-        ("POST", "/api/ai/chat"),
-        ("POST", "/api/ai/chat/contextual"),
-        ("POST", "/api/ai/moderate"),
-        ("POST", "/api/ai/upload"),
     ];
 
     let info_exempted: HashSet<_> = info_exemptions

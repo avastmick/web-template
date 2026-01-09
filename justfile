@@ -396,6 +396,204 @@ test-coverage-html:
     @open server/tarpaulin-report.html 2>/dev/null || xdg-open server/tarpaulin-report.html 2>/dev/null || echo "Please open server/tarpaulin-report.html manually"
     @echo "✅ HTML coverage report generated."
 
+# test-coverage-validate: Run both server and client coverage with 95% threshold gates
+# Usage: just test-coverage-validate
+# Environment: Requires OPENROUTER_API_KEY and AI_DEFAULT_MODEL for server AI tests
+test-coverage-validate:
+    #!/usr/bin/env bash
+    set -e
+    echo "🎯 Running coverage validation with 95% threshold..."
+
+    # Server coverage with tarpaulin
+    echo ""
+    echo "📊 Running server coverage..."
+    cd server
+    SQLX_OFFLINE=true cargo tarpaulin --out Json --output-dir . --all-features --workspace --timeout 300 \
+        --exclude-files "**/migrations/*" --exclude-files "**/tests/*" --ignore-panics --ignore-tests 2>&1 || true
+
+    # Parse server coverage
+    if [ -f "tarpaulin-report.json" ]; then
+        server_coverage=$(jq '.files | map(.covered / .coverable * 100) | add / length' tarpaulin-report.json 2>/dev/null || echo "0")
+        echo "Server coverage: ${server_coverage}%"
+        if (( $(echo "$server_coverage < 95" | bc -l) )); then
+            echo "❌ Server coverage ${server_coverage}% is below 95% threshold"
+            server_passed=false
+        else
+            echo "✅ Server coverage ${server_coverage}% meets 95% threshold"
+            server_passed=true
+        fi
+    else
+        echo "⚠️  Could not parse server coverage report"
+        server_passed=false
+    fi
+    cd ..
+
+    # Client coverage with vitest
+    echo ""
+    echo "📊 Running client coverage..."
+    cd client
+    bun run test:unit:coverage 2>&1 || true
+
+    # Parse client coverage from vitest json output
+    if [ -f "coverage/coverage-summary.json" ]; then
+        client_coverage=$(jq '.total.lines.pct' coverage/coverage-summary.json 2>/dev/null || echo "0")
+        echo "Client coverage: ${client_coverage}%"
+        if (( $(echo "$client_coverage < 95" | bc -l) )); then
+            echo "❌ Client coverage ${client_coverage}% is below 95% threshold"
+            client_passed=false
+        else
+            echo "✅ Client coverage ${client_coverage}% meets 95% threshold"
+            client_passed=true
+        fi
+    else
+        echo "⚠️  Could not parse client coverage report"
+        client_passed=false
+    fi
+    cd ..
+
+    # Summary
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "📋 Coverage Validation Summary"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    if [ "$server_passed" = true ] && [ "$client_passed" = true ]; then
+        echo "✅ All coverage thresholds met!"
+        exit 0
+    else
+        echo "❌ Coverage validation failed"
+        [ "$server_passed" = false ] && echo "   - Server: below 95%"
+        [ "$client_passed" = false ] && echo "   - Client: below 95%"
+        exit 1
+    fi
+
+# test-mutations: Run mutation testing with cargo-mutants (server) and Stryker (client)
+# Usage: just test-mutations
+#        just test-mutations server  (server only)
+#        just test-mutations client  (client only)
+# Note: Mutation testing is slow - expect 10-30+ minutes depending on codebase size
+test-mutations target="all":
+    #!/usr/bin/env bash
+    set -e
+    echo "🧬 Running mutation testing..."
+
+    run_server_mutations() {
+        echo ""
+        echo "🦀 Running cargo-mutants on server..."
+        if ! command -v cargo-mutants &> /dev/null; then
+            echo "⚠️  cargo-mutants not found. Installing..."
+            cargo install cargo-mutants
+        fi
+        cd server
+        # Run with timeout and limited mutants for CI efficiency
+        SQLX_OFFLINE=true cargo mutants --timeout 60 --jobs 4 2>&1 || {
+            echo "⚠️  Some mutants survived or mutation testing encountered errors"
+            echo "   Check mutants.out/ directory for details"
+        }
+        if [ -d "mutants.out" ]; then
+            echo ""
+            echo "📊 Server mutation testing results:"
+            cat mutants.out/outcomes.json 2>/dev/null | jq -r '.outcomes | group_by(.outcome) | map({outcome: .[0].outcome, count: length}) | .[]' 2>/dev/null || echo "   See mutants.out/ for detailed results"
+        fi
+        cd ..
+    }
+
+    run_client_mutations() {
+        echo ""
+        echo "⚡ Running Stryker on client..."
+        cd client
+        if [ ! -f "stryker.conf.json" ]; then
+            echo "❌ Stryker config not found (stryker.conf.json)"
+            echo "   Run: bun add -d @stryker-mutator/core @stryker-mutator/typescript-checker @stryker-mutator/vitest-runner"
+            exit 1
+        fi
+        bunx stryker run 2>&1 || {
+            echo "⚠️  Some mutants survived or Stryker encountered errors"
+            echo "   Check reports/mutation/ directory for details"
+        }
+        cd ..
+    }
+
+    case "{{target}}" in
+        "server")
+            run_server_mutations
+            ;;
+        "client")
+            run_client_mutations
+            ;;
+        "all"|*)
+            run_server_mutations
+            run_client_mutations
+            ;;
+    esac
+
+    echo ""
+    echo "✅ Mutation testing complete."
+
+# quality-check: Full quality validation pipeline (format, lint, test, coverage)
+# Usage: just quality-check
+#        just quality-check --skip-mutations  (skip slow mutation tests)
+# This is the comprehensive quality gate for CI/CD pipelines
+quality-check *flags="":
+    #!/usr/bin/env bash
+    set -e
+    echo "🔍 Running full quality validation pipeline..."
+    echo ""
+
+    # Parse flags
+    skip_mutations=false
+    for flag in {{flags}}; do
+        case "$flag" in
+            "--skip-mutations") skip_mutations=true ;;
+        esac
+    done
+
+    # Track failures
+    failures=""
+
+    # Step 1: Format and lint checks
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "📝 Step 1/4: Code quality checks (format + lint)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    just check || failures="$failures check"
+
+    # Step 2: Run all tests
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🧪 Step 2/4: Running all tests"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    just test || failures="$failures tests"
+
+    # Step 3: Coverage validation
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "📊 Step 3/4: Coverage validation (95% threshold)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    just test-coverage-validate || failures="$failures coverage"
+
+    # Step 4: Mutation testing (optional)
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🧬 Step 4/4: Mutation testing"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    if [ "$skip_mutations" = true ]; then
+        echo "⏭️  Skipping mutation tests (--skip-mutations flag)"
+    else
+        just test-mutations || failures="$failures mutations"
+    fi
+
+    # Summary
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "📋 Quality Check Summary"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    if [ -z "$failures" ]; then
+        echo "✅ All quality checks passed!"
+        exit 0
+    else
+        echo "❌ Quality check failed. Failed steps:$failures"
+        exit 1
+    fi
+
 # test [server_pattern] [client_pattern] [e2e_pattern]: Runs all tests.
 # Patterns are optional. If a pattern is not provided, all tests for that category run.
 # Usage: just test

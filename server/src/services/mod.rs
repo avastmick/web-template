@@ -1,5 +1,3 @@
-// kanbain/server/src/services/mod.rs
-
 pub mod ai_data_service;
 pub mod ai_service;
 pub mod auth_service;

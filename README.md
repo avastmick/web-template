@@ -3,6 +3,9 @@
 > [!CAUTION]
 > Under active development - breaking changes often. Some documentation may be out of date, or not aligned with function. Wait until first release.
 
+> [!IMPORTANT]
+> Test Coverage: 53.88% coverage, 1105/2051 lines covered.
+
 ## Overview
 
 The web-template is a project that will enable the quick-start for a high-performance web application. The project goals are:

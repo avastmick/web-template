@@ -5,7 +5,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
 ## Status Summary
 
 ### Task 1.1: Achieve 80% Server Code Coverage
-*   **Status:** **[-] TODO**
+*   **Status:** **[-] ON-GOING**
 *   **Action:** Implement comprehensive UNIT test coverage for all server code
 *   **Details:**
     *   Write unit tests to achieve >80% coverage for all services
@@ -33,7 +33,7 @@ This document outlines the tasks to be completed based on `INSTRUCTIONS.md` and 
     *   Tests complete in under 30 seconds
 
 ### Task 1.2: Create Integration Tests for ALL Endpoints
-*   **Status:** **[ ] TODO**
+*   **Status:** **[-] ON-GOING**
 *   **Action:** Write comprehensive integration tests for every API endpoint
 *   **Details:**
     *   Create test infrastructure for spawning real server instances

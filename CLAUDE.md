@@ -28,9 +28,6 @@ If you are asked to add integration or endpoint tests, you MUST also read:
 - `server/tests/endpoint/README.md` - For endpoint tests (HTTP requests, MUST verify database state)
 ENSURE you align to the current means of creating to tests FULLY aligning to the existing practice.
 
-**IMPORTANT** Remember that 'Kanbain' is a working title; take care not to name things in the application using the working title as it is likely to change.
-
-
 ## CRITICAL: Server-First MVP Development
 
 **DO NOT IMPLEMENT ANY CLIENT FUNCTIONALITY UNTIL SERVER MVP v1.0.0 IS COMPLETE**

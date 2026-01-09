@@ -1,5 +1,3 @@
-// kanbain/server/src/services/auth_service.rs
-
 //! Authentication service for JWT token management
 //!
 //! This service handles JWT generation, validation, and token claims management.

@@ -1,0 +1,49 @@
+{
+  "id": "evt_fixture_subscription_deleted",
+  "object": "event",
+  "api_version": "2023-10-16",
+  "created": 1704067200,
+  "type": "customer.subscription.deleted",
+  "data": {
+    "object": {
+      "id": "sub_fixture_123",
+      "object": "subscription",
+      "customer": "cus_fixture_123",
+      "status": "canceled",
+      "canceled_at": 1704067200,
+      "current_period_start": 1704067200,
+      "current_period_end": 1706745600,
+      "items": {
+        "object": "list",
+        "data": [
+          {
+            "id": "si_fixture_123",
+            "object": "subscription_item",
+            "price": {
+              "id": "price_fixture_monthly",
+              "object": "price",
+              "currency": "eur",
+              "unit_amount": 2500,
+              "recurring": {
+                "interval": "month",
+                "interval_count": 1
+              }
+            },
+            "quantity": 1
+          }
+        ]
+      },
+      "metadata": {
+        "user_id": "REPLACE_WITH_USER_ID"
+      },
+      "created": 1701388800,
+      "livemode": false
+    }
+  },
+  "livemode": false,
+  "pending_webhooks": 0,
+  "request": {
+    "id": "req_fixture_del",
+    "idempotency_key": null
+  }
+}

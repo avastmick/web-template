@@ -1,5 +1,7 @@
 //! Common test helpers and utilities
 
+pub mod mocks;
+
 use crate::{
     core::AppState,
     services::{

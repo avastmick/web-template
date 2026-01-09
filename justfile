@@ -501,23 +501,10 @@ test-mutations target="all":
         echo ""
         echo "⚡ Running Stryker on client..."
         cd client
-        if [ ! -f "stryker.config.json" ] && [ ! -f "stryker.conf.js" ]; then
-            echo "⚠️  Stryker config not found. Creating default config..."
-            cat > stryker.config.json << 'STRYKER_EOF'
-    {
-      "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
-      "packageManager": "npm",
-      "reporters": ["html", "clear-text", "progress"],
-      "testRunner": "vitest",
-      "vitest": {
-        "configFile": "vitest.config.ts"
-      },
-      "coverageAnalysis": "perTest",
-      "mutate": ["src/**/*.ts", "!src/**/*.test.ts", "!src/**/*.spec.ts"]
-    }
-    STRYKER_EOF
-            echo "   Installing Stryker..."
-            bun add -d @stryker-mutator/core @stryker-mutator/vitest-runner
+        if [ ! -f "stryker.conf.json" ]; then
+            echo "❌ Stryker config not found (stryker.conf.json)"
+            echo "   Run: bun add -d @stryker-mutator/core @stryker-mutator/typescript-checker @stryker-mutator/vitest-runner"
+            exit 1
         fi
         bunx stryker run 2>&1 || {
             echo "⚠️  Some mutants survived or Stryker encountered errors"

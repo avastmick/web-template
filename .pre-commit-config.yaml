@@ -82,3 +82,22 @@ repos:
         entry: bash -c 'cd server && cargo check --locked'
         files: ^server/Cargo\.lock$ # Only trigger on lockfile change itself
         pass_filenames: false
+
+  # Coverage and test checks (run on push only)
+  - repo: local
+    hooks:
+      - id: server-test-coverage
+        name: Server test coverage (cargo tarpaulin)
+        language: system
+        entry: bash -c 'cd server && cargo tarpaulin --fail-under 95'
+        files: ^server/.*\.rs$
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: client-unit-tests
+        name: Client unit tests (bun run test:unit)
+        language: system
+        entry: bash -c 'cd client && bun run test:unit'
+        files: ^client/.*\.(ts|svelte|js)$
+        pass_filenames: false
+        stages: [pre-push]

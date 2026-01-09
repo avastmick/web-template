@@ -1,0 +1,64 @@
+# cargo-mutants configuration for mutation testing
+# https://mutants.rs/
+
+# Files to examine for mutations
+# Focus on business logic in services, handlers, and middleware
+examine_globs = [
+    "src/services/**/*.rs",
+    "src/handlers/**/*.rs",
+    "src/middleware/**/*.rs",
+]
+
+# Files to exclude from mutation testing
+exclude_globs = [
+    # Test files
+    "tests/**",
+    "src/test_helpers/**",
+    "**/tests.rs",
+    "**/*_tests.rs",
+    "**/tests/*.rs",
+
+    # Entry points (minimal logic)
+    "src/main.rs",
+
+    # Generated/config code
+    "migrations/**",
+
+    # Model definitions (mostly struct definitions)
+    "src/models/**",
+
+    # Error definitions
+    "src/errors.rs",
+
+    # Config (environment-dependent)
+    "src/config/**",
+]
+
+# Timeout for each mutant test run (seconds)
+# Longer timeout since tests may involve database operations
+timeout = 300
+
+# Number of parallel jobs (adjust based on CI resources)
+# Use fewer jobs to avoid database contention
+jobs = 2
+
+# Minimum test timeout multiplier
+minimum_test_timeout = 60
+
+# Continue testing even if some mutants fail to build
+# Useful for initial runs to see overall picture
+build_timeout_multiplier = 2.0
+
+# Output directory for reports
+output = "target/mutants"
+
+# Mutation testing targets
+# Initial threshold: 20% survival rate acceptable
+# Target: <10% survival rate
+#
+# Run with: cargo mutants --in-place
+# Or for CI: cargo mutants --check
+#
+# Quality gates:
+# - Phase 1 (current): Accept up to 20% survivors
+# - Phase 2 (target): Reduce to <10% survivors

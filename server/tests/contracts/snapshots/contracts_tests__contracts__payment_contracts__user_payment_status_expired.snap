@@ -1,0 +1,11 @@
+---
+source: tests/contracts/payment_contracts.rs
+assertion_line: 128
+expression: response
+---
+{
+  "has_active_payment": false,
+  "payment_status": "expired",
+  "payment_type": "subscription",
+  "subscription_end_date": null
+}

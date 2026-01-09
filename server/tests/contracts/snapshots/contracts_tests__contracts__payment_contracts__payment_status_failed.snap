@@ -1,0 +1,5 @@
+---
+source: tests/contracts/payment_contracts.rs
+expression: "PaymentStatus::Failed"
+---
+"failed"

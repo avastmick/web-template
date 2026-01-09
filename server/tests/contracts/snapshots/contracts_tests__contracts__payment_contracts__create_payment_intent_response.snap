@@ -1,0 +1,9 @@
+---
+source: tests/contracts/payment_contracts.rs
+assertion_line: 56
+expression: response
+---
+{
+  "client_secret": "pi_1234567890_secret_abcdefghij",
+  "payment_intent_id": "pi_1234567890"
+}

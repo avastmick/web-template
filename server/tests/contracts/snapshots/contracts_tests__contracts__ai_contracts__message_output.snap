@@ -1,0 +1,9 @@
+---
+source: tests/contracts/ai_contracts.rs
+assertion_line: 276
+expression: message
+---
+{
+  "role": "assistant",
+  "content": "This is the assistant's response."
+}

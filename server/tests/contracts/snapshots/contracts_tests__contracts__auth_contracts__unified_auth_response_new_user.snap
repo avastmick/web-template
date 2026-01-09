@@ -1,0 +1,21 @@
+---
+source: tests/contracts/auth_contracts.rs
+assertion_line: 80
+expression: response
+---
+{
+  "auth_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_token",
+  "auth_user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "user@example.com",
+    "created_at": "2024-01-15T12:00:00Z",
+    "updated_at": "2024-01-15T12:00:00Z"
+  },
+  "payment_user": {
+    "payment_required": true,
+    "payment_status": null,
+    "subscription_end_date": null,
+    "has_valid_invite": false,
+    "invite_expires_at": null
+  }
+}

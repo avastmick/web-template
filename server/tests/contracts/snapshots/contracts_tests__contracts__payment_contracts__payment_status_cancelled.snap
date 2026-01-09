@@ -1,0 +1,6 @@
+---
+source: tests/contracts/payment_contracts.rs
+assertion_line: 148
+expression: "PaymentStatus::Cancelled"
+---
+"cancelled"

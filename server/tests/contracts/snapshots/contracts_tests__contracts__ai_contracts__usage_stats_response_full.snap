@@ -1,0 +1,16 @@
+---
+source: tests/contracts/ai_contracts.rs
+assertion_line: 221
+expression: response
+---
+{
+  "total_conversations": 25,
+  "total_messages": 342,
+  "total_tokens": 125000,
+  "total_cost_cents": 4250,
+  "models_used": [
+    "gpt-4",
+    "gpt-4-turbo",
+    "gpt-3.5-turbo"
+  ]
+}

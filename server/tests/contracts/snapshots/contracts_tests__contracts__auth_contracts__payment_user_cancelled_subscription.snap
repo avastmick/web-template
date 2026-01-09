@@ -1,0 +1,12 @@
+---
+source: tests/contracts/auth_contracts.rs
+assertion_line: 175
+expression: payment_user
+---
+{
+  "payment_required": true,
+  "payment_status": "cancelled",
+  "subscription_end_date": "2024-01-15T12:00:00Z",
+  "has_valid_invite": false,
+  "invite_expires_at": null
+}

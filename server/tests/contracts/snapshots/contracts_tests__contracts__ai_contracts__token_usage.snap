@@ -1,0 +1,10 @@
+---
+source: tests/contracts/ai_contracts.rs
+assertion_line: 266
+expression: usage
+---
+{
+  "prompt": 100,
+  "completion": 250,
+  "total": 350
+}

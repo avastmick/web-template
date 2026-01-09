@@ -1,0 +1,11 @@
+---
+source: tests/contracts/payment_contracts.rs
+assertion_line: 116
+expression: response
+---
+{
+  "has_active_payment": false,
+  "payment_status": "cancelled",
+  "payment_type": "subscription",
+  "subscription_end_date": "2025-01-15T12:00:00Z"
+}

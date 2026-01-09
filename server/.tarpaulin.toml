@@ -14,7 +14,7 @@ ignore-panics = true
 ignore-tests = true
 # Output formats
 out = ["Html", "Lcov"]
-# Fail if coverage is below target: 80%
-fail-under = 80
+# Fail if coverage is below target: 95%
+fail-under = 95
 # Avoid false positives from unused generic code
 avoid-cfg-tarpaulin = true

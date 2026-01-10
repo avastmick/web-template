@@ -112,6 +112,10 @@ impl MockStripeClient {
 
     /// Simulate creating a Stripe customer
     ///
+    /// # Panics
+    ///
+    /// Panics if the `customer_calls` mutex is poisoned
+    ///
     /// # Errors
     ///
     /// Returns an error if configured to fail
@@ -138,14 +142,19 @@ impl MockStripeClient {
         }
 
         Ok(self.config.customer_response.clone().unwrap_or_else(|| {
-            let mut response = MockCustomerResponse::default();
-            response.email = email.map(ToString::to_string);
-            response.metadata = metadata;
-            response
+            MockCustomerResponse {
+                email: email.map(ToString::to_string),
+                metadata,
+                ..Default::default()
+            }
         }))
     }
 
     /// Simulate creating a payment intent
+    ///
+    /// # Panics
+    ///
+    /// Panics if the `payment_intent_calls` mutex is poisoned
     ///
     /// # Errors
     ///
@@ -181,34 +190,51 @@ impl MockStripeClient {
             .payment_intent_response
             .clone()
             .unwrap_or_else(|| {
-                let mut response = MockPaymentIntentResponse::default();
-                response.amount = amount;
-                response.currency = currency.to_string();
-                response.customer = customer.map(ToString::to_string);
-                response.metadata = metadata;
-                response
+                MockPaymentIntentResponse {
+                    amount,
+                    currency: currency.to_string(),
+                    customer: customer.map(ToString::to_string),
+                    metadata,
+                    ..Default::default()
+                }
             }))
     }
 
     /// Get the number of customer creation calls
+    ///
+    /// # Panics
+    ///
+    /// Panics if the mutex is poisoned
     #[must_use]
     pub fn customer_call_count(&self) -> usize {
         self.customer_calls.lock().expect("Lock poisoned").len()
     }
 
     /// Get the number of payment intent creation calls
+    ///
+    /// # Panics
+    ///
+    /// Panics if the mutex is poisoned
     #[must_use]
     pub fn payment_intent_call_count(&self) -> usize {
         self.payment_intent_calls.lock().expect("Lock poisoned").len()
     }
 
     /// Get recorded customer calls
+    ///
+    /// # Panics
+    ///
+    /// Panics if the mutex is poisoned
     #[must_use]
     pub fn get_customer_calls(&self) -> Vec<CustomerCreateCall> {
         self.customer_calls.lock().expect("Lock poisoned").clone()
     }
 
     /// Get recorded payment intent calls
+    ///
+    /// # Panics
+    ///
+    /// Panics if the mutex is poisoned
     #[must_use]
     pub fn get_payment_intent_calls(&self) -> Vec<PaymentIntentCreateCall> {
         self.payment_intent_calls
@@ -335,7 +361,7 @@ impl MockWebhookEventBuilder {
         })
     }
 
-    /// Build a payment_intent.succeeded event
+    /// Build a `payment_intent.succeeded` event
     #[must_use]
     pub fn build_payment_succeeded(&self) -> serde_json::Value {
         Self {
@@ -345,7 +371,7 @@ impl MockWebhookEventBuilder {
         .build_json()
     }
 
-    /// Build a payment_intent.payment_failed event
+    /// Build a `payment_intent.payment_failed` event
     #[must_use]
     pub fn build_payment_failed(&self) -> serde_json::Value {
         let mut event = self.clone();
@@ -422,7 +448,7 @@ mod tests {
 
         let result = mock.create_customer(Some("test@example.com"), HashMap::new());
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Card declined");
+        assert_eq!(result.expect_err("Expected error"), "Card declined");
     }
 
     #[test]

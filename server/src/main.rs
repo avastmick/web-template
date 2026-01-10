@@ -235,10 +235,10 @@ fn init_database_if_needed(database_url: &str) -> Result<(), Box<dyn std::error:
 
 fn extract_sqlite_path(database_url: &str) -> Option<String> {
     // Parse SQLite URL format: sqlite:path/to/file.db?options
-    if let Some(stripped) = database_url.strip_prefix("sqlite:") {
-        if let Some(path_part) = stripped.split('?').next() {
-            return Some(path_part.to_string());
-        }
+    if let Some(stripped) = database_url.strip_prefix("sqlite:")
+        && let Some(path_part) = stripped.split('?').next()
+    {
+        return Some(path_part.to_string());
     }
     None
 }

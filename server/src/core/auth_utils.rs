@@ -105,18 +105,18 @@ mod tests {
         // Insert user into database
         // Use runtime query() instead of query!() macro to avoid SQLX_OFFLINE cache issues in tests
         sqlx::query(
-            r#"
+            r"
             INSERT INTO users (id, email, hashed_password, provider, provider_user_id, created_at, updated_at)
             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
-            "#,
+            ",
         )
-        .bind(&user.id)
+        .bind(user.id)
         .bind(&user.email)
         .bind(&user.hashed_password)
         .bind(&user.provider)
         .bind(&user.provider_user_id)
-        .bind(&user.created_at)
-        .bind(&user.updated_at)
+        .bind(user.created_at)
+        .bind(user.updated_at)
         .execute(pool)
         .await
         .expect("Failed to insert test user");

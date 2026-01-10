@@ -2,7 +2,7 @@
 
 //! Payment service tests with Stripe mocks
 //!
-//! These tests exercise the PaymentService using mock Stripe responses
+//! These tests exercise the `PaymentService` using mock Stripe responses
 //! and webhook fixture files for comprehensive testing without external API calls.
 
 use chrono::{Duration, Utc};
@@ -127,10 +127,11 @@ impl MockStripeClient {
                 .unwrap_or_else(|| "Mock customer creation failed".to_string()));
         }
 
-        let mut response = MockCustomerResponse::default();
-        response.email = email.map(ToString::to_string);
-        response.metadata = metadata;
-        Ok(response)
+        Ok(MockCustomerResponse {
+            email: email.map(ToString::to_string),
+            metadata,
+            ..Default::default()
+        })
     }
 
     fn create_payment_intent(
@@ -158,12 +159,13 @@ impl MockStripeClient {
                 .unwrap_or_else(|| "Mock payment intent creation failed".to_string()));
         }
 
-        let mut response = MockPaymentIntentResponse::default();
-        response.amount = amount;
-        response.currency = currency.to_string();
-        response.customer = customer.map(ToString::to_string);
-        response.metadata = metadata;
-        Ok(response)
+        Ok(MockPaymentIntentResponse {
+            amount,
+            currency: currency.to_string(),
+            customer: customer.map(ToString::to_string),
+            metadata,
+            ..Default::default()
+        })
     }
 
     fn customer_call_count(&self) -> usize {

@@ -335,7 +335,7 @@ impl MockWebhookEventBuilder {
         })
     }
 
-    /// Build a payment_intent.succeeded event
+    /// Build a `payment_intent.succeeded` event
     #[must_use]
     pub fn build_payment_succeeded(&self) -> serde_json::Value {
         Self {
@@ -345,7 +345,7 @@ impl MockWebhookEventBuilder {
         .build_json()
     }
 
-    /// Build a payment_intent.payment_failed event
+    /// Build a `payment_intent.payment_failed` event
     #[must_use]
     pub fn build_payment_failed(&self) -> serde_json::Value {
         let mut event = self.clone();

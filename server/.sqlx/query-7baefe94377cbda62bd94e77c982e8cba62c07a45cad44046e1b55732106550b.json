@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT\n                    COUNT(*) as message_count,\n                    COALESCE(MAX(created_at), '') as last_message_at\n                FROM ai_messages\n                WHERE conversation_id = ?1\n                ",
+  "describe": {
+    "columns": [
+      {
+        "name": "message_count",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "last_message_at",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "7baefe94377cbda62bd94e77c982e8cba62c07a45cad44046e1b55732106550b"
+}

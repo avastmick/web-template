@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT id, user_id, title, model, system_prompt, created_at, updated_at, archived_at, metadata\n            FROM ai_conversations\n            WHERE id = ?1 AND user_id = ?2 AND archived_at IS NULL\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "user_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "model",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "system_prompt",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "archived_at",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "metadata",
+        "ordinal": 8,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "7ffa9aa1c7851d0197375935b99afc1a99a0bdd2f9ef5f2f9644ebb4f9f51308"
+}

@@ -60,3 +60,10 @@ context/
 *.db
 **/.sqlx/
 **/*.sqlite*
+
+# Allow server mutation testing config
+!server/.cargo/
+!server/.cargo/mutants.toml
+
+# Allow SQLx offline metadata for mutation testing
+!server/.sqlx/

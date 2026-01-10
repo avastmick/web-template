@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT id FROM user_invites\n            WHERE email = ?1\n            AND used_at IS NULL\n            AND (expires_at IS NULL OR expires_at > ?2)\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "6d260aec7a240b09112b065639d2901d1788251a8ba5c6700543fa200f9746c0"
+}

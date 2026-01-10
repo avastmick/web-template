@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT COUNT(*) as count\n            FROM ai_messages m\n            JOIN ai_conversations c ON m.conversation_id = c.id\n            WHERE c.user_id = ?1 AND c.archived_at IS NULL\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "count",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "11aa379b4569e98a30d7232022b6f1df5dc144f166b7aa308f0f623af5b33ca8"
+}

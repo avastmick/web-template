@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT id FROM ai_conversations\n            WHERE id = ?1 AND user_id = ?2 AND archived_at IS NULL\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "52f3a281626db3c5f3304973b5e40b991d88e42f5c2e2ae9966cc6ec71e3ed64"
+}

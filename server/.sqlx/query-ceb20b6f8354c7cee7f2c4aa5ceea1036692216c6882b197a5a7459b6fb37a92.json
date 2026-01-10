@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT DISTINCT model\n            FROM ai_usage\n            WHERE user_id = ?1\n            ORDER BY model\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "model",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ceb20b6f8354c7cee7f2c4aa5ceea1036692216c6882b197a5a7459b6fb37a92"
+}

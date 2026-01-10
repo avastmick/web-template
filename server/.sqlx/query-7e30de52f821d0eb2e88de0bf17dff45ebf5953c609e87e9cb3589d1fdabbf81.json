@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, email, hashed_password, provider, provider_user_id, created_at, updated_at FROM users WHERE email = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "email",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "hashed_password",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "provider",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "provider_user_id",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "7e30de52f821d0eb2e88de0bf17dff45ebf5953c609e87e9cb3589d1fdabbf81"
+}

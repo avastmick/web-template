@@ -1,0 +1,40 @@
+# cargo-mutants configuration
+# See: https://mutants.rs/
+
+# Include untracked files like .sqlx/ (don't exclude based on gitignore)
+gitignore = false
+
+# NOTE: Environment variables must be set externally when running cargo-mutants
+# Required: SQLX_OFFLINE=true (uses pre-generated .sqlx query metadata)
+# Required: DATABASE_URL="sqlite:./db/test.sqlite3?mode=rwc"
+# Required: DATABASE_PROVIDER="sqlite"
+# Required: JWT_SECRET="test-secret-key-for-mutation-testing"
+#
+# Example:
+#   SQLX_OFFLINE=true DATABASE_URL="sqlite:./db/test.sqlite3?mode=rwc" \
+#   DATABASE_PROVIDER=sqlite JWT_SECRET=test-key cargo mutants
+
+# Timeout multiplier relative to baseline test time
+# AI-related tests can be slow, so we allow generous timeout (3x baseline)
+timeout_multiplier = 3.0
+
+# Minimum test timeout in seconds (floor for autoset value)
+minimum_test_timeout = 60.0
+
+# Exclude test files and generated code from mutation
+# These patterns match files that shouldn't be mutated
+exclude_globs = [
+    "**/tests/**",
+    "**/test_helpers/**",
+    "**/migrations/**",
+]
+
+# Skip functions that are hard to test or not worth mutating
+exclude_re = [
+    # Logging/tracing functions
+    "initialize_tracing",
+    # Main function and CLI handling
+    "^main$",
+    # Debug implementations
+    "fmt.*Debug",
+]

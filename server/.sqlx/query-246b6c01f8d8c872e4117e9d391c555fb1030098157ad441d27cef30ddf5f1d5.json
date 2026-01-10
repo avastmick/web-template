@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            UPDATE ai_conversations\n            SET archived_at = ?1, updated_at = ?2\n            WHERE id = ?3 AND user_id = ?4 AND archived_at IS NULL\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "246b6c01f8d8c872e4117e9d391c555fb1030098157ad441d27cef30ddf5f1d5"
+}

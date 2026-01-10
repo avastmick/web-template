@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            UPDATE user_invites\n            SET used_at = ?1, updated_at = ?1\n            WHERE email = ?2\n            AND used_at IS NULL\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "05d1eb095388c78c29ddcdd73536610dcb1af899cfe2fb66f3186eccfb4e489a"
+}

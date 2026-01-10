@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                COUNT(DISTINCT conversation_id) as total_conversations,\n                COALESCE(SUM(prompt_tokens + completion_tokens), 0) as total_tokens,\n                COALESCE(SUM(cost_cents), 0) as total_cost_cents\n            FROM ai_usage\n            WHERE user_id = ?1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "total_conversations",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "total_tokens",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "total_cost_cents",
+        "ordinal": 2,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "df8404f8ee06183af08936f41dfe28bd79a2ddb57e2d374ae0d6409c9b4423c6"
+}

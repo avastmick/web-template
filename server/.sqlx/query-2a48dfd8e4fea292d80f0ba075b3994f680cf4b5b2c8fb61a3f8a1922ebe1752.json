@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO ai_conversations (id, user_id, title, model, system_prompt, created_at, updated_at, metadata)\n            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "2a48dfd8e4fea292d80f0ba075b3994f680cf4b5b2c8fb61a3f8a1922ebe1752"
+}

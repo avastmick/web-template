@@ -15,18 +15,19 @@ mod tests {
         let email = format!("test+{user_id}@example.com");
         let now = chrono::Utc::now().to_rfc3339();
 
-        sqlx::query!(
+        // Use runtime query() instead of query!() macro to avoid SQLX_OFFLINE cache issues in tests
+        sqlx::query(
             r#"
             INSERT INTO users (id, email, hashed_password, provider, created_at, updated_at)
             VALUES (?1, ?2, ?3, ?4, ?5, ?6)
             "#,
-            user_id,
-            email,
-            "hashed_password",
-            "local",
-            now,
-            now
         )
+        .bind(&user_id)
+        .bind(&email)
+        .bind("hashed_password")
+        .bind("local")
+        .bind(&now)
+        .bind(&now)
         .execute(pool)
         .await
         .expect("Failed to create test user");

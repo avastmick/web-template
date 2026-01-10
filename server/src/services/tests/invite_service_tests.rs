@@ -69,7 +69,7 @@ async fn test_create_invite_with_expiration() {
         .expect("Failed to create invite with expiration");
 
     assert!(invite.expires_at.is_some());
-    let expires = invite.expires_at.unwrap();
+    let expires = invite.expires_at.expect("Expiration should be set");
     // Allow 1 second tolerance for timing
     assert!((expires - future_time).num_seconds().abs() <= 1);
 }
@@ -199,14 +199,14 @@ async fn test_get_valid_invite_returns_invite() {
         .expect("Failed to get valid invite");
 
     assert!(fetched.is_some());
-    let invite = fetched.unwrap();
+    let invite = fetched.expect("Invite should be present");
     assert_eq!(invite.id, created.id);
     assert_eq!(invite.email, "getvalid@example.com");
 }
 
-/// Note: This test is ignored due to a known bug (wt-yml) where get_valid_invite
-/// uses datetime('now') in SQL which has format incompatibility with chrono DateTime.
-/// The expired invite check works correctly via check_invite_exists (see test_check_invite_exists_expired).
+/// Note: This test is ignored due to a known bug (wt-yml) where `get_valid_invite`
+/// uses `datetime('now')` in SQL which has format incompatibility with chrono `DateTime`.
+/// The expired invite check works correctly via `check_invite_exists` (see `test_check_invite_exists_expired`).
 #[tokio::test]
 #[ignore = "Known bug wt-yml: datetime format mismatch in get_valid_invite"]
 async fn test_get_valid_invite_returns_none_for_expired() {
@@ -272,7 +272,7 @@ async fn test_get_user_invite_returns_used_invite() {
         .expect("Failed to get user invite");
 
     assert!(fetched.is_some());
-    let invite = fetched.unwrap();
+    let invite = fetched.expect("Invite should be present");
     assert!(invite.used_at.is_some());
 }
 
@@ -488,7 +488,10 @@ async fn test_case_insensitive_get_valid_invite() {
 
     assert!(lower.is_some());
     assert!(upper.is_some());
-    assert_eq!(lower.unwrap().id, upper.unwrap().id);
+    assert_eq!(
+        lower.expect("Lower should be present").id,
+        upper.expect("Upper should be present").id
+    );
 }
 
 #[tokio::test]

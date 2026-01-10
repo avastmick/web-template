@@ -28,7 +28,7 @@ fn bench_password_hashing(c: &mut Criterion) {
 
     for (name, password) in passwords {
         group.bench_with_input(BenchmarkId::new("hash", name), &password, |b, password| {
-            b.iter(|| hash_password(black_box(password)))
+            b.iter(|| hash_password(black_box(password)));
         });
     }
 
@@ -61,7 +61,7 @@ fn bench_password_verification(c: &mut Criterion) {
             BenchmarkId::new("verify_wrong", name),
             &("WrongPassword!", &hashed),
             |b, (wrong_password, hashed)| {
-                b.iter(|| verify_password(black_box(wrong_password), black_box(hashed)))
+                b.iter(|| verify_password(black_box(wrong_password), black_box(hashed)));
             },
         );
     }
@@ -129,13 +129,13 @@ fn bench_jwt_validation(c: &mut Criterion) {
             .expect("Failed to generate token for benchmark setup");
 
         group.bench_with_input(BenchmarkId::new("validate", name), &token, |b, token| {
-            b.iter(|| auth_service.validate_token(black_box(token)))
+            b.iter(|| auth_service.validate_token(black_box(token)));
         });
     }
 
     // Also benchmark validation of an invalid token
     group.bench_function("validate_invalid", |b| {
-        b.iter(|| auth_service.validate_token(black_box("invalid.token.here")))
+        b.iter(|| auth_service.validate_token(black_box("invalid.token.here")));
     });
 
     group.finish();

@@ -95,8 +95,7 @@ async fn test_create_user_empty_email() {
     let result = service.create_user(&payload).await;
 
     // SQLite might allow empty email, so we test what happens
-    if result.is_ok() {
-        let user = result.expect("User creation succeeded");
+    if let Ok(user) = result {
         assert_eq!(user.email, "");
     }
     // If it fails, that's also acceptable behavior
@@ -463,8 +462,7 @@ async fn test_create_user_very_long_email() {
 
     let result = service.create_user(&payload).await;
 
-    if result.is_ok() {
-        let user = result.expect("User creation succeeded");
+    if let Ok(user) = result {
         assert_eq!(user.email, long_email);
     }
     // If it fails due to length constraints, that's also acceptable

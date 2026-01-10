@@ -17,10 +17,10 @@ mod tests {
 
         // Use runtime query() instead of query!() macro to avoid SQLX_OFFLINE cache issues in tests
         sqlx::query(
-            r#"
+            r"
             INSERT INTO users (id, email, hashed_password, provider, created_at, updated_at)
             VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-            "#,
+            ",
         )
         .bind(&user_id)
         .bind(&email)

@@ -156,20 +156,20 @@ fn extract_tested_routes() -> HashSet<(String, String)> {
             if line.contains("send_get_request") || line.contains("send_authenticated_get_request") {
                 // Look for path in this line or next few lines
                 let mut path = None;
-                if let Some(start) = line.find("\"/api/") {
-                    if let Some(end) = line[start + 1..].find('"') {
-                        path = Some(line[start + 1..start + 1 + end].to_string());
-                    }
+                if let Some(start) = line.find("\"/api/")
+                    && let Some(end) = line[start + 1..].find('"')
+                {
+                    path = Some(line[start + 1..start + 1 + end].to_string());
                 }
                 for j in 1..=3 {
                     if path.is_some() || i + j >= lines.len() {
                         break;
                     }
                     let next_line = lines[i + j];
-                    if let Some(start) = next_line.find("\"/api/") {
-                        if let Some(end) = next_line[start + 1..].find('"') {
-                            path = Some(next_line[start + 1..start + 1 + end].to_string());
-                        }
+                    if let Some(start) = next_line.find("\"/api/")
+                        && let Some(end) = next_line[start + 1..].find('"')
+                    {
+                        path = Some(next_line[start + 1..start + 1 + end].to_string());
                     }
                 }
                 if let Some(path) = path {
@@ -182,20 +182,20 @@ fn extract_tested_routes() -> HashSet<(String, String)> {
 
             if line.contains("send_authenticated_delete_request") {
                 let mut path = None;
-                if let Some(start) = line.find("\"/api/") {
-                    if let Some(end) = line[start + 1..].find('"') {
-                        path = Some(line[start + 1..start + 1 + end].to_string());
-                    }
+                if let Some(start) = line.find("\"/api/")
+                    && let Some(end) = line[start + 1..].find('"')
+                {
+                    path = Some(line[start + 1..start + 1 + end].to_string());
                 }
                 for j in 1..=3 {
                     if path.is_some() || i + j >= lines.len() {
                         break;
                     }
                     let next_line = lines[i + j];
-                    if let Some(start) = next_line.find("\"/api/") {
-                        if let Some(end) = next_line[start + 1..].find('"') {
-                            path = Some(next_line[start + 1..start + 1 + end].to_string());
-                        }
+                    if let Some(start) = next_line.find("\"/api/")
+                        && let Some(end) = next_line[start + 1..].find('"')
+                    {
+                        path = Some(next_line[start + 1..start + 1 + end].to_string());
                     }
                 }
                 if let Some(path) = path {
@@ -219,10 +219,10 @@ fn extract_tested_routes() -> HashSet<(String, String)> {
                 if let Some(method_match) = method_regex.find(line) {
                     method = Some(method_match.as_str().replace("Method::", "").to_uppercase());
                 }
-                if let Some(start) = line.find("\"/api/") {
-                    if let Some(end) = line[start + 1..].find('"') {
-                        path = Some(line[start + 1..start + 1 + end].to_string());
-                    }
+                if let Some(start) = line.find("\"/api/")
+                    && let Some(end) = line[start + 1..].find('"')
+                {
+                    path = Some(line[start + 1..start + 1 + end].to_string());
                 }
 
                 // If not found on same line, check next 5 lines
@@ -232,18 +232,18 @@ fn extract_tested_routes() -> HashSet<(String, String)> {
                     }
                     let next_line = lines[i + j];
 
-                    if method.is_none() {
-                        if let Some(method_match) = method_regex.find(next_line) {
-                            method =
-                                Some(method_match.as_str().replace("Method::", "").to_uppercase());
-                        }
+                    if method.is_none()
+                        && let Some(method_match) = method_regex.find(next_line)
+                    {
+                        method =
+                            Some(method_match.as_str().replace("Method::", "").to_uppercase());
                     }
 
                     if path.is_none() {
-                        if let Some(start) = next_line.find("\"/api/") {
-                            if let Some(end) = next_line[start + 1..].find('"') {
-                                path = Some(next_line[start + 1..start + 1 + end].to_string());
-                            }
+                        if let Some(start) = next_line.find("\"/api/")
+                            && let Some(end) = next_line[start + 1..].find('"')
+                        {
+                            path = Some(next_line[start + 1..start + 1 + end].to_string());
                         } else if next_line.contains('&')
                             && (next_line.contains("_uri") || next_line.contains("_url"))
                         {
@@ -254,17 +254,18 @@ fn extract_tested_routes() -> HashSet<(String, String)> {
                                     break;
                                 }
                                 let prev_line = lines[i - k];
-                                if prev_line.contains("format!") && prev_line.contains("\"/api/") {
-                                    if let Some(start) = prev_line.find("\"/api/") {
-                                        // Extract path up to ? or closing quote
-                                        let path_start = start + 1;
-                                        let path_str = &prev_line[path_start..];
-                                        let end = path_str.find('?').unwrap_or_else(|| {
-                                            path_str.find('"').unwrap_or(path_str.len())
-                                        });
-                                        path = Some(path_str[..end].to_string());
-                                        break;
-                                    }
+                                if prev_line.contains("format!")
+                                    && prev_line.contains("\"/api/")
+                                    && let Some(start) = prev_line.find("\"/api/")
+                                {
+                                    // Extract path up to ? or closing quote
+                                    let path_start = start + 1;
+                                    let path_str = &prev_line[path_start..];
+                                    let end = path_str.find('?').unwrap_or_else(|| {
+                                        path_str.find('"').unwrap_or(path_str.len())
+                                    });
+                                    path = Some(path_str[..end].to_string());
+                                    break;
                                 }
                             }
                         }
@@ -413,7 +414,7 @@ fn test_all_api_routes_have_tests() {
 
     let untested_not_exempted: Vec<_> = untested_routes
         .into_iter()
-        .filter(|(m, p)| !all_exempted.contains(&(m.to_string(), p.to_string())))
+        .filter(|(m, p)| !all_exempted.contains(&(m.clone(), p.clone())))
         .collect();
 
     if !untested_not_exempted.is_empty() {

@@ -191,24 +191,36 @@ impl MockStripeClient {
     }
 
     /// Get the number of customer creation calls
+    ///
+    /// # Panics
+    /// Panics if the internal mutex is poisoned.
     #[must_use]
     pub fn customer_call_count(&self) -> usize {
         self.customer_calls.lock().expect("Lock poisoned").len()
     }
 
     /// Get the number of payment intent creation calls
+    ///
+    /// # Panics
+    /// Panics if the internal mutex is poisoned.
     #[must_use]
     pub fn payment_intent_call_count(&self) -> usize {
         self.payment_intent_calls.lock().expect("Lock poisoned").len()
     }
 
     /// Get recorded customer calls
+    ///
+    /// # Panics
+    /// Panics if the internal mutex is poisoned.
     #[must_use]
     pub fn get_customer_calls(&self) -> Vec<CustomerCreateCall> {
         self.customer_calls.lock().expect("Lock poisoned").clone()
     }
 
     /// Get recorded payment intent calls
+    ///
+    /// # Panics
+    /// Panics if the internal mutex is poisoned.
     #[must_use]
     pub fn get_payment_intent_calls(&self) -> Vec<PaymentIntentCreateCall> {
         self.payment_intent_calls
@@ -335,7 +347,7 @@ impl MockWebhookEventBuilder {
         })
     }
 
-    /// Build a payment_intent.succeeded event
+    /// Build a `payment_intent.succeeded` event
     #[must_use]
     pub fn build_payment_succeeded(&self) -> serde_json::Value {
         Self {
@@ -345,7 +357,7 @@ impl MockWebhookEventBuilder {
         .build_json()
     }
 
-    /// Build a payment_intent.payment_failed event
+    /// Build a `payment_intent.payment_failed` event
     #[must_use]
     pub fn build_payment_failed(&self) -> serde_json::Value {
         let mut event = self.clone();

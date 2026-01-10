@@ -191,24 +191,36 @@ impl MockStripeClient {
     }
 
     /// Get the number of customer creation calls
+    ///
+    /// # Panics
+    /// Panics if the internal mutex is poisoned.
     #[must_use]
     pub fn customer_call_count(&self) -> usize {
         self.customer_calls.lock().expect("Lock poisoned").len()
     }
 
     /// Get the number of payment intent creation calls
+    ///
+    /// # Panics
+    /// Panics if the internal mutex is poisoned.
     #[must_use]
     pub fn payment_intent_call_count(&self) -> usize {
         self.payment_intent_calls.lock().expect("Lock poisoned").len()
     }
 
     /// Get recorded customer calls
+    ///
+    /// # Panics
+    /// Panics if the internal mutex is poisoned.
     #[must_use]
     pub fn get_customer_calls(&self) -> Vec<CustomerCreateCall> {
         self.customer_calls.lock().expect("Lock poisoned").clone()
     }
 
     /// Get recorded payment intent calls
+    ///
+    /// # Panics
+    /// Panics if the internal mutex is poisoned.
     #[must_use]
     pub fn get_payment_intent_calls(&self) -> Vec<PaymentIntentCreateCall> {
         self.payment_intent_calls

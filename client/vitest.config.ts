@@ -1,26 +1,35 @@
-import { svelteTesting } from '@testing-library/svelte/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-	plugins: [sveltekit(), svelteTesting()],
+	plugins: [sveltekit()],
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}'],
-		exclude: ['e2e/**', 'node_modules/**'],
 		environment: 'jsdom',
-		setupFiles: ['./vitest.setup.ts'],
-		globals: true,
+		// Required for Stryker mutation testing
+		threads: true,
+		// Coverage configuration
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'json', 'html'],
-			reportsDirectory: './coverage',
 			include: ['src/**/*.{js,ts,svelte}'],
 			exclude: [
+				'src/**/*.{test,spec}.{js,ts}',
 				'src/**/*.d.ts',
-				'src/**/*.test.{js,ts}',
-				'src/**/*.spec.{js,ts}',
-				'src/app.html'
-			]
+				'src/app.html',
+				'src/hooks.server.ts'
+			],
+			thresholds: {
+				lines: 95,
+				functions: 95,
+				branches: 95,
+				statements: 95
+			}
+		},
+		// Vite 6 compatibility - ensure browser conditions are used
+		alias: {
+			$lib: '/src/lib',
+			$app: '/.svelte-kit/runtime/app'
 		}
 	}
 });

@@ -1,0 +1,6 @@
+---
+source: tests/contracts/payment_contracts.rs
+assertion_line: 157
+expression: "PaymentType::OneTime"
+---
+"one_time"

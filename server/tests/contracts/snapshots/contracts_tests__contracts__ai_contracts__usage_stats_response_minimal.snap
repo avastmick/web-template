@@ -1,0 +1,12 @@
+---
+source: tests/contracts/ai_contracts.rs
+assertion_line: 204
+expression: response
+---
+{
+  "total_conversations": 0,
+  "total_messages": 0,
+  "total_tokens": 0,
+  "total_cost_cents": null,
+  "models_used": []
+}

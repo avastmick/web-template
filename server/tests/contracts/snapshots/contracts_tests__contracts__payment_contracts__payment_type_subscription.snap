@@ -1,0 +1,6 @@
+---
+source: tests/contracts/payment_contracts.rs
+assertion_line: 156
+expression: "PaymentType::Subscription"
+---
+"subscription"

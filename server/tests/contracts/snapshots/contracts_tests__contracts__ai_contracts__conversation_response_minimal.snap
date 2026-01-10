@@ -1,0 +1,15 @@
+---
+source: tests/contracts/ai_contracts.rs
+assertion_line: 91
+expression: response
+---
+{
+  "id": "conv_550e8400-e29b-41d4-a716-446655440000",
+  "title": null,
+  "model": "gpt-4",
+  "system_prompt": null,
+  "created_at": "2024-01-15T12:00:00Z",
+  "updated_at": "2024-01-15T12:00:00Z",
+  "message_count": 0,
+  "last_message_at": null
+}

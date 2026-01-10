@@ -1,0 +1,11 @@
+---
+source: tests/contracts/payment_contracts.rs
+assertion_line: 140
+expression: response
+---
+{
+  "has_active_payment": false,
+  "payment_status": "failed",
+  "payment_type": "one_time",
+  "subscription_end_date": null
+}

@@ -1,0 +1,13 @@
+---
+source: tests/contracts/auth_contracts.rs
+assertion_line: 203
+expression: params
+---
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example_token",
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "existing@example.com",
+  "is_new_user": false,
+  "payment_required": false,
+  "has_valid_invite": true
+}

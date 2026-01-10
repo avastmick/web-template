@@ -1,0 +1,15 @@
+---
+source: tests/contracts/ai_contracts.rs
+assertion_line: 107
+expression: response
+---
+{
+  "id": "conv_550e8400-e29b-41d4-a716-446655440000",
+  "title": "Project Discussion",
+  "model": "gpt-4-turbo",
+  "system_prompt": "You are a helpful software engineering assistant.",
+  "created_at": "2024-01-15T12:00:00Z",
+  "updated_at": "2024-01-15T13:00:00Z",
+  "message_count": 42,
+  "last_message_at": "2024-01-15T13:00:00Z"
+}
